@@ -16,7 +16,9 @@ export async function getClinicData(slug: string) {
         'x-api-key': apiKey,
         'Content-Type': 'application/json',
       },
-      cache: 'no-store', // Siempre obtener datos frescos
+      // Permitimos que Next.js lo trate como dato estático en build.
+      // Si se quiere refrescar en producción, se puede usar revalidate.
+      next: { revalidate: 60 },
     });
 
     if (!response.ok) {

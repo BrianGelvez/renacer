@@ -1,9 +1,10 @@
 'use client';
 
+import { Suspense } from 'react';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
-export default function DashboardRouteLayout({
+function DashboardRouteLayoutInner({
   children,
 }: {
   children: React.ReactNode;
@@ -32,5 +33,17 @@ export default function DashboardRouteLayout({
     >
       {children}
     </DashboardLayout>
+  );
+}
+
+export default function DashboardRouteLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <Suspense>
+      <DashboardRouteLayoutInner>{children}</DashboardRouteLayoutInner>
+    </Suspense>
   );
 }

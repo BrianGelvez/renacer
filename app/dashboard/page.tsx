@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
@@ -15,7 +15,7 @@ import PatientsSection from '@/components/dashboard/PatientsSection';
 import { motion } from 'framer-motion';
 import { Settings, Construction } from 'lucide-react';
 
-export default function DashboardPage() {
+function DashboardPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -198,5 +198,13 @@ export default function DashboardPage() {
     >
       {renderContent()}
     </motion.div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense>
+      <DashboardPageInner />
+    </Suspense>
   );
 }

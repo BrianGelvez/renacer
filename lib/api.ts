@@ -153,6 +153,67 @@ class ApiClient {
   }
 
   /**
+   * Actualizar información de la clínica actual (OWNER/ADMIN)
+   */
+  async updateClinic(data: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    province?: string;
+    isActive?: boolean;
+  }) {
+    const response = await this.client.patch('/clinics/current', data);
+    return response.data;
+  }
+
+  /**
+   * Crear horario de atención de la clínica (clinic availability)
+   */
+  async createClinicAvailability(data: {
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+    isActive?: boolean;
+  }) {
+    const response = await this.client.post(
+      '/clinics/current/availability',
+      data,
+    );
+    return response.data;
+  }
+
+  /**
+   * Actualizar horario de atención de la clínica
+   */
+  async updateClinicAvailability(
+    id: string,
+    data: {
+      dayOfWeek?: number;
+      startTime?: string;
+      endTime?: string;
+      isActive?: boolean;
+    },
+  ) {
+    const response = await this.client.patch(
+      `/clinics/current/availability/${id}`,
+      data,
+    );
+    return response.data;
+  }
+
+  /**
+   * Eliminar horario de atención de la clínica
+   */
+  async deleteClinicAvailability(id: string) {
+    const response = await this.client.delete(
+      `/clinics/current/availability/${id}`,
+    );
+    return response.data;
+  }
+
+  /**
    * Obtener miembros de la clínica (OWNER, ADMIN, STAFF) con datos del usuario
    */
   async getClinicMembers() {
