@@ -145,6 +145,14 @@ class ApiClient {
   }
 
   /**
+   * Obtener los horarios de atención de la clínica actual
+   */
+  async getClinicAvailability() {
+    const response = await this.client.get('/clinics/current/availability');
+    return response.data;
+  }
+
+  /**
    * Obtener miembros de la clínica (OWNER, ADMIN, STAFF) con datos del usuario
    */
   async getClinicMembers() {
