@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { MapPin, Phone, Mail } from 'lucide-react';
 
 interface ClinicData {
@@ -138,12 +139,29 @@ export default function Footer({ clinic }: FooterProps) {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-12 pt-8 text-center">
+        <div className="border-t border-gray-800 mt-12 pt-8 text-center space-y-3">
           <p className="text-gray-400 text-sm">
             © {new Date().getFullYear()} ENSIGNA - Centro Médico. Todos los
             derechos reservados.
           </p>
-          <p className="text-gray-500 text-xs mt-2">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs">
+            <Link
+              href="/privacidad"
+              className="text-gray-500 hover:text-white transition-colors"
+            >
+              Política de privacidad
+            </Link>
+            <span className="text-gray-600 hidden sm:inline" aria-hidden>
+              ·
+            </span>
+            <Link
+              href="/condiciones"
+              className="text-gray-500 hover:text-white transition-colors"
+            >
+              Condiciones del servicio
+            </Link>
+          </div>
+          <p className="text-gray-500 text-xs">
             Tecnología al servicio de la salud
           </p>
         </div>
