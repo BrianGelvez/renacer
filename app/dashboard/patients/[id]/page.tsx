@@ -32,7 +32,9 @@ import PatientInsurancesSection from "@/components/dashboard/PatientInsurancesSe
 
 const STATUS_LABELS: Record<string, string> = {
   SCHEDULED: "Programado",
+  PENDING_CONFIRMATION: "Pendiente de confirmación",
   CONFIRMED: "Confirmado",
+  RESCHEDULE_REQUESTED: "Reprogramar",
   COMPLETED: "Completado",
   CANCELED: "Cancelado",
   NO_SHOW: "No se presentó",
@@ -480,7 +482,9 @@ export default function PatientDetailPage() {
                             inline-flex px-2.5 py-1 rounded-lg text-xs font-medium
                             ${apt.status === "CANCELED" ? "bg-gray-200 text-gray-600" : ""}
                             ${apt.status === "SCHEDULED" ? "bg-amber-100 text-amber-800" : ""}
+                            ${apt.status === "PENDING_CONFIRMATION" ? "bg-violet-100 text-violet-900" : ""}
                             ${apt.status === "CONFIRMED" ? "bg-emerald-100 text-emerald-800" : ""}
+                            ${apt.status === "RESCHEDULE_REQUESTED" ? "bg-sky-100 text-sky-900" : ""}
                             ${apt.status === "COMPLETED" ? "bg-blue-100 text-blue-800" : ""}
                             ${apt.status === "NO_SHOW" ? "bg-red-100 text-red-800" : ""}
                           `}

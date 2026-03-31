@@ -109,6 +109,10 @@ function upcomingStatusStyle(status: string): {
 } {
   if (status === 'CONFIRMED')
     return { dot: 'bg-emerald-500', ring: 'ring-emerald-200' };
+  if (status === 'PENDING_CONFIRMATION')
+    return { dot: 'bg-violet-500', ring: 'ring-violet-200' };
+  if (status === 'RESCHEDULE_REQUESTED')
+    return { dot: 'bg-sky-500', ring: 'ring-sky-200' };
   if (status === 'NO_SHOW')
     return { dot: 'bg-red-500', ring: 'ring-red-200' };
   return { dot: 'bg-amber-500', ring: 'ring-amber-200' };

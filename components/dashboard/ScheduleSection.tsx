@@ -89,7 +89,9 @@ function isToday(dateStr: string): boolean {
 function appointmentStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     SCHEDULED: 'Programado',
+    PENDING_CONFIRMATION: 'Pend. confirmación',
     CONFIRMED: 'Confirmado',
+    RESCHEDULE_REQUESTED: 'Reprogramar',
     COMPLETED: 'Realizado',
     CANCELED: 'Cancelado',
     NO_SHOW: 'No se presentó',
@@ -101,7 +103,17 @@ function appointmentStatusLabel(status: string): string {
 function appointmentStatusColors(status: string): { bg: string; border: string; text: string } {
   const map: Record<string, { bg: string; border: string; text: string }> = {
     SCHEDULED: { bg: 'bg-amber-500', border: 'border-amber-600/50', text: 'text-white' },
+    PENDING_CONFIRMATION: {
+      bg: 'bg-violet-500',
+      border: 'border-violet-600/50',
+      text: 'text-white',
+    },
     CONFIRMED: { bg: 'bg-emerald-500', border: 'border-emerald-600/50', text: 'text-white' },
+    RESCHEDULE_REQUESTED: {
+      bg: 'bg-sky-500',
+      border: 'border-sky-600/50',
+      text: 'text-white',
+    },
     COMPLETED: { bg: 'bg-blue-500', border: 'border-blue-600/50', text: 'text-white' },
     CANCELED: { bg: 'bg-gray-400', border: 'border-gray-500/50', text: 'text-white' },
     NO_SHOW: { bg: 'bg-red-500', border: 'border-red-600/50', text: 'text-white' },
@@ -113,7 +125,19 @@ function appointmentStatusColors(status: string): { bg: string; border: string; 
 function appointmentStatusListColors(status: string): { bg: string; border: string; badge: string; text: string } {
   const map: Record<string, { bg: string; border: string; badge: string; text: string }> = {
     SCHEDULED: { bg: 'bg-amber-50', border: 'border-amber-300', badge: 'bg-amber-200/80 text-amber-800', text: 'text-amber-900' },
+    PENDING_CONFIRMATION: {
+      bg: 'bg-violet-50',
+      border: 'border-violet-300',
+      badge: 'bg-violet-200/80 text-violet-900',
+      text: 'text-violet-900',
+    },
     CONFIRMED: { bg: 'bg-emerald-50', border: 'border-emerald-300', badge: 'bg-emerald-200/80 text-emerald-800', text: 'text-emerald-900' },
+    RESCHEDULE_REQUESTED: {
+      bg: 'bg-sky-50',
+      border: 'border-sky-300',
+      badge: 'bg-sky-200/80 text-sky-900',
+      text: 'text-sky-900',
+    },
     COMPLETED: { bg: 'bg-blue-50', border: 'border-blue-300', badge: 'bg-blue-200/80 text-blue-800', text: 'text-blue-900' },
     CANCELED: { bg: 'bg-gray-100', border: 'border-gray-300', badge: 'bg-gray-200 text-gray-600', text: 'text-gray-700' },
     NO_SHOW: { bg: 'bg-red-50', border: 'border-red-300', badge: 'bg-red-200/80 text-red-800', text: 'text-red-900' },

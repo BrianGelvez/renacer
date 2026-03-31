@@ -54,7 +54,9 @@ export interface AppointmentDetail {
 
 const STATUS_LABELS: Record<string, string> = {
   SCHEDULED: 'Programado',
+  PENDING_CONFIRMATION: 'Pendiente de confirmación',
   CONFIRMED: 'Confirmado',
+  RESCHEDULE_REQUESTED: 'Reprogramar',
   COMPLETED: 'Realizado',
   CANCELED: 'Cancelado',
   NO_SHOW: 'No se presentó',
@@ -62,7 +64,11 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, string> = {
   SCHEDULED: 'bg-amber-100 text-amber-800 border-amber-200',
+  PENDING_CONFIRMATION:
+    'bg-violet-100 text-violet-900 border-violet-200',
   CONFIRMED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  RESCHEDULE_REQUESTED:
+    'bg-sky-100 text-sky-900 border-sky-200',
   COMPLETED: 'bg-blue-100 text-blue-800 border-blue-200',
   CANCELED: 'bg-gray-100 text-gray-600 border-gray-200',
   NO_SHOW: 'bg-red-100 text-red-800 border-red-200',
@@ -321,9 +327,18 @@ export default function AppointmentDetailModal({
   const canTransition =
     canEdit &&
     detail &&
-    ['SCHEDULED', 'CONFIRMED'].includes(detail.status);
+    [
+      'SCHEDULED',
+      'PENDING_CONFIRMATION',
+      'RESCHEDULE_REQUESTED',
+      'CONFIRMED',
+    ].includes(detail.status);
 
   const actionsScheduled = canEdit && detail?.status === 'SCHEDULED';
+  const actionsPendingConfirmation =
+    canEdit && detail?.status === 'PENDING_CONFIRMATION';
+  const actionsRescheduleRequested =
+    canEdit && detail?.status === 'RESCHEDULE_REQUESTED';
   const actionsConfirmed = canEdit && detail?.status === 'CONFIRMED';
 
   return (
@@ -581,7 +596,11 @@ export default function AppointmentDetailModal({
                           </p>
                           <p className="text-xs text-gray-500">
                             {actionsScheduled &&
-                              'Confirmá la visita o cancelá si ya no aplica.'}
+                              'Enviá la solicitud de confirmación por WhatsApp o cancelá si ya no aplica.'}
+                            {actionsPendingConfirmation &&
+                              'El paciente debe confirmar, cancelar o pedir reprogramar desde WhatsApp. Podés cancelar acá si corresponde.'}
+                            {actionsRescheduleRequested &&
+                              'El paciente pidió reprogramar. Cancelá el turno si ya no aplica o gestioná el nuevo horario con la agenda.'}
                             {actionsConfirmed &&
                               'Registrá el resultado cuando el paciente pase por consulta.'}
                           </p>
@@ -594,11 +613,16 @@ export default function AppointmentDetailModal({
                             <TurnActionButton
                               visual="success"
                               icon={<CheckCircle className="h-5 w-5" />}
-                              title="Confirmar turno"
-                              description="El paciente avisó o vas a recibirlo en la fecha acordada."
-                              loading={actionLoading === 'CONFIRMED'}
-                              disabled={!!actionLoading && actionLoading !== 'CONFIRMED'}
-                              onClick={() => handleStatusChange('CONFIRMED')}
+                              title="Solicitar confirmación (WhatsApp)"
+                              description="Se envía la plantilla al paciente; el turno queda pendiente hasta que responda."
+                              loading={actionLoading === 'PENDING_CONFIRMATION'}
+                              disabled={
+                                !!actionLoading &&
+                                actionLoading !== 'PENDING_CONFIRMATION'
+                              }
+                              onClick={() =>
+                                handleStatusChange('PENDING_CONFIRMATION')
+                              }
                             />
                             <div className="relative flex items-center gap-3 py-0.5">
                               <div className="h-px flex-1 bg-gray-200" />
@@ -607,6 +631,22 @@ export default function AppointmentDetailModal({
                               </span>
                               <div className="h-px flex-1 bg-gray-200" />
                             </div>
+                            <TurnActionButton
+                              visual="outline"
+                              icon={<Ban className="h-5 w-5" />}
+                              title="Cancelar turno"
+                              description="Liberá el horario si la visita no se realizará."
+                              loading={false}
+                              disabled={!!actionLoading}
+                              onClick={() => setShowCancelConfirm(true)}
+                              aria-label="Cancelar turno"
+                            />
+                          </>
+                        )}
+
+                        {(actionsPendingConfirmation ||
+                          actionsRescheduleRequested) && (
+                          <>
                             <TurnActionButton
                               visual="outline"
                               icon={<Ban className="h-5 w-5" />}
