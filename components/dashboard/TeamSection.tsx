@@ -50,7 +50,7 @@ interface Professional {
 function RoleBadge({ role }: { role: string }) {
   if (role === 'OWNER') {
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-sm">
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-lg gradient-red text-white shadow-sm">
         <Crown className="w-3 h-3" />
         Propietario
       </span>
@@ -143,7 +143,7 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
           </div>
         </div>
         <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-ensigna-primary" />
         </div>
       </div>
     );
@@ -259,7 +259,7 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
                   <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg ${
                       m.role === 'OWNER' 
-                        ? 'bg-gradient-to-br from-red-500 to-rose-600' 
+                        ? 'gradient-red' 
                         : 'bg-gradient-to-br from-amber-500 to-orange-600'
                     }`}>
                       {m.user.name[0]}

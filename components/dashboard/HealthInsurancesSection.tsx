@@ -338,7 +338,7 @@ function DeleteConfirmModal({
             type="button"
             onClick={handleConfirm}
             disabled={loading}
-            className="px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-50 inline-flex gap-2"
+            className="px-4 py-2.5 rounded-xl gradient-red text-white font-medium hover:brightness-105 disabled:opacity-50 inline-flex gap-2 shadow-md shadow-ensigna-primary/20"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
             Desactivar

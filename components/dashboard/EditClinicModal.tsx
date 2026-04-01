@@ -291,7 +291,7 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
                   type="button"
                   onClick={openNewAvailability}
                   disabled={loading || availabilityFormOpen}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-ensigna-primary hover:bg-ensigna-accent rounded-lg transition-colors disabled:opacity-50"
                 >
                   <Plus className="w-4 h-4" />
                   Agregar horario
@@ -299,7 +299,7 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
               </div>
 
               {availabilityFormOpen && (
-                <div className="mb-4 p-4 rounded-xl border-2 border-red-100 bg-red-50/50 space-y-4">
+                <div className="mb-4 p-4 rounded-xl border-2 border-[rgba(209,106,138,0.2)] bg-ensigna-accent-soft/80 space-y-4">
                   <h5 className="font-medium text-gray-900">
                     {editingAvailabilityId ? 'Editar horario' : 'Nuevo horario'}
                   </h5>
@@ -316,7 +316,7 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
                           disabled={availSubmitting}
                           className={`min-w-[2.75rem] px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                             availDayOfWeek === idx
-                              ? 'bg-red-600 text-white'
+                              ? 'gradient-red text-white'
                               : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
                           }`}
                         >
@@ -367,7 +367,7 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
                       type="button"
                       onClick={handleSaveAvailability}
                       disabled={availSubmitting}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:opacity-60"
+                      className="inline-flex items-center gap-2 px-4 py-2 gradient-red text-white rounded-lg font-medium hover:brightness-105 disabled:opacity-60"
                     >
                       {availSubmitting ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -436,7 +436,7 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
               type="submit"
               form="edit-clinic-form"
               disabled={loading}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-semibold hover:from-red-700 hover:to-rose-700 disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-5 py-2.5 gradient-red text-white rounded-xl font-semibold hover:brightness-105 disabled:opacity-60 shadow-md shadow-ensigna-primary/20"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
               Guardar información

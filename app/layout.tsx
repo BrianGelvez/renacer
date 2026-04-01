@@ -7,7 +7,7 @@ import ConditionalChatbot from '@/components/ConditionalChatbot'; // Importa el 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'ENSIGNA - Centro Médico | Tecnología y Excelencia en Salud',
+  title: 'Renacer - Centro Médico | Tecnología y Excelencia en Salud',
   description:
     'Centro médico de vanguardia que combina excelencia profesional con tecnología avanzada para brindarte la mejor atención médica.',
 };

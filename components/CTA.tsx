@@ -17,7 +17,7 @@ export default function CTA({ clinic }: CTAProps) {
   const hasPhone = phone.length > 0;
 
   return (
-    <section className="py-24 bg-gradient-to-br from-[#E53935] via-[#bf201d] to-[#C62828] relative overflow-hidden w-full shadow-ensigna">
+    <section className="py-24 bg-gradient-to-br from-[#D16A8A] via-[#d16a8a] to-[#E89AB0] relative overflow-hidden w-full shadow-ensigna">
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-white rounded-full blur-3xl"></div>
@@ -34,7 +34,7 @@ export default function CTA({ clinic }: CTAProps) {
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
             Te esperamos
           </h2>
-          <p className="text-xl sm:text-2xl text-red-50 mb-12 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl sm:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed">
             Visitanos, contactanos por teléfono o escribinos. Estamos para
             cuidarte.
           </p>
@@ -48,7 +48,7 @@ export default function CTA({ clinic }: CTAProps) {
           >
             <Link
               href="#ubicacion"
-              className="group px-10 py-5 bg-white text-red-600 rounded-xl hover:bg-gray-50 transition-all font-semibold text-lg shadow-2xl hover:shadow-3xl transform hover:scale-105 flex items-center justify-center space-x-2"
+              className="group px-10 py-5 bg-white text-ensigna-primary rounded-xl hover:bg-gray-50 transition-all font-semibold text-lg shadow-2xl hover:shadow-3xl transform hover:scale-105 flex items-center justify-center space-x-2"
             >
               <MapPin className="w-5 h-5" />
               <span>Ver ubicación</span>

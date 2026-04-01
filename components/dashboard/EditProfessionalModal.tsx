@@ -215,7 +215,7 @@ export default function EditProfessionalModal({
                 type="button"
                 onClick={handleDeactivate}
                 disabled={loading || deactivating}
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-ensigna-primary hover:bg-ensigna-accent rounded-xl disabled:opacity-50"
               >
                 {deactivating ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserMinus className="w-4 h-4" />}
                 Desactivar profesional
@@ -234,7 +234,7 @@ export default function EditProfessionalModal({
                 type="submit"
                 form="edit-professional-form"
                 disabled={loading}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-semibold hover:from-red-700 hover:to-rose-700 disabled:opacity-60"
+                className="inline-flex items-center gap-2 px-5 py-2.5 gradient-red text-white rounded-xl font-semibold hover:brightness-105 disabled:opacity-60 shadow-md shadow-ensigna-primary/20"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                 Guardar

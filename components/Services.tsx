@@ -9,7 +9,7 @@ const services = [
     title: 'Clínica Médica',
     description:
       'Atención médica general con profesionales altamente capacitados y tecnología de última generación.',
-    color: 'bg-red-100 text-red-600',
+    color: 'bg-ensigna-accent-soft text-ensigna-primary',
   },
   {
     icon: Heart,
@@ -36,10 +36,10 @@ const services = [
 
 export default function Services() {
   return (
-    <section id="servicios" className="py-24 bg-gradient-to-b from-red-50/30 to-[var(--ensigna-background)] relative overflow-hidden w-full">
+    <section id="servicios" className="py-24 bg-gradient-to-b from-ensigna-soft/25 to-[var(--ensigna-background)] relative overflow-hidden w-full">
       {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-red-50/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-red-50/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-96 h-96 bg-ensigna-soft/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-ensigna-primary/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -72,7 +72,7 @@ export default function Services() {
                 className="group ensigna-glass rounded-[var(--ensigna-radius-lg)] p-8 transition-all duration-200 hover:shadow-ensigna-hover relative overflow-hidden"
               >
                 {/* Hover effect background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-red-50/0 to-red-50/0 group-hover:from-red-50/50 group-hover:to-transparent transition-all duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-ensigna-soft/0 to-ensigna-soft/0 group-hover:from-ensigna-soft/40 group-hover:to-transparent transition-all duration-300"></div>
                 
                 <div className="relative z-10">
                   <div

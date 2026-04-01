@@ -21,15 +21,15 @@ export default function Footer({ clinic }: FooterProps) {
     <footer className="bg-gray-900 text-gray-300 relative overflow-hidden w-full">
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-red-600 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-red-500 rounded-full blur-3xl"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-ensigna-primary rounded-full blur-3xl opacity-40"></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-ensigna-primary-light rounded-full blur-3xl opacity-35"></div>
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
           {/* Brand */}
           <div>
-            <h3 className="text-3xl font-bold text-white mb-6">ENSIGNA</h3>
+            <h3 className="text-3xl font-bold text-white mb-6">Renacer</h3>
             <p className="text-gray-400 leading-relaxed text-base">
               Centro Médico comprometido con tu salud y bienestar, utilizando
               tecnología de vanguardia para brindarte la mejor atención médica.
@@ -48,7 +48,7 @@ export default function Footer({ clinic }: FooterProps) {
                 )}
                 {(clinic.address || clinic.city || clinic.province) && (
                   <div className="flex items-start space-x-3">
-                    <MapPin className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                    <MapPin className="w-5 h-5 text-ensigna-primary-light mt-0.5 flex-shrink-0" />
                     <p className="text-gray-400">
                       {[clinic.address, clinic.city, clinic.province].filter(Boolean).join(', ')}
                     </p>
@@ -56,7 +56,7 @@ export default function Footer({ clinic }: FooterProps) {
                 )}
                 {clinic.phone && (
                   <div className="flex items-center space-x-3">
-                    <Phone className="w-5 h-5 text-red-500 flex-shrink-0" />
+                    <Phone className="w-5 h-5 text-ensigna-primary-light flex-shrink-0" />
                     <a
                       href={`tel:${clinic.phone}`}
                       className="text-gray-400 hover:text-white transition-colors"
@@ -67,7 +67,7 @@ export default function Footer({ clinic }: FooterProps) {
                 )}
                 {clinic.email && (
                   <div className="flex items-center space-x-3">
-                    <Mail className="w-5 h-5 text-red-500 flex-shrink-0" />
+                    <Mail className="w-5 h-5 text-ensigna-primary-light flex-shrink-0" />
                     <a
                       href={`mailto:${clinic.email}`}
                       className="text-gray-400 hover:text-white transition-colors"

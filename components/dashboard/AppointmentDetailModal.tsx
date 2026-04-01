@@ -65,7 +65,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_STYLES: Record<string, string> = {
   SCHEDULED: 'bg-amber-100 text-amber-800 border-amber-200',
   PENDING_CONFIRMATION:
-    'bg-violet-100 text-violet-900 border-violet-200',
+    'bg-[rgba(209,106,138,0.1)] text-[#D16A8A] border-[rgba(209,106,138,0.25)]',
   CONFIRMED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   RESCHEDULE_REQUESTED:
     'bg-sky-100 text-sky-900 border-sky-200',
@@ -163,7 +163,7 @@ function TurnActionButton({
     success:
       'bg-gradient-to-br from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-600/25 hover:from-emerald-500 hover:to-emerald-600 active:scale-[0.99]',
     primary:
-      'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-md shadow-blue-600/20 hover:from-blue-500 hover:to-blue-600 active:scale-[0.99]',
+      'bg-gradient-to-br from-[#D16A8A] to-[#E89AB0] text-white shadow-md shadow-[rgba(209,106,138,0.25)] hover:brightness-105 active:scale-[0.99]',
     danger:
       'bg-gradient-to-br from-red-600 to-red-700 text-white shadow-md shadow-red-600/20 hover:from-red-500 hover:to-red-600 active:scale-[0.99]',
     neutral:

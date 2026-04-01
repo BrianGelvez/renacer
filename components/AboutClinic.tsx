@@ -112,10 +112,10 @@ export default function AboutClinic({ clinic }: AboutClinicProps) {
             className="relative order-2 lg:order-1"
           >
             <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-gray-50">
+              <div className="absolute inset-0 bg-gradient-to-br from-ensigna-soft/40 via-white to-gray-50">
                 <div className="absolute inset-0 flex items-center justify-center p-8">
                   <div className="text-center">
-                    <Building2 className="w-24 h-24 text-red-200 mx-auto mb-4" />
+                    <Building2 className="w-24 h-24 text-ensigna-primary-light mx-auto mb-4" />
                     <p className="text-gray-400 text-sm font-medium">
                       {/* TODO: Reemplazar con imagen real del consultorio */}
                       Imagen: Instalaciones del centro médico
@@ -124,7 +124,7 @@ export default function AboutClinic({ clinic }: AboutClinicProps) {
                 </div>
               </div>
             </div>
-            <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-red-100/40 rounded-full blur-2xl -z-10"></div>
+            <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-ensigna-soft/50 rounded-full blur-2xl -z-10"></div>
           </motion.div>
 
           {/* Información */}
@@ -148,8 +148,8 @@ export default function AboutClinic({ clinic }: AboutClinicProps) {
                       transition={{ duration: 0.5, delay: index * 0.1 }}
                       className="flex items-start space-x-4 group"
                     >
-                      <div className="flex-shrink-0 w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-200 transition-colors">
-                        <Icon className="w-7 h-7 text-red-600" />
+                      <div className="flex-shrink-0 w-14 h-14 bg-ensigna-accent-soft rounded-xl flex items-center justify-center group-hover:bg-ensigna-accent transition-colors">
+                        <Icon className="w-7 h-7 text-ensigna-primary" />
                       </div>
                       <div className="flex-1">
                         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">

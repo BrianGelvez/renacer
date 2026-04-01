@@ -98,7 +98,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         onClick={() => setIsOpen(true)}
-        className="w-full sm:w-auto inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-semibold hover:from-red-700 hover:to-rose-700 transition-all shadow-lg shadow-red-500/20 hover:shadow-xl hover:shadow-red-500/30"
+        className="w-full sm:w-auto inline-flex items-center gap-2 px-6 py-3 gradient-red text-white rounded-xl font-semibold hover:brightness-105 transition-all shadow-lg shadow-ensigna-primary/25 hover:shadow-xl"
       >
         <UserPlus className="w-5 h-5" />
         Agregar profesional
@@ -115,10 +115,10 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
               className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
             >
               {/* Header del modal */}
-              <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-red-50 to-rose-50">
+              <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-ensigna-soft/40 to-ensigna-accent-soft">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl gradient-red flex items-center justify-center">
                       <UserPlus className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -220,7 +220,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="pro-firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                        Nombre <span className="text-red-500">*</span>
+                        Nombre <span className="text-ensigna-primary">*</span>
                       </label>
                       <div className="relative">
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -230,7 +230,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
                           placeholder="Juan"
-                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all"
+                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
                           required
                           disabled={loading}
                         />
@@ -238,7 +238,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                     </div>
                     <div>
                       <label htmlFor="pro-lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                        Apellido <span className="text-red-500">*</span>
+                        Apellido <span className="text-ensigna-primary">*</span>
                       </label>
                       <div className="relative">
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -248,7 +248,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
                           placeholder="Pérez"
-                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all"
+                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
                           required
                           disabled={loading}
                         />
@@ -268,7 +268,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                         value={specialty}
                         onChange={(e) => setSpecialty(e.target.value)}
                         placeholder="Cardiología, Pediatría, Dermatología..."
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
                         disabled={loading}
                       />
                     </div>
@@ -289,7 +289,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                           value={licenseNumber}
                           onChange={(e) => setLicenseNumber(e.target.value)}
                           placeholder="MN 12345"
-                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all"
+                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
                           disabled={loading}
                         />
                       </div>
@@ -306,7 +306,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="+54 11 1234-5678"
-                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 text-gray-900 placeholder-gray-400 transition-all"
+                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
                           disabled={loading}
                         />
                       </div>
@@ -320,7 +320,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                       checked={managedByClinic}
                       onChange={(e) => setManagedByClinic(e.target.checked)}
                       disabled={loading}
-                      className="mt-1 w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                      className="mt-1 w-4 h-4 rounded border-gray-300 text-ensigna-primary focus:ring-ensigna-primary"
                     />
                     <label htmlFor="pro-managedByClinic" className="text-sm font-medium text-gray-700 cursor-pointer">
                       Gestionado por la clínica (no tendrá cuenta de usuario). La clínica configurará su horario y disponibilidad.
@@ -357,7 +357,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                       type="submit"
                       form="create-professional-form"
                       disabled={loading}
-                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-xl font-semibold hover:from-red-700 hover:to-rose-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-lg shadow-red-500/20"
+                      className="inline-flex items-center gap-2 px-6 py-2.5 gradient-red text-white rounded-xl font-semibold hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-lg shadow-ensigna-primary/25"
                     >
                       {loading ? (
                         <>

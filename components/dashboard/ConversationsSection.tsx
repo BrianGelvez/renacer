@@ -216,7 +216,7 @@ export default function ConversationsSection() {
   if (authLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
+        <div className="w-12 h-12 rounded-2xl gradient-red flex items-center justify-center">
           <Loader2 className="w-6 h-6 text-white animate-spin" />
         </div>
         <p className="text-gray-500 font-medium">Cargando…</p>
@@ -332,7 +332,7 @@ export default function ConversationsSection() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por teléfono, sesión o DNI…"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400 transition-shadow"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary transition-shadow"
               />
             </div>
           </div>
@@ -380,7 +380,7 @@ export default function ConversationsSection() {
                           onClick={() => selectConversation(c.id)}
                           className={`w-full text-left rounded-xl px-3 py-3 transition-all border ${
                             active
-                              ? "bg-red-50/90 border-red-200/80 shadow-sm"
+                              ? "bg-ensigna-accent-soft/90 border-[rgba(209,106,138,0.2)] shadow-sm"
                               : "border-transparent hover:bg-gray-50 hover:border-gray-100"
                           }`}
                         >
@@ -468,7 +468,7 @@ export default function ConversationsSection() {
               >
                 {detailLoading && (
                   <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 text-red-500 animate-spin" />
+                    <Loader2 className="w-8 h-8 text-ensigna-primary animate-spin" />
                   </div>
                 )}
                 {detailError && (
@@ -503,7 +503,7 @@ export default function ConversationsSection() {
                           className={`max-w-[min(100%,520px)] rounded-2xl px-4 py-3 shadow-sm ${
                             inbound
                               ? "bg-white border border-gray-200/90 text-gray-800 rounded-tl-md"
-                              : "bg-gradient-to-br from-red-600 to-rose-600 text-white rounded-tr-md shadow-red-500/15"
+                              : "gradient-red text-white rounded-tr-md shadow-ensigna-primary/20"
                           }`}
                         >
                           <div
@@ -576,7 +576,7 @@ export default function ConversationsSection() {
                       value={draft}
                       onChange={(e) => setDraft(e.target.value)}
                       placeholder="Escribir mensaje…"
-                      className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-400"
+                      className="w-full px-4 py-3 rounded-2xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary"
                       disabled={detail?.channel !== "whatsapp" || sending === "sending"}
                     />
                     {detail?.channel !== "whatsapp" && (
@@ -592,7 +592,7 @@ export default function ConversationsSection() {
                   </div>
                   <button
                     type="submit"
-                    className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-red-600 text-white font-semibold text-sm hover:bg-red-700 disabled:opacity-50"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl gradient-red text-white font-semibold text-sm hover:brightness-105 disabled:opacity-50"
                     disabled={
                       !draft.trim() ||
                       sending === "sending" ||

@@ -123,7 +123,7 @@ export function NotificationDropdown({
             <button
               type="button"
               onClick={handleMarkAllAsRead}
-              className="text-xs font-medium text-red-600 hover:text-red-700 flex items-center gap-1"
+              className="text-xs font-medium text-ensigna-primary hover:text-ensigna-primary-dark flex items-center gap-1"
             >
               <CheckCheck className="w-3.5 h-3.5" />
               Marcar todas como leídas
@@ -133,7 +133,7 @@ export function NotificationDropdown({
         <div className="max-h-[min(70vh,400px)] overflow-y-auto bg-white/50">
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 text-red-200 animate-spin" />
+              <Loader2 className="w-8 h-8 text-ensigna-primary-light animate-spin" />
             </div>
           ) : notifications.length === 0 ? (
             <p className="text-center text-[var(--ensigna-text-secondary)] py-8 px-4">
@@ -146,13 +146,13 @@ export function NotificationDropdown({
                   <button
                     type="button"
                     onClick={() => handleItemClick(n)}
-                    className={`w-full text-left px-4 py-3 transition-all duration-200 hover:bg-red-50/70 ${
-                      !n.readAt ? 'bg-red-50/40' : ''
+                    className={`w-full text-left px-4 py-3 transition-all duration-200 hover:bg-ensigna-accent/70 ${
+                      !n.readAt ? 'bg-ensigna-accent-soft/80' : ''
                     }`}
                   >
                     <div className="flex gap-3">
                       {!n.readAt && (
-                        <span className="flex-shrink-0 w-2 h-2 mt-1.5 rounded-full bg-red-500" />
+                        <span className="flex-shrink-0 w-2 h-2 mt-1.5 rounded-full bg-ensigna-primary" />
                       )}
                       <div className={`flex-1 min-w-0 ${!n.readAt ? '' : 'pl-5'}`}>
                         <p className="font-medium text-[var(--ensigna-text)] text-sm">{n.title}</p>

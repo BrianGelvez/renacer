@@ -19,24 +19,24 @@ export default function AuthLayout({
   return (
     <div className="min-h-screen ensigna-page-bg py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-red-500/10 blur-3xl" />
-        <div className="absolute bottom-0 -left-16 h-64 w-64 rounded-full bg-[#bf201d]/8 blur-3xl" />
+        <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-ensigna-primary/15 blur-3xl" />
+        <div className="absolute bottom-0 -left-16 h-64 w-64 rounded-full bg-ensigna-soft/40 blur-3xl" />
       </div>
       <div className="relative max-w-md w-full mx-auto">
         <div className="flex flex-col items-center mb-8">
-          <Link href="/" className="flex items-center gap-3 mb-6">
-            <div className="relative w-12 h-12 sm:w-14 sm:h-14">
+          <Link href="/" className="flex items-center gap-3 mb-6 min-h-10">
+            <div className="relative h-10 w-10 sm:h-36 sm:w-36">
               <Image
-                src="/ensigna.png"
-                alt="ENSIGNA - Centro Médico"
+                src="/logo-renacer.png"
+                alt="Renacer"
                 fill
                 className="object-contain"
                 priority
               />
             </div>
-            <span className="text-xl sm:text-2xl font-bold text-[var(--ensigna-text)]">
-              ENSIGNA
-            </span>
+            {/* <span className="text-xl sm:text-2xl font-bold text-[var(--ensigna-text)]">
+              Renacer
+            </span> */}
           </Link>
           <Link
             href="/"

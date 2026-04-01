@@ -10,7 +10,7 @@ export default function Hero() {
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center ensigna-page-bg pt-36 md:pt-24 pb-16 overflow-hidden w-full">
       {/* Background gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 via-[var(--ensigna-background)] to-rose-50/30" />
+      <div className="absolute inset-0 bg-gradient-to-br from-ensigna-soft/35 via-[var(--ensigna-background)] to-ensigna-primary/10" />
 
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -24,7 +24,7 @@ export default function Hero() {
             repeat: Infinity,
             ease: 'easeInOut',
           }}
-          className="absolute top-1/4 right-1/4 w-96 h-96 bg-red-200/20 rounded-full blur-3xl"
+          className="absolute top-1/4 right-1/4 w-96 h-96 bg-ensigna-soft/30 rounded-full blur-3xl"
         />
         <motion.div
           animate={{
@@ -36,7 +36,7 @@ export default function Hero() {
             repeat: Infinity,
             ease: 'easeInOut',
           }}
-          className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-red-300/15 rounded-full blur-3xl"
+          className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-ensigna-primary-light/20 rounded-full blur-3xl"
         />
       </div>
 
@@ -47,10 +47,10 @@ export default function Hero() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="inline-flex items-center space-x-2 px-5 py-2.5 bg-red-100 rounded-full mb-8"
+            className="inline-flex items-center space-x-2 px-5 py-2.5 bg-ensigna-accent-soft rounded-full mb-8"
           >
-            <Shield className="w-4 h-4 text-red-600" />
-            <span className="text-sm font-semibold text-red-700">
+            <Shield className="w-4 h-4 text-ensigna-primary" />
+            <span className="text-sm font-semibold text-ensigna-primary-dark">
               Centro Médico Certificado
             </span>
           </motion.div>
@@ -70,7 +70,7 @@ export default function Hero() {
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
                 transition={{ duration: 1, delay: 1.2, ease: 'easeOut' }}
-                className="absolute bottom-3 left-0 right-0 h-4 bg-red-100/60 -z-0"
+                className="absolute bottom-3 left-0 right-0 h-4 bg-ensigna-soft/50 -z-0"
                 style={{ transformOrigin: 'left' }}
               />
             </span>
@@ -83,7 +83,7 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.5 }}
             className="text-lg sm:text-xl md:text-2xl text-[var(--ensigna-text-secondary)] mb-12 max-w-3xl mx-auto leading-relaxed px-4"
           >
-            En <strong className="text-[var(--ensigna-text)]">ENSIGNA</strong> combinamos la
+            En <strong className="text-[var(--ensigna-text)]">Renacer</strong> combinamos la
             experiencia médica con tecnología de vanguardia. Un espacio diseñado
             para tu bienestar, donde cada atención cuenta.
           </motion.p>
@@ -97,21 +97,21 @@ export default function Hero() {
           >
             <Link
               href={`/public/${clinicSlug}/agenda`}
-              className="group btn-ensigna-primary !px-8 !py-4 text-base sm:text-lg min-w-[200px] shadow-ensigna-red"
+              className="group btn-ensigna-primary !px-8 !py-4 text-base sm:text-lg min-w-[200px] shadow-ensigna-primary"
             >
               <Calendar className="w-5 h-5" />
               <span>Reservar turno</span>
             </Link>
             <Link
               href="#sobre-nosotros"
-              className="group btn-ensigna-secondary !px-8 !py-4 text-base sm:text-lg min-w-[200px] !border-2 !border-ensigna-primary !text-ensigna-primary hover:!bg-red-50/80"
+              className="group btn-ensigna-secondary !px-8 !py-4 text-base sm:text-lg min-w-[200px] !border-2 !border-ensigna-primary !text-ensigna-primary hover:!bg-ensigna-accent"
             >
               <Play className="w-5 h-5" />
               <span>Conocer más</span>
             </Link>
             <Link
               href="#ubicacion"
-              className="group btn-ensigna-secondary !px-8 !py-4 text-base sm:text-lg min-w-[200px] !border-2 !border-ensigna-primary !text-ensigna-primary hover:!bg-red-50/80"
+              className="group btn-ensigna-secondary !px-8 !py-4 text-base sm:text-lg min-w-[200px] !border-2 !border-ensigna-primary !text-ensigna-primary hover:!bg-ensigna-accent"
             >
               <MapPin className="w-5 h-5" />
               <span>Dónde estamos</span>
@@ -152,7 +152,7 @@ export default function Hero() {
                   whileHover={{ y: -4 }}
                   className="ensigna-glass rounded-[var(--ensigna-radius-lg)] p-6 transition-all duration-200 hover:shadow-ensigna-hover"
                 >
-                  <div className="w-12 h-12 bg-red-500/15 backdrop-blur-sm rounded-lg flex items-center justify-center mb-4 mx-auto">
+                  <div className="w-12 h-12 bg-ensigna-primary/15 backdrop-blur-sm rounded-lg flex items-center justify-center mb-4 mx-auto">
                     <Icon className="w-6 h-6 text-ensigna-primary" />
                   </div>
                   <h3 className="font-bold text-[var(--ensigna-text)] mb-1 text-sm sm:text-base">

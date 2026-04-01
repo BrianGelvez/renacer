@@ -9,8 +9,8 @@ const approaches = [
     title: 'Atención Humana',
     description:
       'Cada paciente es único. Nos tomamos el tiempo para escucharte, entender tus necesidades y brindarte un trato personalizado que va más allá de la consulta médica.',
-    color: 'from-red-100 to-red-50',
-    iconColor: 'text-red-600',
+    color: 'from-ensigna-soft to-ensigna-accent-soft',
+    iconColor: 'text-ensigna-primary',
   },
   {
     icon: Users,
@@ -40,9 +40,9 @@ const approaches = [
 
 export default function OurApproach() {
   return (
-    <section id="nuestro-enfoque" className="py-24 bg-gradient-to-b from-[var(--ensigna-background)] via-red-50/25 to-[var(--ensigna-background)] relative overflow-hidden w-full">
+    <section id="nuestro-enfoque" className="py-24 bg-gradient-to-b from-[var(--ensigna-background)] via-ensigna-soft/20 to-[var(--ensigna-background)] relative overflow-hidden w-full">
       {/* Background decoration */}
-      <div className="absolute top-1/4 right-0 w-96 h-96 bg-red-50/40 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute top-1/4 right-0 w-96 h-96 bg-ensigna-soft/35 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-blue-50/30 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

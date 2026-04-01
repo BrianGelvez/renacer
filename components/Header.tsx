@@ -31,18 +31,18 @@ export default function Header() {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="relative w-10 h-10 sm:w-12 sm:h-12">
+          <Link href="/" className="flex items-center space-x-3 min-h-10">
+            <div className="relative h-10 w-10 sm:h-12 sm:w-12 flex-shrink-0">
               <Image
-                src="/ensigna.png"
-                alt="ENSIGNA - Centro Médico"
+                src="/logo-renacer.png"
+                alt="Renacer"
                 fill
                 className="object-contain"
                 priority
               />
             </div>
             <span className="text-lg sm:text-xl font-bold text-[var(--ensigna-text)]">
-              ENSIGNA
+              Renacer
             </span>
           </Link>
 

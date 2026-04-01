@@ -43,7 +43,7 @@ function DashboardPageInner() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center animate-pulse">
+          <div className="w-12 h-12 rounded-2xl gradient-red flex items-center justify-center animate-pulse">
             <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
           </div>
           <p className="text-gray-500 font-medium">Cargando dashboard...</p>

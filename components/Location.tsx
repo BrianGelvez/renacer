@@ -44,8 +44,8 @@ export default function Location({ clinic }: LocationProps) {
           >
             <div className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-8 lg:p-10 shadow-xl border border-gray-100">
               <div className="flex items-start space-x-4 mb-6">
-                <div className="flex-shrink-0 w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center">
-                  <MapPin className="w-7 h-7 text-red-600" />
+                <div className="flex-shrink-0 w-14 h-14 bg-ensigna-accent-soft rounded-xl flex items-center justify-center">
+                  <MapPin className="w-7 h-7 text-ensigna-primary" />
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900 mb-2">
@@ -63,15 +63,15 @@ export default function Location({ clinic }: LocationProps) {
                 </h4>
                 <ul className="space-y-3 text-gray-600">
                   <li className="flex items-start space-x-3">
-                    <Navigation className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <Navigation className="w-5 h-5 text-ensigna-primary mt-0.5 flex-shrink-0" />
                     <span>Fácil acceso desde el centro de la ciudad</span>
                   </li>
                   <li className="flex items-start space-x-3">
-                    <Navigation className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <Navigation className="w-5 h-5 text-ensigna-primary mt-0.5 flex-shrink-0" />
                     <span>Estacionamiento disponible</span>
                   </li>
                   <li className="flex items-start space-x-3">
-                    <Navigation className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <Navigation className="w-5 h-5 text-ensigna-primary mt-0.5 flex-shrink-0" />
                     <span>Transporte público cercano</span>
                   </li>
                 </ul>

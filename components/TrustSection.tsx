@@ -12,7 +12,7 @@ const trustPoints = [
 
 export default function TrustSection() {
   return (
-    <section className="py-24 bg-gradient-to-br from-red-600 via-red-700 to-red-600 relative overflow-hidden w-full">
+    <section className="py-24 bg-gradient-to-br from-[#D16A8A] via-[#c75f82] to-[#E89AB0] relative overflow-hidden w-full">
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-10 pointer-events-none">
         <div className="absolute top-20 left-20 w-96 h-96 bg-white rounded-full blur-3xl"></div>
@@ -30,8 +30,8 @@ export default function TrustSection() {
           <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
             Confianza y Cercanía
           </h2>
-          <p className="text-xl sm:text-2xl text-red-50 max-w-3xl mx-auto leading-relaxed">
-            En ENSIGNA, creemos que la mejor medicina combina conocimiento,
+          <p className="text-xl sm:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
+            En Renacer, creemos que la mejor medicina combina conocimiento,
             tecnología y, sobre todo, un trato cercano y empático
           </p>
         </motion.div>
@@ -71,7 +71,7 @@ export default function TrustSection() {
           transition={{ duration: 0.6, delay: 0.6 }}
           className="mt-12 text-center"
         >
-          <p className="text-red-50 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed">
+          <p className="text-white/90 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed">
             Tu salud es nuestra prioridad. Estamos aquí para acompañarte en cada
             paso de tu camino hacia el bienestar.
           </p>

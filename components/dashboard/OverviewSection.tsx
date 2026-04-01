@@ -79,7 +79,7 @@ function upcomingStatusStyle(status: string): {
   if (status === 'CONFIRMED')
     return { dot: 'bg-emerald-500', ring: 'ring-emerald-200' };
   if (status === 'PENDING_CONFIRMATION')
-    return { dot: 'bg-violet-500', ring: 'ring-violet-200' };
+    return { dot: 'bg-[#D16A8A]', ring: 'ring-pink-200' };
   if (status === 'RESCHEDULE_REQUESTED')
     return { dot: 'bg-sky-500', ring: 'ring-sky-200' };
   if (status === 'NO_SHOW')
@@ -239,7 +239,7 @@ export default function OverviewSection() {
             title: 'Pacientes totales',
             value: String(summary.patientsTotal ?? 0),
             icon: <UsersRound className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-rose-500 to-rose-600',
+            color: 'bg-gradient-to-br from-[#D16A8A] to-[#E89AB0]',
             href: '/dashboard/patients',
           },
         ]
@@ -255,7 +255,7 @@ export default function OverviewSection() {
             title: 'Pacientes totales',
             value: String(summary.patientsTotal ?? 0),
             icon: <UsersRound className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-rose-500 to-rose-600',
+            color: 'bg-gradient-to-br from-[#D16A8A] to-[#E89AB0]',
             href: '/dashboard/patients',
           },
           {
@@ -297,11 +297,11 @@ export default function OverviewSection() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-[var(--ensigna-radius-lg)] bg-gradient-to-br from-[#E53935] via-[#bf201d] to-[#C62828] p-6 sm:p-8 text-white shadow-ensigna"
+        className="relative overflow-hidden rounded-[var(--ensigna-radius-lg)] bg-gradient-to-br from-[#D16A8A] via-[#d16a8a] to-[#E89AB0] p-6 sm:p-8 text-white shadow-ensigna"
       >
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/3 blur-2xl" />
-        <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-rose-500/30 rounded-full blur-2xl" />
+        <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-white/20 rounded-full blur-2xl" />
 
         <div className="relative">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -361,7 +361,7 @@ export default function OverviewSection() {
               <div>
                 <p className="text-sm text-white/70">Clínica</p>
                 <p className="font-semibold text-lg">
-                  {clinic?.name || 'ENSIGNA'}
+                  {clinic?.name || 'Renacer'}
                 </p>
               </div>
             </div>
@@ -400,7 +400,7 @@ export default function OverviewSection() {
 
       {loading && !summary ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <Loader2 className="w-10 h-10 animate-spin text-red-600" />
+          <Loader2 className="w-10 h-10 animate-spin text-ensigna-primary" />
           <p className="text-sm text-gray-500">Cargando métricas...</p>
         </div>
       ) : (
@@ -499,7 +499,7 @@ export default function OverviewSection() {
                       go(href);
                     }
                   }}
-                  className="flex items-start gap-3 p-2 -m-2 rounded-lg cursor-pointer hover:bg-red-50/60 transition-all duration-200"
+                  className="flex items-start gap-3 p-2 -m-2 rounded-lg cursor-pointer hover:bg-ensigna-accent/60 transition-all duration-200"
                 >
                   <div className="mt-0.5 shrink-0 w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100">
                     {activityIcon(activity.type)}
@@ -535,7 +535,7 @@ export default function OverviewSection() {
           <button
             type="button"
             onClick={() => router.push('/dashboard/agenda')}
-            className="text-sm font-medium text-red-600 hover:text-red-700"
+            className="text-sm font-medium text-ensigna-primary hover:text-ensigna-primary-dark"
           >
             Ver todos
           </button>

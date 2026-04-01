@@ -16,7 +16,7 @@ const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', '
 const DAYS_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 const DAY_COLORS = [
-  'from-red-500/10 to-red-500/5 border-red-200',
+  'from-ensigna-primary/10 to-ensigna-soft/20 border-[rgba(209,106,138,0.2)]',
   'from-blue-500/10 to-blue-500/5 border-blue-200',
   'from-emerald-500/10 to-emerald-500/5 border-emerald-200',
   'from-purple-500/10 to-purple-500/5 border-purple-200',
@@ -88,7 +88,7 @@ function BlockCard({
                   e.stopPropagation();
                   onDeleteBlock(block.id);
                 }}
-                className="p-2 rounded-lg text-gray-400 active:text-red-600 active:bg-red-50 transition-colors touch-manipulation"
+                className="p-2 rounded-lg text-gray-400 active:text-ensigna-primary active:bg-ensigna-accent transition-colors touch-manipulation"
                 aria-label="Eliminar"
               >
                 <Trash2 className="w-4 h-4" />

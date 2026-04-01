@@ -191,7 +191,7 @@ export default function ChatbotWidget({ clinicSlug }: ChatbotWidgetProps) {
       {/* Botón flotante */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-br from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center group"
+        className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-br from-[#D16A8A] to-[#E89AB0] hover:brightness-105 text-white rounded-full shadow-lg shadow-ensigna-primary/30 hover:shadow-xl transition-all duration-200 flex items-center justify-center group"
         aria-label="Abrir chat"
       >
         {isOpen ? (
@@ -231,14 +231,14 @@ export default function ChatbotWidget({ clinicSlug }: ChatbotWidgetProps) {
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-50 w-96 h-[600px] bg-white rounded-lg shadow-2xl flex flex-col border border-gray-200">
           {/* Header */}
-          <div className="bg-gradient-to-r from-red-600 to-red-700 text-white p-4 rounded-t-lg flex items-center justify-between">
+          <div className="bg-gradient-to-r from-[#D16A8A] to-[#E89AB0] text-white p-4 rounded-t-lg flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-lg">Asistente Virtual</h3>
-              <p className="text-xs text-red-100">Estoy aquí para ayudarte</p>
+              <p className="text-xs text-white/80">Estoy aquí para ayudarte</p>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-white hover:text-red-200 transition-colors"
+              className="text-white hover:text-white/70 transition-colors"
               aria-label="Cerrar chat"
             >
               <svg
@@ -281,7 +281,7 @@ export default function ChatbotWidget({ clinicSlug }: ChatbotWidgetProps) {
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
                     message.role === 'user'
-                      ? 'bg-red-600 text-white'
+                      ? 'gradient-red text-white'
                       : 'bg-white text-gray-800 border border-gray-200'
                   }`}
                 >
@@ -335,12 +335,12 @@ export default function ChatbotWidget({ clinicSlug }: ChatbotWidgetProps) {
                 onKeyPress={handleKeyPress}
                 placeholder="Escribí tu mensaje..."
                 disabled={isLoading || !sessionId}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgba(209,106,138,0.35)] focus:border-ensigna-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
               />
               <button
                 onClick={sendMessage}
                 disabled={!inputValue.trim() || isLoading || !sessionId}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 gradient-red text-white rounded-lg hover:brightness-105 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

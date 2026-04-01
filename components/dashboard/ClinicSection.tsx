@@ -43,7 +43,7 @@ export default function ClinicSection() {
         <button
           type="button"
           onClick={() => setEditModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors shadow-lg shadow-red-500/20"
+          className="inline-flex items-center gap-2 px-4 py-2.5 gradient-red text-white rounded-xl font-medium hover:brightness-105 transition-all shadow-lg shadow-ensigna-primary/25"
         >
           <Edit2 className="w-4 h-4" />
           Editar información
@@ -58,7 +58,7 @@ export default function ClinicSection() {
         className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
       >
         {/* Cover Image */}
-        <div className="relative h-48 bg-gradient-to-br from-red-600 via-red-700 to-rose-800">
+        <div className="relative h-48 bg-gradient-to-br from-[#D16A8A] via-[#c75f82] to-[#E89AB0]">
           <div className="absolute inset-0 bg-black/20" />
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
           <button className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-sm rounded-xl text-white hover:bg-white/30 transition-colors">
@@ -147,7 +147,7 @@ export default function ClinicSection() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Sitio web</p>
-                <p className="text-red-600 hover:text-red-700 cursor-pointer">
+                <p className="text-ensigna-primary hover:text-ensigna-primary-dark cursor-pointer">
                   www.clinica.com
                 </p>
               </div>
@@ -227,7 +227,7 @@ export default function ClinicSection() {
       >
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-lg font-semibold text-gray-900">Documentos</h4>
-          <button className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+          <button className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-ensigna-primary hover:bg-ensigna-accent rounded-lg transition-colors">
             <Upload className="w-4 h-4" />
             Subir documento
           </button>

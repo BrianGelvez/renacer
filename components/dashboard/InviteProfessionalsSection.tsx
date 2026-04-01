@@ -89,7 +89,7 @@ export default function InviteProfessionalsSection() {
   if (loadingList) {
     return (
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 flex items-center gap-3">
+        <div className="bg-gradient-to-r from-[#D16A8A] to-[#E89AB0] px-6 py-4 flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
             <Stethoscope className="w-5 h-5 text-white" />
           </div>
@@ -98,7 +98,7 @@ export default function InviteProfessionalsSection() {
           </h2>
         </div>
         <div className="px-6 py-8 flex justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-white/80" />
         </div>
       </div>
     );
@@ -106,7 +106,7 @@ export default function InviteProfessionalsSection() {
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-      <div className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 flex items-center gap-3">
+      <div className="bg-gradient-to-r from-[#D16A8A] to-[#E89AB0] px-6 py-4 flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
           <Stethoscope className="w-5 h-5 text-white" />
         </div>
@@ -184,7 +184,7 @@ export default function InviteProfessionalsSection() {
                         invitingId === p.id ||
                         !emailByProfessional[p.id]?.trim()
                       }
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 gradient-red text-white rounded-lg text-sm font-medium hover:brightness-105 focus:ring-2 focus:ring-[rgba(209,106,138,0.35)] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all flex-shrink-0"
                     >
                       {invitingId === p.id ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

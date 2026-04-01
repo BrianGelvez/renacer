@@ -304,7 +304,7 @@ export default function DashboardLayout({
   const getRoleColor = (role: string) => {
     switch (role) {
       case "OWNER":
-        return "from-red-500 to-rose-600";
+        return "from-[#D16A8A] to-[#E89AB0]";
       case "ADMIN":
         return "from-amber-500 to-orange-600";
       case "STAFF":
@@ -337,11 +337,11 @@ export default function DashboardLayout({
       >
         {/* Logo & Toggle */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-black/[0.06] dark:border-white/[0.08]">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="relative w-10 h-10 flex-shrink-0">
+          <Link href="/" className="flex items-center gap-3 min-h-10">
+            <div className="relative h-10 w-10 flex-shrink-0">
               <Image
-                src="/ensigna.png"
-                alt="ENSIGNA"
+                src="/logo-renacer.png"
+                alt="Renacer"
                 fill
                 className="object-contain"
                 priority
@@ -353,7 +353,7 @@ export default function DashboardLayout({
                 animate={{ opacity: 1 }}
                 className="text-xl font-bold text-[var(--ensigna-text)]"
               >
-                ENSIGNA
+                Renacer
               </motion.span>
             )}
           </Link>
@@ -422,14 +422,14 @@ export default function DashboardLayout({
                     href={item.href}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative ${
                       isActive
-                        ? "bg-red-50 text-red-600"
+                        ? "bg-ensigna-accent text-ensigna-primary"
                         : "text-[var(--ensigna-text-secondary)] hover:bg-black/[0.04] hover:text-[var(--ensigna-text)]"
                     } ${isSidebarCollapsed ? "justify-center" : ""}`}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="activeNav"
-                        className="absolute left-0 inset-y-2 w-1 bg-red-600 rounded-r-full"
+                        className="absolute left-0 inset-y-2 w-1 bg-ensigna-primary rounded-r-full"
                         transition={{
                           type: "spring",
                           stiffness: 300,
@@ -440,7 +440,7 @@ export default function DashboardLayout({
                     <span
                       className={`flex-shrink-0 ${
                         isActive
-                          ? "text-red-600"
+                          ? "text-ensigna-primary"
                           : "text-[var(--ensigna-text-secondary)] group-hover:text-[var(--ensigna-text)]"
                       }`}
                     >
@@ -452,14 +452,14 @@ export default function DashboardLayout({
                           {item.label}
                         </span>
                         {item.badge && (
-                          <span className="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-600 rounded-full">
+                          <span className="px-2 py-0.5 text-xs font-semibold bg-ensigna-accent-soft text-ensigna-primary rounded-full">
                             {item.badge}
                           </span>
                         )}
                       </>
                     )}
                     {isSidebarCollapsed && item.badge && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 w-4 h-4 text-[10px] font-bold bg-ensigna-primary text-white rounded-full flex items-center justify-center">
                         {item.badge}
                       </span>
                     )}
@@ -484,7 +484,7 @@ export default function DashboardLayout({
           )}
           <button
             onClick={logout}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-600 hover:bg-ensigna-accent hover:text-ensigna-primary transition-colors ${
               isSidebarCollapsed ? "justify-center" : ""
             }`}
           >
@@ -506,16 +506,16 @@ export default function DashboardLayout({
             <Menu className="w-6 h-6" />
           </button>
 
-          <Link href="/" className="flex items-center gap-2">
-            <div className="relative w-8 h-8">
+          <Link href="/" className="flex items-center gap-2 min-h-10">
+            <div className="relative h-10 w-10">
               <Image
-                src="/ensigna.png"
-                alt="ENSIGNA"
+                src="/logo-renacer.png"
+                alt="Renacer"
                 fill
                 className="object-contain"
               />
             </div>
-            <span className="text-lg font-bold text-[var(--ensigna-text)]">ENSIGNA</span>
+            <span className="text-lg font-bold text-[var(--ensigna-text)]">Renacer</span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -526,7 +526,7 @@ export default function DashboardLayout({
             >
               <Bell className="w-5 h-5" />
               {notificationUnreadCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-ensigna-primary text-white rounded-full flex items-center justify-center">
                   {notificationUnreadCount > 99
                     ? "99+"
                     : notificationUnreadCount}
@@ -563,17 +563,17 @@ export default function DashboardLayout({
               className="lg:hidden fixed left-0 top-0 bottom-0 z-50 w-80 ensigna-sidebar shadow-ensigna-hover"
             >
               <div className="h-16 flex items-center justify-between px-4 border-b border-black/[0.06] dark:border-white/[0.08]">
-                <Link href="/" className="flex items-center gap-3">
-                  <div className="relative w-10 h-10">
+                <Link href="/" className="flex items-center gap-3 min-h-10">
+                  <div className="relative h-10 w-10">
                     <Image
-                      src="/ensigna.png"
-                      alt="ENSIGNA"
+                      src="/logo-renacer.png"
+                      alt="Renacer"
                       fill
                       className="object-contain"
                     />
                   </div>
                   <span className="text-xl font-bold text-[var(--ensigna-text)]">
-                    ENSIGNA
+                    Renacer
                   </span>
                 </Link>
                 <button
@@ -621,7 +621,7 @@ export default function DashboardLayout({
                           onClick={() => setIsMobileMenuOpen(false)}
                           className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                             isActive
-                              ? "bg-red-50 text-red-600"
+                              ? "bg-ensigna-accent text-ensigna-primary"
                               : "text-[var(--ensigna-text-secondary)] hover:bg-black/[0.04]"
                           }`}
                         >
@@ -630,7 +630,7 @@ export default function DashboardLayout({
                             {item.label}
                           </span>
                           {item.badge && (
-                            <span className="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-600 rounded-full">
+                            <span className="px-2 py-0.5 text-xs font-semibold bg-ensigna-accent-soft text-ensigna-primary rounded-full">
                               {item.badge}
                             </span>
                           )}
@@ -653,7 +653,7 @@ export default function DashboardLayout({
                 )}
                 <button
                   onClick={logout}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-red-50 text-red-600 font-medium hover:bg-red-100 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-ensigna-accent text-ensigna-primary font-medium hover:bg-ensigna-accent-soft transition-colors"
                 >
                   <LogOut className="w-5 h-5" />
                   Cerrar sesión
@@ -678,26 +678,26 @@ export default function DashboardLayout({
                 {isActive && (
                   <motion.div
                     layoutId="activeBottomNav"
-                    className="absolute inset-0 bg-red-50 rounded-xl"
+                    className="absolute inset-0 bg-ensigna-accent rounded-xl"
                     transition={{ type: "spring", damping: 30, stiffness: 300 }}
                   />
                 )}
                 <span
                   className={`relative z-10 ${
-                    isActive ? "text-red-600" : "text-gray-400"
+                    isActive ? "text-ensigna-primary" : "text-gray-400"
                   }`}
                 >
                   {item.icon}
                 </span>
                 <span
                   className={`relative z-10 text-[10px] font-medium ${
-                    isActive ? "text-red-600" : "text-gray-500"
+                    isActive ? "text-ensigna-primary" : "text-gray-500"
                   }`}
                 >
                   {item.label}
                 </span>
                 {item.badge && (
-                  <span className="absolute -top-0.5 right-1 w-4 h-4 text-[10px] font-bold bg-red-500 text-white rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 right-1 w-4 h-4 text-[10px] font-bold bg-ensigna-primary text-white rounded-full flex items-center justify-center">
                     {item.badge}
                   </span>
                 )}
@@ -716,7 +716,7 @@ export default function DashboardLayout({
         } pt-16 lg:pt-0 pb-20 lg:pb-0`}
       >
         {/* Desktop Header */}
-        <header className="hidden lg:flex items-center justify-between px-6 lg:px-8 h-16 min-w-0 mx-8 ensigna-dashboard-header">
+        <header className="hidden lg:flex items-center justify-between px-6 lg:px-8 h-16 min-w-0 mx-4 lg:mx-8 mt-4 ensigna-dashboard-header">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold text-white drop-shadow-sm">
               {filteredNavItems.find((item) => item.id === activeSection)
@@ -773,7 +773,7 @@ export default function DashboardLayout({
                             role="option"
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => goToPatientDetail(p.id)}
-                            className="w-full text-left px-3 py-2.5 text-sm hover:bg-red-50/80 active:bg-red-100/80 border-b border-black/[0.04] last:border-0 transition-colors"
+                            className="w-full text-left px-3 py-2.5 text-sm hover:bg-ensigna-accent/80 active:bg-ensigna-accent border-b border-black/[0.04] last:border-0 transition-colors"
                           >
                             <span className="font-medium text-[var(--ensigna-text)]">
                               {p.lastName}, {p.firstName}
@@ -797,7 +797,7 @@ export default function DashboardLayout({
             >
               <Bell className="w-5 h-5" />
               {notificationUnreadCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-white text-red-600 rounded-full flex items-center justify-center">
+                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-white text-ensigna-primary rounded-full flex items-center justify-center">
                   {notificationUnreadCount > 99
                     ? "99+"
                     : notificationUnreadCount}
@@ -820,7 +820,7 @@ export default function DashboardLayout({
               <div
                 className={`w-10 h-10 rounded-xl bg-gradient-to-br ${getRoleColor(
                   user?.role || "",
-                )} flex items-center justify-center text-white font-bold shadow-lg shadow-red-500/20`}
+                )} flex items-center justify-center text-white font-bold shadow-lg shadow-ensigna-primary/25`}
               >
                 {user?.name?.[0]}
               </div>

@@ -9,7 +9,7 @@ const benefits = [
     title: 'Organización Total',
     description:
       'Gestiona turnos, pacientes y profesionales desde una plataforma centralizada y eficiente.',
-    color: 'text-red-600',
+    color: 'text-ensigna-primary',
   },
   {
     icon: Clock,

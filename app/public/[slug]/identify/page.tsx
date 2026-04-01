@@ -185,11 +185,11 @@ export default function IdentifyPatientPage() {
   if (!slug) return null;
 
   const inputCls =
-    'w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-red-500/30 focus:border-ensigna-primary min-h-[44px]';
+    'w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary min-h-[44px]';
   const healthInsurances = clinicInfo?.healthInsurances ?? [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50/80 via-[var(--ensigna-background)] to-rose-50/40 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-ensigna-soft/50 via-[var(--ensigna-background)] to-ensigna-primary/5 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -197,7 +197,7 @@ export default function IdentifyPatientPage() {
       >
         <div className="ensigna-modal-panel overflow-hidden rounded-[var(--ensigna-radius-lg)]">
           <div className="p-6 sm:p-8 pb-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#E53935] to-[#C62828] flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 rounded-2xl gradient-red flex items-center justify-center mx-auto mb-4">
               <User className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 text-center mb-2">
@@ -214,7 +214,7 @@ export default function IdentifyPatientPage() {
               onClick={() => { setActiveTab('identify'); setError(null); }}
               className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-semibold transition-colors ${
                 activeTab === 'identify'
-                  ? 'text-ensigna-primary border-b-2 border-ensigna-primary bg-red-50/50'
+                  ? 'text-white border-b-2 border-ensigna-primary bg-ensigna-accent-soft/90'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -226,7 +226,7 @@ export default function IdentifyPatientPage() {
               onClick={() => { setActiveTab('new'); setError(null); }}
               className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-semibold transition-colors ${
                 activeTab === 'new'
-                  ? 'text-ensigna-primary border-b-2 border-ensigna-primary bg-red-50/50'
+                  ? 'text-white border-b-2 border-ensigna-primary bg-ensigna-accent-soft/90'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -310,7 +310,7 @@ export default function IdentifyPatientPage() {
                               step === s.id
                                 ? 'gradient-red text-white'
                                 : step > s.id
-                                  ? 'bg-red-100 text-red-800'
+                                  ? 'bg-ensigna-accent-soft text-ensigna-primary-dark'
                                   : 'bg-gray-100 text-gray-500'
                             }`}
                           >
@@ -319,7 +319,7 @@ export default function IdentifyPatientPage() {
                           {i < STEPS.length - 1 && (
                             <div
                               className={`flex-1 h-1 mx-1 rounded-full min-w-0 ${
-                                step > s.id ? 'bg-red-200' : 'bg-gray-200'
+                                step > s.id ? 'bg-ensigna-primary-light/50' : 'bg-gray-200'
                               }`}
                             />
                           )}
@@ -457,7 +457,7 @@ export default function IdentifyPatientPage() {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
-                        <textarea value={fullForm.notes} onChange={(e) => update('notes', e.target.value)} rows={2} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-red-500/30 resize-none" placeholder="Notas opcionales..." />
+                        <textarea value={fullForm.notes} onChange={(e) => update('notes', e.target.value)} rows={2} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary resize-none" placeholder="Notas opcionales..." />
                       </div>
                     </motion.div>
                   )}
