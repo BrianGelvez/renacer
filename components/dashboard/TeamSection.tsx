@@ -379,7 +379,7 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
                             initial={{ opacity: 0, y: -4 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -4 }}
-                            className="absolute right-0 top-full mt-1 w-52 py-1 bg-white rounded-xl border border-gray-200 shadow-lg z-10"
+                            className="absolute right-0 top-full mt-1 w-52 py-1 bg-white rounded-xl border border-gray-200 shadow-lg z-20"
                           >
                             <button
                               type="button"

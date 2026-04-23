@@ -20,10 +20,13 @@ import {
   Loader2,
   AlertCircle,
   Wallet,
+  MessageCircle,
+  CalendarClock,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import DashboardCard from './DashboardCard';
+import QuickActionModals, { type QuickActionKey } from './QuickActionModals';
 
 type DashboardSummary = Awaited<ReturnType<typeof apiClient.getDashboardSummary>>;
 
@@ -158,6 +161,7 @@ export default function OverviewSection() {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [quickModal, setQuickModal] = useState<QuickActionKey | null>(null);
 
   const loadSummary = useCallback(async () => {
     setError(null);
@@ -290,7 +294,90 @@ export default function OverviewSection() {
         ]
     : [];
 
-  const canBook = user?.role === 'OWNER' || user?.role === 'ADMIN';
+  const role = user?.role;
+
+  type QuickActionDef = {
+    key: QuickActionKey;
+    label: string;
+    icon: typeof Calendar;
+    className: string;
+    /** Si se define, solo esos roles ven la acción */
+    roles?: readonly ('OWNER' | 'ADMIN' | 'STAFF')[];
+  };
+
+  const quickActionDefs: QuickActionDef[] = [
+    {
+      key: 'new',
+      label: 'Nuevo turno',
+      icon: Calendar,
+      className: 'bg-blue-50 text-blue-600 hover:bg-blue-100',
+      roles: ['OWNER', 'ADMIN'],
+    },
+    {
+      key: 'agenda',
+      label: 'Ver agenda',
+      icon: Clock,
+      className: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100',
+    },
+    {
+      key: 'patients',
+      label: 'Pacientes',
+      icon: Users,
+      className: 'bg-purple-50 text-purple-600 hover:bg-purple-100',
+    },
+    {
+      key: 'reports',
+      label: 'Reportes',
+      icon: TrendingUp,
+      className: 'bg-amber-50 text-amber-600 hover:bg-amber-100',
+    },
+    {
+      key: 'finanzas',
+      label: 'Finanzas',
+      icon: Wallet,
+      className: 'bg-teal-50 text-teal-600 hover:bg-teal-100',
+    },
+    {
+      key: 'availability',
+      label: 'Disponibilidad',
+      icon: CalendarClock,
+      className: 'bg-sky-50 text-sky-600 hover:bg-sky-100',
+    },
+    {
+      key: 'team',
+      label: 'Equipo',
+      icon: UsersRound,
+      className: 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100',
+      roles: ['OWNER', 'ADMIN'],
+    },
+    {
+      key: 'clinic',
+      label: 'Mi clínica',
+      icon: Building2,
+      className: 'bg-rose-50 text-rose-600 hover:bg-rose-100',
+      roles: ['OWNER', 'ADMIN'],
+    },
+    {
+      key: 'conversations',
+      label: 'Conversaciones',
+      icon: MessageCircle,
+      className: 'bg-cyan-50 text-cyan-600 hover:bg-cyan-100',
+      roles: ['OWNER', 'ADMIN'],
+    },
+    {
+      key: 'invite',
+      label: 'Invitaciones',
+      icon: UserPlus,
+      className: 'bg-violet-50 text-violet-600 hover:bg-violet-100',
+      roles: ['OWNER', 'ADMIN'],
+    },
+  ];
+
+  const quickActions = quickActionDefs.filter((a) => {
+    if (!a.roles) return true;
+    if (role !== 'OWNER' && role !== 'ADMIN' && role !== 'STAFF') return false;
+    return a.roles.includes(role);
+  });
 
   return (
     <div className="space-y-6 min-w-0 max-w-full">
@@ -421,43 +508,23 @@ export default function OverviewSection() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Acciones rápidas
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 min-w-0">
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  canBook ? '/dashboard/agenda?book=1' : '/dashboard/agenda',
-                )
-              }
-              className="flex flex-col items-center gap-2 p-4 rounded-xl transition-colors bg-blue-50 text-blue-600 hover:bg-blue-100"
-            >
-              <Calendar className="w-6 h-6" />
-              <span className="text-sm font-medium">Nuevo turno</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push('/dashboard/agenda')}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl transition-colors bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-            >
-              <Clock className="w-6 h-6" />
-              <span className="text-sm font-medium">Ver agenda</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push('/dashboard/patients')}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl transition-colors bg-purple-50 text-purple-600 hover:bg-purple-100"
-            >
-              <Users className="w-6 h-6" />
-              <span className="text-sm font-medium">Pacientes</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push('/dashboard/reports')}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl transition-colors bg-amber-50 text-amber-600 hover:bg-amber-100"
-            >
-              <TrendingUp className="w-6 h-6" />
-              <span className="text-sm font-medium">Reportes</span>
-            </button>
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 min-w-0">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.key}
+                  type="button"
+                  onClick={() => setQuickModal(action.key)}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-colors min-h-[92px] sm:min-h-0 ${action.className}`}
+                >
+                  <Icon className="w-6 h-6 shrink-0" />
+                  <span className="text-sm font-medium text-center leading-tight">
+                    {action.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </motion.div>
 
@@ -475,7 +542,7 @@ export default function OverviewSection() {
               Aún no hay actividad registrada en el período reciente.
             </p>
           ) : (
-            <div className="space-y-4 max-h-[320px] overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-[320px] overflow-y-auto overflow-x-hidden pr-2">
               {summary.recentActivity.map((activity) => (
                 <div
                   key={activity.id}
@@ -499,19 +566,19 @@ export default function OverviewSection() {
                       go(href);
                     }
                   }}
-                  className="flex items-start gap-3 p-2 -m-2 rounded-lg cursor-pointer hover:bg-ensigna-accent/60 transition-all duration-200"
+                  className="group flex items-start gap-3 rounded-xl px-3 py-2.5 cursor-pointer border border-transparent bg-transparent transition-colors duration-200 hover:bg-ensigna-accent-soft/80 hover:border-[rgba(209,106,138,0.18)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ensigna-primary/40"
                 >
-                  <div className="mt-0.5 shrink-0 w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100">
+                  <div className="mt-0.5 shrink-0 w-8 h-8 rounded-lg bg-white flex items-center justify-center border border-gray-200/90 shadow-sm">
                     {activityIcon(activity.type)}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900">
+                  <div className="min-w-0 flex-1 group-hover:text-white">
+                    <p className="text-sm font-medium text-gray-900 group-hover:text-white">
                       {activity.title}
                     </p>
-                    <p className="text-xs text-gray-600 line-clamp-2">
+                    <p className="text-xs text-gray-600 line-clamp-2 group-hover:text-white">
                       {activity.message}
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 mt-1 group-hover:text-white">
                       {formatRelativeTime(activity.createdAt)}
                     </p>
                   </div>
@@ -579,6 +646,13 @@ export default function OverviewSection() {
           </div>
         )}
       </motion.div>
+
+      <QuickActionModals
+        action={quickModal}
+        onClose={() => setQuickModal(null)}
+        dashboardSummary={summary}
+        onDashboardRefresh={loadSummary}
+      />
     </div>
   );
 }

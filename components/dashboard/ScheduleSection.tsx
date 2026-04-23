@@ -10,6 +10,8 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  Check,
   CalendarDays,
   List,
   Stethoscope,
@@ -197,6 +199,8 @@ export default function ScheduleSection() {
     string | null
   >(null);
   const bookIntentHandled = useRef(false);
+  const professionalPickerRef = useRef<HTMLDivElement>(null);
+  const [professionalMenuOpen, setProfessionalMenuOpen] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -274,6 +278,23 @@ export default function ScheduleSection() {
       bookIntentHandled.current = false;
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!professionalMenuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (professionalPickerRef.current?.contains(e.target as Node)) return;
+      setProfessionalMenuOpen(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setProfessionalMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [professionalMenuOpen]);
 
   useEffect(() => {
     if (!canBook || searchParams.get('book') !== '1') return;
@@ -387,29 +408,141 @@ export default function ScheduleSection() {
       </div>
 
       {/* Filtros: profesional + navegación semana + vista */}
-      <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm overflow-visible">
         <div className="p-3 sm:p-5 border-b border-gray-100 space-y-3 sm:space-y-4">
           {!isStaff && (
             <div className="space-y-3">
-              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5 sm:mb-2">
+              <label
+                id="professional-label"
+                htmlFor="professional-picker-button"
+                className="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1.5 sm:mb-2"
+              >
                 Profesional
               </label>
-              <div className="relative">
-                <Stethoscope className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
-                <select
-                  value={selectedProfessionalId}
-                  onChange={(e) => setSelectedProfessionalId(e.target.value)}
-                  className="w-full sm:max-w-md px-10 py-3.5 sm:py-3 rounded-xl border-2 border-gray-200 text-gray-900 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50/50 text-base touch-manipulation min-h-[48px] appearance-none cursor-pointer"
+              <div ref={professionalPickerRef} className="relative sm:max-w-md">
+                <button
+                  type="button"
+                  id="professional-picker-button"
+                  aria-haspopup="listbox"
+                  aria-expanded={professionalMenuOpen}
+                  aria-controls="professional-picker-list"
+                  onClick={() => setProfessionalMenuOpen((o) => !o)}
+                  className={`group w-full flex items-center gap-3 min-h-[52px] pl-3 pr-3 py-2.5 rounded-2xl border-2 text-left transition-all duration-200 touch-manipulation shadow-sm ${
+                    professionalMenuOpen
+                      ? 'border-emerald-400 bg-white ring-4 ring-emerald-500/15 shadow-md'
+                      : 'border-gray-200/90 bg-gradient-to-b from-white to-gray-50/80 hover:border-emerald-200 hover:shadow-md'
+                  }`}
                 >
-                  <option value="">Seleccionar profesional...</option>
-                  {professionals.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      Dr. {p.firstName} {p.lastName}
-                      {p.specialty ? ` · ${p.specialty}` : ''}
-                    </option>
-                  ))}
-                </select>
-                <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none rotate-90" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25">
+                    <Stethoscope className="h-5 w-5" aria-hidden />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    {selectedProfessional ? (
+                      <>
+                        <p className="truncate text-base font-semibold text-gray-900">
+                          Dr. {selectedProfessional.firstName}{' '}
+                          {selectedProfessional.lastName}
+                        </p>
+                        {selectedProfessional.specialty ? (
+                          <p className="truncate text-sm text-gray-500">
+                            {selectedProfessional.specialty}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-gray-400">Ver agenda de este profesional</p>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-base font-medium text-gray-500">
+                          Seleccionar profesional
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          Elegí quién querés visualizar
+                        </p>
+                      </>
+                    )}
+                  </div>
+                  <ChevronDown
+                    className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 ${
+                      professionalMenuOpen ? 'rotate-180 text-emerald-600' : 'group-hover:text-gray-600'
+                    }`}
+                    aria-hidden
+                  />
+                </button>
+
+                <AnimatePresence>
+                  {professionalMenuOpen && (
+                    <motion.ul
+                      id="professional-picker-list"
+                      role="listbox"
+                      aria-labelledby="professional-label"
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+                      className="absolute left-0 right-0 z-40 mt-2 max-h-[min(60vh,340px)] overflow-y-auto overflow-x-hidden rounded-2xl border border-gray-200/80 bg-white py-2 shadow-xl shadow-gray-900/10 ring-1 ring-black/[0.04]"
+                    >
+                      {professionals.length === 0 ? (
+                        <li className="px-4 py-6 text-center text-sm text-gray-500" role="presentation">
+                          No hay profesionales cargados.
+                        </li>
+                      ) : null}
+                      {professionals.map((p) => {
+                        const selected = p.id === selectedProfessionalId;
+                        const inactive = p.isActive === false;
+                        return (
+                          <li key={p.id} role="presentation" className="px-2">
+                            <button
+                              type="button"
+                              role="option"
+                              aria-selected={selected}
+                              onClick={() => {
+                                setSelectedProfessionalId(p.id);
+                                setProfessionalMenuOpen(false);
+                              }}
+                              className={`flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
+                                selected
+                                  ? 'bg-emerald-50 text-emerald-950'
+                                  : 'text-gray-900 hover:bg-gray-50'
+                              } ${inactive ? 'opacity-70' : ''}`}
+                            >
+                              <div
+                                className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
+                                  selected
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-gray-100 text-gray-600'
+                                }`}
+                              >
+                                {p.firstName?.[0]}
+                                {p.lastName?.[0]}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <p className="truncate font-semibold text-[15px] leading-snug">
+                                    Dr. {p.firstName} {p.lastName}
+                                  </p>
+                                  {inactive && (
+                                    <span className="shrink-0 rounded-md bg-gray-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600">
+                                      Inactivo
+                                    </span>
+                                  )}
+                                </div>
+                                {p.specialty ? (
+                                  <p className="mt-0.5 truncate text-sm text-gray-500">{p.specialty}</p>
+                                ) : (
+                                  <p className="mt-0.5 text-sm text-gray-400">Sin especialidad indicada</p>
+                                )}
+                              </div>
+                              {selected && (
+                                <Check className="mt-1 h-5 w-5 shrink-0 text-emerald-600" aria-hidden />
+                              )}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
               </div>
               {/* Tarjeta con información del profesional seleccionado */}
               {selectedProfessional && (

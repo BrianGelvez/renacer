@@ -146,7 +146,7 @@ export function NotificationDropdown({
                   <button
                     type="button"
                     onClick={() => handleItemClick(n)}
-                    className={`w-full text-left px-4 py-3 transition-all duration-200 hover:bg-ensigna-accent/70 ${
+                    className={`group w-full text-left px-4 py-3 transition-all duration-200 hover:bg-ensigna-accent/70 ${
                       !n.readAt ? 'bg-ensigna-accent-soft/80' : ''
                     }`}
                   >
@@ -155,9 +155,13 @@ export function NotificationDropdown({
                         <span className="flex-shrink-0 w-2 h-2 mt-1.5 rounded-full bg-ensigna-primary" />
                       )}
                       <div className={`flex-1 min-w-0 ${!n.readAt ? '' : 'pl-5'}`}>
-                        <p className="font-medium text-[var(--ensigna-text)] text-sm">{n.title}</p>
-                        <p className="text-sm text-[var(--ensigna-text-secondary)] line-clamp-2">{n.message}</p>
-                        <p className="text-xs text-[var(--ensigna-text-secondary)]/80 mt-1">
+                        <p className="font-medium text-[var(--ensigna-text)] text-sm group-hover:text-white">
+                          {n.title}
+                        </p>
+                        <p className="text-sm text-[var(--ensigna-text-secondary)] line-clamp-2 group-hover:text-white">
+                          {n.message}
+                        </p>
+                        <p className="text-xs text-[var(--ensigna-text-secondary)]/80 mt-1 group-hover:text-white">
                           {formatRelativeTime(n.createdAt)}
                         </p>
                       </div>

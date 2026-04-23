@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Loader2,
@@ -40,6 +41,7 @@ interface EditClinicModalProps {
 }
 
 export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinicModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -57,6 +59,10 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
   const [availStartTime, setAvailStartTime] = useState('09:00');
   const [availEndTime, setAvailEndTime] = useState('17:00');
   const [availSubmitting, setAvailSubmitting] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (clinic) {
@@ -173,15 +179,29 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
   };
 
   if (!clinic) return null;
+  if (!mounted) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <motion.div
+        key="edit-clinic-root"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4"
+      >
+        <div
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={onClose}
+          aria-hidden
+        />
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+          initial={{ opacity: 0, scale: 0.97, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97, y: 10 }}
+          transition={{ type: 'tween', duration: 0.2 }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative z-10 flex w-full max-w-2xl max-h-[min(92dvh,90vh)] flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
         >
           <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between shrink-0">
             <h3 className="text-xl font-bold text-gray-900">Editar información de la clínica</h3>
@@ -443,7 +463,8 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
             </button>
           </div>
         </motion.div>
-      </div>
-    </AnimatePresence>
+      </motion.div>
+    </AnimatePresence>,
+    document.body,
   );
 }

@@ -30,6 +30,8 @@ interface CreatePatientModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: (patientId: string) => void;
+  /** Por defecto true: abre la ficha del paciente al guardar */
+  navigateAfterCreate?: boolean;
 }
 
 interface HealthInsuranceOption {
@@ -42,6 +44,7 @@ export default function CreatePatientModal({
   open,
   onClose,
   onSuccess,
+  navigateAfterCreate = true,
 }: CreatePatientModalProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -154,7 +157,9 @@ export default function CreatePatientModal({
       });
       onClose();
       if (onSuccess) onSuccess(patient.id);
-      router.push(`/dashboard/patients/${patient.id}`);
+      if (navigateAfterCreate) {
+        router.push(`/dashboard/patients/${patient.id}`);
+      }
     } catch (err: unknown) {
       setError(
         (err as { response?: { data?: { message?: string } } })?.response?.data
