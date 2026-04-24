@@ -33,6 +33,12 @@ type ConversationRow = {
   _count: { messages: number };
 };
 
+function sortConversationsByActivity(rows: ConversationRow[]): ConversationRow[] {
+  return [...rows].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  );
+}
+
 type MessageRow = {
   id: string;
   direction: string;
@@ -102,7 +108,7 @@ export default function ConversationsSection() {
       const channel =
         filter === "all" ? undefined : (filter as "whatsapp" | "web");
       const data = await apiClient.getMessageConversations(channel);
-      setList(data);
+      setList(sortConversationsByActivity(data));
     } catch (e: unknown) {
       const msg =
         e && typeof e === "object" && "response" in e
@@ -194,6 +200,46 @@ export default function ConversationsSection() {
       },
       [selectedId],
     ),
+    useCallback(
+      (conversation: unknown) => {
+        if (!conversation || typeof conversation !== "object") return;
+        const c = conversation as Partial<ConversationRow>;
+        if (
+          !c.id ||
+          !c.channel ||
+          !c.externalId ||
+          !c.updatedAt ||
+          !c.createdAt
+        ) {
+          return;
+        }
+        if (filter !== "all" && c.channel !== filter) return;
+
+        const nextRow: ConversationRow = {
+          id: String(c.id),
+          channel: String(c.channel),
+          externalId: String(c.externalId),
+          patientDni: c.patientDni == null ? null : String(c.patientDni),
+          createdAt: String(c.createdAt),
+          updatedAt: String(c.updatedAt),
+          _count: {
+            messages:
+              typeof c._count?.messages === "number" ? c._count.messages : 0,
+          },
+        };
+
+        setList((prev) => {
+          const exists = prev.some((item) => item.id === nextRow.id);
+          const merged = exists
+            ? prev.map((item) =>
+                item.id === nextRow.id ? { ...item, ...nextRow } : item,
+              )
+            : [nextRow, ...prev];
+          return sortConversationsByActivity(merged);
+        });
+      },
+      [filter],
+    ),
   );
 
   useEffect(() => {
@@ -205,12 +251,14 @@ export default function ConversationsSection() {
 
   const filteredList = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return list;
-    return list.filter(
-      (c) =>
-        c.externalId.toLowerCase().includes(q) ||
-        (c.patientDni && c.patientDni.toLowerCase().includes(q)),
-    );
+    const searched = !q
+      ? list
+      : list.filter(
+          (c) =>
+            c.externalId.toLowerCase().includes(q) ||
+            (c.patientDni && c.patientDni.toLowerCase().includes(q)),
+        );
+    return sortConversationsByActivity(searched);
   }, [list, search]);
 
   if (authLoading) {
