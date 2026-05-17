@@ -34,9 +34,9 @@ export default function CreateMedicalRecordModal({
 }: CreateMedicalRecordModalProps) {
   const { user } = useAuth();
   const [consultationDate, setConsultationDate] = useState('');
-  const [professionalId, setProfessionalId] = useState('');
-  const [professionals, setProfessionals] = useState<
-    Array<{ id: string; firstName: string; lastName: string; specialty?: string | null }>
+  const [doctorUserId, setDoctorUserId] = useState('');
+  const [doctorOptions, setDoctorOptions] = useState<
+    Array<{ userId: string; firstName: string; lastName: string; specialty?: string | null }>
   >([]);
   const [appointmentDate, setAppointmentDate] = useState<string | null>(null);
   const [loadingAppointment, setLoadingAppointment] = useState(false);
@@ -53,7 +53,7 @@ export default function CreateMedicalRecordModal({
   const [error, setError] = useState<string | null>(null);
 
   const isFromAppointment = !!appointmentId;
-  const canSelectProfessional =
+  const canSelectDoctor =
     (user?.role === 'OWNER' || user?.role === 'ADMIN') && !isFromAppointment;
 
   const fetchAppointmentDate = useCallback(async () => {
@@ -73,15 +73,25 @@ export default function CreateMedicalRecordModal({
     }
   }, [appointmentId]);
 
-  const fetchProfessionals = useCallback(() => {
-    if (!canSelectProfessional) return;
-    apiClient.getProfessionals().then((data: typeof professionals) => {
-      setProfessionals(Array.isArray(data) ? data : []);
-      if (data?.length && !professionalId) {
-        setProfessionalId(data[0].id);
-      }
+  const fetchDoctorOptions = useCallback(() => {
+    if (!canSelectDoctor) return;
+    void apiClient.listClinicDoctors().then((data) => {
+      const list = Array.isArray(data) ? data : [];
+      setDoctorOptions(
+        list.map((m) => ({
+          userId: m.userId,
+          firstName: m.firstName,
+          lastName: m.lastName,
+          specialty: m.specialty ?? null,
+        })),
+      );
+      setDoctorUserId((prev) =>
+        prev && list.some((m) => m.userId === prev)
+          ? prev
+          : (list[0]?.userId ?? ''),
+      );
     });
-  }, [canSelectProfessional]);
+  }, [canSelectDoctor]);
 
   const fetchPatientInsurances = useCallback(() => {
     if (initialPatientInsurances?.length) {
@@ -102,18 +112,18 @@ export default function CreateMedicalRecordModal({
     if (open && appointmentId) {
       fetchAppointmentDate();
     }
-    if (open && canSelectProfessional) {
-      fetchProfessionals();
+    if (open && canSelectDoctor) {
+      fetchDoctorOptions();
     }
     if (open) {
       fetchPatientInsurances();
     }
-  }, [open, appointmentId, canSelectProfessional, fetchAppointmentDate, fetchProfessionals, fetchPatientInsurances]);
+  }, [open, appointmentId, canSelectDoctor, fetchAppointmentDate, fetchDoctorOptions, fetchPatientInsurances]);
 
   useEffect(() => {
     if (!open) {
       setConsultationDate('');
-      setProfessionalId('');
+      setDoctorUserId('');
       setAppointmentDate(null);
       setHealthInsuranceId('');
       setReason('');
@@ -134,8 +144,8 @@ export default function CreateMedicalRecordModal({
       return;
     }
 
-    if (canSelectProfessional && !professionalId) {
-      setError('Seleccioná un profesional.');
+    if (canSelectDoctor && !doctorUserId) {
+      setError('Seleccioná un médico.');
       return;
     }
 
@@ -146,7 +156,7 @@ export default function CreateMedicalRecordModal({
         ...(appointmentId && { appointmentId }),
         ...(!appointmentId && {
           consultationDate,
-          ...(canSelectProfessional && { professionalId }),
+          ...(canSelectDoctor && { doctorUserId }),
         }),
         ...(healthInsuranceId && { healthInsuranceId }),
         reason: reason.trim() || undefined,
@@ -250,20 +260,20 @@ export default function CreateMedicalRecordModal({
             )}
           </div>
 
-          {canSelectProfessional && (
+          {canSelectDoctor && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Profesional
+                Médico
               </label>
               <select
-                value={professionalId}
-                onChange={(e) => setProfessionalId(e.target.value)}
+                value={doctorUserId}
+                onChange={(e) => setDoctorUserId(e.target.value)}
                 required
                 className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="">Seleccionar...</option>
-                {professionals.map((p) => (
-                  <option key={p.id} value={p.id}>
+                {doctorOptions.map((p) => (
+                  <option key={p.userId} value={p.userId}>
                     {p.firstName} {p.lastName}
                     {p.specialty ? ` · ${p.specialty}` : ''}
                   </option>

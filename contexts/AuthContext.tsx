@@ -20,6 +20,8 @@ export interface ClinicAvailability {
   isActive: boolean;
 }
 
+export type RecetarioSyncStatus = 'PENDING' | 'SYNCED' | 'FAILED';
+
 interface Clinic {
   id: string;
   name: string;
@@ -29,8 +31,13 @@ interface Clinic {
   address?: string;
   city?: string;
   province?: string;
+  prescriptionLogoUrl?: string | null;
   isActive: boolean;
   clinicAvailabilities?: ClinicAvailability[];
+  recetarioHealthCenterId?: number | null;
+  recetarioSyncStatus?: RecetarioSyncStatus | null;
+  recetarioSyncedAt?: string | null;
+  recetarioLastError?: string | null;
 }
 
 interface AuthContextType {

@@ -13,7 +13,7 @@ import {
   Trash2,
   Plus,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api';
+import { apiClient, type ClinicTeamMemberDto } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { SlotItem } from './ScheduleSection';
 import BookingModal from './BookingModal';
@@ -45,7 +45,21 @@ type ProfessionalRow = {
   phone?: string | null;
   isActive?: boolean;
   userId?: string | null;
+  managedByClinic?: boolean | null;
 };
+
+function clinicDoctorToPickerRow(d: ClinicTeamMemberDto): ProfessionalRow {
+  return {
+    id: d.id,
+    firstName: d.firstName,
+    lastName: d.lastName,
+    specialty: d.specialty,
+    phone: d.phone,
+    isActive: d.isActive,
+    userId: d.hasAccount ? d.id : null,
+    managedByClinic: d.managedByClinic ?? false,
+  };
+}
 
 type AvailabilityRow = {
   id: string;
@@ -170,7 +184,8 @@ function FramedContent({
   onDashboardRefresh,
 }: QuickActionModalsProps) {
   const { user, loadUserData } = useAuth();
-  const isStaff = user?.role === 'STAFF';
+  const isDoctorUser =
+    user?.role === 'DOCTOR' || user?.role === ('STAFF' as string);
   const title = action ? TITLES[action] : '';
 
   const [payOpen, setPayOpen] = useState(false);
@@ -194,8 +209,8 @@ function FramedContent({
     let cancelled = false;
     (async () => {
       try {
-        const list = await apiClient.getProfessionals();
-        const arr = Array.isArray(list) ? (list as ProfessionalRow[]) : [];
+        const list = await apiClient.listClinicDoctors();
+        const arr = Array.isArray(list) ? list.map(clinicDoctorToPickerRow) : [];
         const active = arr.filter((p) => p.isActive !== false);
         if (cancelled) return;
         setBookPros(active);
@@ -219,7 +234,7 @@ function FramedContent({
     setSlotsError(null);
     (async () => {
       try {
-        const raw = await apiClient.getProfessionalSlots(bookProId, start, end);
+        const raw = await apiClient.getDoctorSlots(bookProId, start, end);
         const byDate = (raw as SlotsByDate) ?? {};
         const flat = Object.keys(byDate)
           .sort()
@@ -261,9 +276,9 @@ function FramedContent({
       try {
         let list: ProfessionalRow[] = [];
         let resolvedPro: string | null = null;
-        if (!isStaff) {
-          const raw = await apiClient.getProfessionals();
-          list = Array.isArray(raw) ? (raw as ProfessionalRow[]) : [];
+        if (!isDoctorUser) {
+          const raw = await apiClient.listClinicDoctors();
+          list = Array.isArray(raw) ? raw.map(clinicDoctorToPickerRow) : [];
           const active = list.filter((p) => p.isActive !== false);
           resolvedPro =
             agendaProId && active.some((p) => p.id === agendaProId)
@@ -275,10 +290,10 @@ function FramedContent({
           }
         }
         const { start, end } = rangeFromToday(7);
-        const data = isStaff
+        const data = isDoctorUser
           ? await apiClient.getMyAppointments(start, end)
           : resolvedPro
-            ? await apiClient.getProfessionalAppointments(resolvedPro, start, end)
+            ? await apiClient.getDoctorAppointments(resolvedPro, start, end)
             : {};
         const byDate = (data as AppointmentsByDate) ?? {};
         const flat = Object.keys(byDate)
@@ -306,7 +321,7 @@ function FramedContent({
     return () => {
       cancelled = true;
     };
-  }, [action, isStaff, agendaProId]);
+  }, [action, isDoctorUser, agendaProId]);
 
   /* —— Finanzas —— */
   const [paySummary, setPaySummary] = useState<Awaited<
@@ -346,11 +361,11 @@ function FramedContent({
   const [availSubmitting, setAvailSubmitting] = useState(false);
 
   useEffect(() => {
-    if (action !== 'availability' || isStaff) return;
+    if (action !== 'availability' || isDoctorUser) return;
     let cancelled = false;
     (async () => {
-      const raw = await apiClient.getProfessionals();
-      const list = Array.isArray(raw) ? (raw as ProfessionalRow[]) : [];
+      const raw = await apiClient.listClinicDoctors();
+      const list = Array.isArray(raw) ? raw.map(clinicDoctorToPickerRow) : [];
       const active = list.filter((p) => p.isActive !== false);
       if (cancelled) return;
       setPickerPros(active);
@@ -361,16 +376,16 @@ function FramedContent({
     return () => {
       cancelled = true;
     };
-  }, [action, isStaff]);
+  }, [action, isDoctorUser]);
 
   const loadAvailabilityList = useCallback(async () => {
     setAvailLoading(true);
     setAvailError(null);
     try {
-      const data = isStaff
+      const data = isDoctorUser
         ? await apiClient.getMyAvailability()
         : availProId
-          ? await apiClient.getProfessionalAvailability(availProId)
+          ? await apiClient.getDoctorAvailability(availProId)
           : [];
       setAvailRows(Array.isArray(data) ? (data as AvailabilityRow[]) : []);
     } catch {
@@ -379,13 +394,13 @@ function FramedContent({
     } finally {
       setAvailLoading(false);
     }
-  }, [isStaff, availProId]);
+  }, [isDoctorUser, availProId]);
 
   useEffect(() => {
     if (action !== 'availability') return;
-    if (!isStaff && !availProId) return;
+    if (!isDoctorUser && !availProId) return;
     void loadAvailabilityList();
-  }, [action, isStaff, availProId, loadAvailabilityList]);
+  }, [action, isDoctorUser, availProId, loadAvailabilityList]);
 
   /* —— Equipo —— */
   const [teamList, setTeamList] = useState<ProfessionalRow[]>([]);
@@ -395,8 +410,9 @@ function FramedContent({
   const loadTeam = useCallback(async () => {
     setTeamLoading(true);
     try {
-      const raw = await apiClient.getProfessionals();
-      setTeamList(Array.isArray(raw) ? (raw as ProfessionalRow[]) : []);
+      const raw = await apiClient.listClinicDoctors();
+      const rows = Array.isArray(raw) ? raw.map(clinicDoctorToPickerRow) : [];
+      setTeamList(rows.filter((p) => p.isActive !== false));
     } catch {
       setTeamList([]);
     } finally {
@@ -475,11 +491,13 @@ function FramedContent({
   useEffect(() => {
     if (action !== 'invite' || inviteType !== 'professional') return;
     let cancelled = false;
-    apiClient.getProfessionals().then((raw) => {
+    apiClient.listClinicDoctors().then((raw) => {
       if (cancelled) return;
-      const arr = Array.isArray(raw) ? (raw as ProfessionalRow[]) : [];
+      const arr = Array.isArray(raw) ? raw.map(clinicDoctorToPickerRow) : [];
       setInvitePros(arr);
-      const need = arr.filter((p) => !p.userId && p.isActive !== false);
+      const need = arr.filter(
+        (p) => !p.userId && p.isActive !== false,
+      );
       setInviteProId((prev) => (prev && need.some((p) => p.id === prev) ? prev : need[0]?.id ?? ''));
     });
     return () => {
@@ -488,7 +506,7 @@ function FramedContent({
   }, [action, inviteType]);
 
   const handleOpenBook = (slot: SlotItem) => {
-    const p = bookPros.find((x) => x.id === slot.professionalId);
+    const p = bookPros.find((x) => x.id === slot.doctorUserId);
     setProNameForBook(
       p ? `Dr. ${p.firstName} ${p.lastName}` : 'Profesional',
     );
@@ -526,7 +544,7 @@ function FramedContent({
             ) : (
               <ul className="max-h-64 space-y-2 overflow-y-auto pr-1">
                 {slotsFlat.map((s) => (
-                  <li key={`${s.date}-${s.startTime}-${s.professionalId}`}>
+                  <li key={`${s.date}-${s.startTime}-${s.doctorUserId}`}>
                     <button
                       type="button"
                       onClick={() => handleOpenBook(s)}
@@ -547,7 +565,7 @@ function FramedContent({
       case 'agenda':
         return (
           <div className="space-y-4">
-            {!isStaff ? (
+            {!isDoctorUser ? (
               <ProfessionalPickerField
                 idPrefix="qa-agenda"
                 label="Profesional"
@@ -692,7 +710,7 @@ function FramedContent({
       case 'availability':
         return (
           <div className="space-y-4">
-            {!isStaff ? (
+            {!isDoctorUser ? (
               <ProfessionalPickerField
                 idPrefix="qa-avail"
                 label="Profesional"
@@ -794,7 +812,7 @@ function FramedContent({
                   setAvailSubmitting(true);
                   try {
                     await apiClient.createAvailability({
-                      ...(!isStaff && availProId ? { professionalId: availProId } : {}),
+                      ...(!isDoctorUser && availProId ? { doctorUserId: availProId } : {}),
                       dayOfWeek: newDay,
                       startTime: newStart,
                       endTime: newEnd,
@@ -848,7 +866,7 @@ function FramedContent({
                       onClick={async () => {
                         setTeamBusyId(p.id);
                         try {
-                          await apiClient.updateProfessional(p.id, {
+                          await apiClient.updateDoctor(p.id, {
                             isActive: !(p.isActive !== false),
                           });
                           await loadTeam();
@@ -1020,7 +1038,7 @@ function FramedContent({
                       setInviteError('Seleccioná un profesional.');
                       return;
                     }
-                    await apiClient.inviteProfessional(inviteProId, inviteEmail.trim());
+                    await apiClient.inviteDoctor(inviteProId, inviteEmail.trim());
                   }
                   setInviteOk('Invitación enviada.');
                   setInviteEmail('');
@@ -1064,7 +1082,7 @@ function FramedContent({
       {bookingSlot ? (
         <BookingModal
           slot={bookingSlot}
-          professionalName={proNameForBook}
+          doctorDisplayName={proNameForBook}
           onClose={() => setBookingSlot(null)}
           onSuccess={() => {
             setBookingSlot(null);

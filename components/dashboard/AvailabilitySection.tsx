@@ -33,10 +33,10 @@ export interface BlockedDate {
 
 interface AvailabilitySectionProps {
   readOnly?: boolean;
-  professionalId?: string;
+  doctorUserId?: string;
 }
 
-export default function AvailabilitySection({ readOnly = false, professionalId }: AvailabilitySectionProps) {
+export default function AvailabilitySection({ readOnly = false, doctorUserId }: AvailabilitySectionProps) {
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState<string | null>(null);
@@ -63,8 +63,8 @@ export default function AvailabilitySection({ readOnly = false, professionalId }
     setError(null);
     try {
       let data;
-      if (professionalId) {
-        data = await apiClient.getProfessionalAvailability(professionalId);
+      if (doctorUserId) {
+        data = await apiClient.getDoctorAvailability(doctorUserId);
       } else {
         data = await apiClient.getMyAvailability();
       }
@@ -85,7 +85,7 @@ export default function AvailabilitySection({ readOnly = false, professionalId }
   };
 
   const loadBlockedDates = async () => {
-    if (!professionalId) {
+    if (!doctorUserId) {
       try {
         const data = await apiClient.getMyBlockedDates(
           calendarMonth.year,
@@ -98,8 +98,8 @@ export default function AvailabilitySection({ readOnly = false, professionalId }
       return;
     }
     try {
-      const data = await apiClient.getProfessionalBlockedDates(
-        professionalId,
+      const data = await apiClient.getDoctorBlockedDates(
+        doctorUserId,
         calendarMonth.year,
         calendarMonth.month,
       );
@@ -110,17 +110,17 @@ export default function AvailabilitySection({ readOnly = false, professionalId }
   };
 
   useEffect(() => {
-    if (readOnly && !professionalId) {
+    if (readOnly && !doctorUserId) {
       setLoading(false);
       return;
     }
     loadAvailability();
-  }, [professionalId, readOnly]);
+  }, [doctorUserId, readOnly]);
 
   useEffect(() => {
     if (viewMode !== 'month') return;
     loadBlockedDates();
-  }, [viewMode, calendarMonth.year, calendarMonth.month, professionalId]);
+  }, [viewMode, calendarMonth.year, calendarMonth.month, doctorUserId]);
 
   const handleCreate = async (values: AvailabilityFormValues) => {
     setError(null);
@@ -129,7 +129,7 @@ export default function AvailabilitySection({ readOnly = false, professionalId }
     try {
       await apiClient.createAvailability({
         ...values,
-        ...(professionalId ? { professionalId } : {}),
+        ...(doctorUserId ? { doctorUserId } : {}),
       });
       setSuccess('Horario agregado correctamente.');
       setFormOpen(false);
@@ -233,7 +233,7 @@ export default function AvailabilitySection({ readOnly = false, professionalId }
   };
 
   /** Solo el propio profesional puede bloquear/desbloquear días; OWNER/ADMIN no. */
-  const canManageBlockedDates = !professionalId;
+  const canManageBlockedDates = !doctorUserId;
 
   // Para vista mes: agrupar por día de la semana (solo indicador de si hay bloques)
   const availabilityByWeekday = availabilities.reduce((acc, b) => {
@@ -268,7 +268,7 @@ export default function AvailabilitySection({ readOnly = false, professionalId }
           </div>
           <div className="min-w-0">
             <h3 className="font-semibold text-gray-900 truncate">
-              {professionalId ? 'Horarios del profesional' : 'Mis horarios'}
+              {doctorUserId ? 'Horarios del profesional' : 'Mis horarios'}
             </h3>
             <p className="text-sm text-gray-500">
               {availabilities.length} bloque{availabilities.length !== 1 ? 's' : ''} · Vista por {viewMode === 'week' ? 'semana' : 'mes'}
@@ -349,7 +349,7 @@ export default function AvailabilitySection({ readOnly = false, professionalId }
           </motion.div>
         )}
 
-        {readOnly && !professionalId ? (
+        {readOnly && !doctorUserId ? (
           <div className="py-8 text-center">
             <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-500">Seleccioná un profesional para ver su disponibilidad.</p>

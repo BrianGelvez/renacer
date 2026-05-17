@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Building2,
@@ -17,12 +17,35 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import EditClinicModal from './EditClinicModal';
 import HealthInsurancesSection from './HealthInsurancesSection';
+import RecetarioSyncBadge from './RecetarioSyncBadge';
+import RecetarioIntegrationPanel from './RecetarioIntegrationPanel';
 
 const DAYS_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 export default function ClinicSection() {
   const { clinic, loadUserData } = useAuth();
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [logoLoadFailed, setLogoLoadFailed] = useState(false);
+  const prescriptionLogoUrl = clinic?.prescriptionLogoUrl?.trim() || null;
+
+  useEffect(() => {
+    setLogoLoadFailed(false);
+  }, [prescriptionLogoUrl]);
+
+  /**
+   * Tras un guardado, recargamos los datos.
+   * Adicionalmente, programamos un segundo refresh 2.5s después: la
+   * sincronización con Recetario corre en background (fire-and-forget)
+   * y normalmente termina poco después de que el endpoint principal
+   * respondió. Este segundo fetch captura el estado final del badge
+   * (SYNCED / FAILED) sin obligar al usuario a refrescar manualmente.
+   */
+  const handleSaved = async () => {
+    await loadUserData();
+    window.setTimeout(() => {
+      void loadUserData();
+    }, 2500);
+  };
 
   const clinicAvailabilities = (clinic?.clinicAvailabilities ?? []).filter((a) => a.isActive);
 
@@ -70,7 +93,16 @@ export default function ClinicSection() {
         <div className="relative px-6 pb-6">
           <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12 sm:-mt-16 relative z-10">
             <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl bg-white shadow-xl border-4 border-white flex items-center justify-center overflow-hidden">
-              <Building2 className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300" />
+              {prescriptionLogoUrl && !logoLoadFailed ? (
+                <img
+                  src={prescriptionLogoUrl}
+                  alt={`Logo de ${clinic?.name ?? 'la clínica'}`}
+                  className="h-full w-full object-cover"
+                  onError={() => setLogoLoadFailed(true)}
+                />
+              ) : (
+                <Building2 className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300" />
+              )}
             </div>
             <div className="flex-1 pb-2">
               <div className="flex items-center gap-2 mb-1">
@@ -87,6 +119,16 @@ export default function ClinicSection() {
               <p className="text-gray-500 font-mono text-sm">
                 /{clinic?.slug || 'mi-clinica'}
               </p>
+              <div className="mt-2">
+                <RecetarioSyncBadge
+                  status={clinic?.recetarioSyncStatus ?? null}
+                  syncedAt={clinic?.recetarioSyncedAt ?? null}
+                  lastError={clinic?.recetarioLastError ?? null}
+                  healthCenterId={clinic?.recetarioHealthCenterId ?? null}
+                />
+              </div>
+              {/* Nota: el badge anterior es solo informativo. El panel
+                  completo con acciones está debajo en la grilla. */}
             </div>
           </div>
         </div>
@@ -189,6 +231,11 @@ export default function ClinicSection() {
           </div>
         </motion.div>
 
+        {/* Recetario.com.ar integration */}
+        <div className="lg:col-span-2">
+          <RecetarioIntegrationPanel />
+        </div>
+
         {/* Health Insurances */}
         <div className="lg:col-span-2">
           <HealthInsurancesSection />
@@ -264,7 +311,7 @@ export default function ClinicSection() {
         <EditClinicModal
           clinic={clinic}
           onClose={() => setEditModalOpen(false)}
-          onSaved={loadUserData}
+          onSaved={handleSaved}
         />
       )}
     </div>

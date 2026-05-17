@@ -26,7 +26,7 @@ interface Slot {
   startTime: string;
   endTime: string;
   duration?: number;
-  professionalId?: string;
+  doctorUserId?: string;
   clinicId?: string;
   status?: string;
   type: 'SLOT' | 'APPOINTMENT';
@@ -180,7 +180,7 @@ export default function PublicAgendaPage() {
     try {
       const data = await apiClient.getPublicSlots({
         clinicSlug,
-        professionalId: selectedProfessionalId,
+        doctorUserId: selectedProfessionalId,
         startDate: range.start,
         endDate: range.end,
       });
@@ -222,7 +222,7 @@ export default function PublicAgendaPage() {
     try {
       const body: Parameters<typeof apiClient.requestPublicAppointment>[0] = {
         clinicSlug,
-        professionalId: selectedSlot.professionalId!,
+        doctorUserId: selectedSlot.doctorUserId!,
         patientId,
         date: selectedSlot.date,
         startTime: selectedSlot.startTime,
@@ -234,7 +234,7 @@ export default function PublicAgendaPage() {
       
       // Guardar información del turno antes de cerrar el modal
       const professional = clinicInfo?.professionals.find(
-        (p) => p.id === selectedSlot.professionalId,
+        (p) => p.id === selectedSlot.doctorUserId,
       );
       setLastAppointmentInfo({
         date: selectedSlot.date,

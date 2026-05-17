@@ -14,28 +14,19 @@ import {
   Clock,
   ArrowRight,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api';
+import { apiClient, type ClinicTeamMemberDto } from '@/lib/api';
 
-interface Professional {
-  id: string;
-  firstName: string;
-  lastName: string;
-  specialty?: string | null;
-  userId: string | null;
-  isActive: boolean;
-}
+type InviteType = 'admin' | 'doctor';
 
-type InviteType = 'admin' | 'professional';
-
-/** Invitación unificada para mostrar en la lista (admin o profesional) */
+/** Invitación unificada para mostrar en la lista (admin o médico). */
 interface RecentInviteItem {
   id: string;
-  type: 'admin' | 'professional';
+  type: 'admin' | 'doctor';
   email: string;
   status: 'pending' | 'accepted';
   date: string;
   dateRaw: Date;
-  professionalName?: string;
+  doctorName?: string;
 }
 
 interface InviteSectionProps {
@@ -56,10 +47,10 @@ function formatRelativeDate(date: Date): string {
 }
 
 export default function InviteSection({ refreshKey = 0, canInviteAdmin = true }: InviteSectionProps) {
-  const [inviteType, setInviteType] = useState<InviteType>(canInviteAdmin ? 'admin' : 'professional');
+  const [inviteType, setInviteType] = useState<InviteType>(canInviteAdmin ? 'admin' : 'doctor');
   const [email, setEmail] = useState('');
-  const [professionalId, setProfessionalId] = useState('');
-  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [doctorUserId, setDoctorUserId] = useState('');
+  const [doctors, setDoctors] = useState<ClinicTeamMemberDto[]>([]);
   const [loadingProfessionals, setLoadingProfessionals] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -68,24 +59,24 @@ export default function InviteSection({ refreshKey = 0, canInviteAdmin = true }:
   const [loadingInvites, setLoadingInvites] = useState(true);
   const [inviteListKey, setInviteListKey] = useState(0);
 
-  const professionalsWithoutAccount = professionals.filter((p) => !p.userId && p.isActive);
+  const doctorsWithoutAccount = doctors.filter((d) => !d.hasAccount && d.isActive);
 
   useEffect(() => {
     if (!canInviteAdmin) {
-      setInviteType('professional');
+      setInviteType('doctor');
     }
   }, [canInviteAdmin]);
 
   useEffect(() => {
-    if (inviteType === 'professional') {
+    if (inviteType === 'doctor') {
       setLoadingProfessionals(true);
       apiClient
-        .getProfessionals()
-        .then((data) => setProfessionals(Array.isArray(data) ? data : []))
-        .catch(() => setProfessionals([]))
+        .listClinicDoctors()
+        .then((data) => setDoctors(Array.isArray(data) ? data : []))
+        .catch(() => setDoctors([]))
         .finally(() => setLoadingProfessionals(false));
     } else {
-      setProfessionalId('');
+      setDoctorUserId('');
     }
   }, [inviteType, refreshKey]);
 
@@ -95,9 +86,9 @@ export default function InviteSection({ refreshKey = 0, canInviteAdmin = true }:
     const load = async () => {
       try {
         const adminPromise = canInviteAdmin ? apiClient.getAdminInvites() : Promise.resolve([]);
-        const [adminInvites, proInvites] = await Promise.all([
+        const [adminInvites, doctorInvRows] = await Promise.all([
           adminPromise,
-          apiClient.getProfessionalInvites(),
+          apiClient.getDoctorInvites(),
         ]);
         const items: RecentInviteItem[] = [];
         (adminInvites as Array<{ id: string; email: string; createdAt: string; usedAt: string | null }>)?.forEach((inv) => {
@@ -111,23 +102,23 @@ export default function InviteSection({ refreshKey = 0, canInviteAdmin = true }:
             dateRaw: date,
           });
         });
-        (proInvites as Array<{
+        (doctorInvRows as Array<{
           id: string;
           email: string;
           createdAt: string;
           usedAt: string | null;
-          professional?: { firstName: string; lastName: string };
+          doctor?: { name: string; lastName: string };
         }>)?.forEach((inv) => {
           const date = new Date(inv.createdAt);
           items.push({
             id: inv.id,
-            type: 'professional',
+            type: 'doctor',
             email: inv.email,
             status: inv.usedAt ? 'accepted' : 'pending',
             date: formatRelativeDate(date),
             dateRaw: date,
-            professionalName: inv.professional
-              ? `Dr. ${inv.professional.firstName} ${inv.professional.lastName}`
+            doctorName: inv.doctor
+              ? `Dr. ${inv.doctor.name} ${inv.doctor.lastName}`
               : undefined,
           });
         });
@@ -164,15 +155,15 @@ export default function InviteSection({ refreshKey = 0, canInviteAdmin = true }:
         setLoading(false);
       }
     } else {
-      if (!professionalId || !email.trim()) return;
+      if (!doctorUserId || !email.trim()) return;
       setLoading(true);
       try {
-        await apiClient.inviteProfessional(professionalId, email.trim());
-        const pro = professionals.find((p) => p.id === professionalId);
-        const name = pro ? `${pro.firstName} ${pro.lastName}` : 'Profesional';
+        await apiClient.inviteDoctor(doctorUserId, email.trim());
+        const doc = doctors.find((d) => d.userId === doctorUserId);
+        const name = doc ? `${doc.firstName} ${doc.lastName}` : 'médico';
         setSuccess(`Invitación enviada a ${email} para ${name}.`);
         setEmail('');
-        setProfessionalId('');
+        setDoctorUserId('');
         setInviteListKey((k) => k + 1);
       } catch (err: unknown) {
         const message =
@@ -211,14 +202,14 @@ export default function InviteSection({ refreshKey = 0, canInviteAdmin = true }:
             <ShieldPlus className="w-10 h-10 mb-3 relative z-10" />
             <h3 className="text-lg font-semibold mb-1 relative z-10">Administradores</h3>
             <p className="text-white/80 text-sm relative z-10">
-              Pueden gestionar profesionales, ver estadísticas y configurar la clínica.
+              Pueden gestionar el equipo médico, ver estadísticas y configurar la clínica.
             </p>
           </div>
         )}
         <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3" />
           <Stethoscope className="w-10 h-10 mb-3 relative z-10" />
-          <h3 className="text-lg font-semibold mb-1 relative z-10">Profesionales</h3>
+          <h3 className="text-lg font-semibold mb-1 relative z-10">Médicos</h3>
           <p className="text-white/80 text-sm relative z-10">
             Gestionan su disponibilidad, ven sus turnos y atienden pacientes.
           </p>
@@ -227,7 +218,7 @@ export default function InviteSection({ refreshKey = 0, canInviteAdmin = true }:
 
       {!canInviteAdmin && (
         <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-          Como administrador podés invitar profesionales por correo para que creen su cuenta de usuario.
+          Como administrador podés invitar médicos por correo para que creen su cuenta de usuario.
         </p>
       )}
 
@@ -279,69 +270,69 @@ export default function InviteSection({ refreshKey = 0, canInviteAdmin = true }:
               </button>
               <button
                 type="button"
-                onClick={() => setInviteType('professional')}
+                onClick={() => setInviteType('doctor')}
                 className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                  inviteType === 'professional'
+                  inviteType === 'doctor'
                     ? 'border-emerald-500 bg-emerald-50'
                     : 'border-gray-200 hover:border-gray-300 bg-white'
                 }`}
               >
-                {inviteType === 'professional' && (
+                {inviteType === 'doctor' && (
                   <motion.div
                     layoutId="inviteType"
                     className="absolute inset-0 border-2 border-emerald-500 rounded-xl"
                   />
                 )}
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  inviteType === 'professional' 
+                  inviteType === 'doctor' 
                     ? 'bg-emerald-500 text-white' 
                     : 'bg-gray-100 text-gray-500'
                 }`}>
                   <Stethoscope className="w-6 h-6" />
                 </div>
                 <span className={`font-medium ${
-                  inviteType === 'professional' ? 'text-emerald-700' : 'text-gray-700'
+                  inviteType === 'doctor' ? 'text-emerald-700' : 'text-gray-700'
                 }`}>
-                  Profesional
+                  Médico
                 </span>
               </button>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {(inviteType === 'professional' || !canInviteAdmin) && (
+            {(inviteType === 'doctor' || !canInviteAdmin) && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Profesional a vincular
+                  Médico a vincular
                 </label>
                 {loadingProfessionals ? (
                   <div className="flex items-center gap-2 text-sm text-gray-500 py-3 px-4 bg-gray-50 rounded-xl">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Cargando profesionales…
+                    Cargando médicos…
                   </div>
-                ) : professionalsWithoutAccount.length === 0 ? (
+                ) : doctorsWithoutAccount.length === 0 ? (
                   <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
                     <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-sm font-medium text-amber-800">
-                        No hay profesionales disponibles
+                        No hay médicos para invitar
                       </p>
                       <p className="text-sm text-amber-700 mt-1">
-                        Primero debes crear un profesional desde la sección &quot;Crear Profesional&quot;.
+                        Primero creá un médico desde la sección Equipo (&quot;Agregar profesional&quot;).
                       </p>
                     </div>
                   </div>
                 ) : (
                   <select
-                    value={professionalId}
-                    onChange={(e) => setProfessionalId(e.target.value)}
-                    required={inviteType === 'professional' || !canInviteAdmin}
+                    value={doctorUserId}
+                    onChange={(e) => setDoctorUserId(e.target.value)}
+                    required={inviteType === 'doctor' || !canInviteAdmin}
                     disabled={loading}
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-gray-900 bg-white transition-all"
                   >
-                    <option value="">Seleccionar profesional…</option>
-                    {professionalsWithoutAccount.map((p) => (
-                      <option key={p.id} value={p.id}>
+                    <option value="">Seleccionar médico…</option>
+                    {doctorsWithoutAccount.map((p) => (
+                      <option key={p.userId} value={p.userId}>
                         Dr. {p.firstName} {p.lastName}
                         {p.specialty ? ` — ${p.specialty}` : ''}
                       </option>
@@ -379,8 +370,8 @@ export default function InviteSection({ refreshKey = 0, canInviteAdmin = true }:
                 type="submit"
                 disabled={
                   loading ||
-                  ((inviteType === 'professional' || !canInviteAdmin) &&
-                    (!professionalId || professionalsWithoutAccount.length === 0))
+                  ((inviteType === 'doctor' || !canInviteAdmin) &&
+                    (!doctorUserId || doctorsWithoutAccount.length === 0))
                 }
                 className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed ${
                   canInviteAdmin && inviteType === 'admin'
@@ -472,10 +463,10 @@ export default function InviteSection({ refreshKey = 0, canInviteAdmin = true }:
                     <p className="font-medium text-gray-900 truncate">{invite.email}</p>
                     <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
                       <span>{invite.date}</span>
-                      {invite.type === 'professional' && invite.professionalName && (
+                      {invite.type === 'doctor' && invite.doctorName && (
                         <>
                           <span aria-hidden>·</span>
-                          <span className="truncate">{invite.professionalName}</span>
+                          <span className="truncate">{invite.doctorName}</span>
                         </>
                       )}
                     </div>

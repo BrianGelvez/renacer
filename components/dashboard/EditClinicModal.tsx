@@ -30,6 +30,7 @@ interface ClinicToEdit {
   address?: string | null;
   city?: string | null;
   province?: string | null;
+  prescriptionLogoUrl?: string | null;
   isActive: boolean;
   clinicAvailabilities?: ClinicAvailability[];
 }
@@ -48,6 +49,7 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [province, setProvince] = useState('');
+  const [prescriptionLogoUrl, setPrescriptionLogoUrl] = useState('');
   const [availabilities, setAvailabilities] = useState<ClinicAvailability[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +74,7 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
       setAddress(clinic.address ?? '');
       setCity(clinic.city ?? '');
       setProvince(clinic.province ?? '');
+      setPrescriptionLogoUrl(clinic.prescriptionLogoUrl ?? '');
       setAvailabilities(clinic.clinicAvailabilities ?? []);
       setError(null);
     }
@@ -99,6 +102,7 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
         address: address.trim() || undefined,
         city: city.trim() || undefined,
         province: province.trim() || undefined,
+        prescriptionLogoUrl: prescriptionLogoUrl.trim() || null,
       });
       onSaved();
       onClose();
@@ -278,6 +282,26 @@ export default function EditClinicModal({ clinic, onClose, onSaved }: EditClinic
                     disabled={loading}
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  URL del logo para recetas
+                </label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="url"
+                    value={prescriptionLogoUrl}
+                    onChange={(e) => setPrescriptionLogoUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                    disabled={loading}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Se guarda localmente y se sincroniza automáticamente con
+                  Recetario como prescriptionLogoUrl.
+                </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

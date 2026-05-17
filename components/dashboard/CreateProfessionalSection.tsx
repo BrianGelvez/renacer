@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Stethoscope,
@@ -16,7 +16,7 @@ import {
   Building2,
   Mail,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api';
+import { apiClient, type CreateDoctorApiPayload } from '@/lib/api';
 
 interface CreateProfessionalSectionProps {
   onCreated?: () => void;
@@ -30,20 +30,70 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
   const [licenseNumber, setLicenseNumber] = useState('');
   const [phone, setPhone] = useState('');
   const [managedByClinic, setManagedByClinic] = useState(true);
+  const [licenseTypes, setLicenseTypes] = useState<string[]>([]);
+  const [titles, setTitles] = useState<string[]>([]);
+  const [provinces, setProvinces] = useState<{ id: number; name: string }[]>([]);
+
+  const [email, setEmail] = useState('');
+  const [licenseType, setLicenseType] = useState('');
+  const [documentNumber, setDocumentNumber] = useState('');
+  const [title, setTitle] = useState('');
+  const [workPhone, setWorkPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [province, setProvince] = useState('');
+  const [prescriptionLegend, setPrescriptionLegend] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [successType, setSuccessType] = useState<'managed' | 'pending' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    void (async () => {
+      try {
+        const [cats, provs] = await Promise.all([
+          apiClient.getRecetarioProfessionalFields(),
+          apiClient.getRecetarioProvinces(false),
+        ]);
+        setLicenseTypes(
+          Array.isArray(cats?.licenseTypes) ? cats.licenseTypes : [],
+        );
+        setTitles(Array.isArray(cats?.titles) ? cats.titles : []);
+        setProvinces(Array.isArray(provs) ? provs : []);
+      } catch {
+        setLicenseTypes([]);
+        setTitles([]);
+        setProvinces([]);
+      }
+    })();
+  }, [isOpen]);
+
+  const resetRecetarioForm = () => {
+    setEmail('');
+    setLicenseType('');
+    setDocumentNumber('');
+    setTitle('');
+    setWorkPhone('');
+    setAddress('');
+    setProvince('');
+    setPrescriptionLegend('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    if (!firstName.trim() || !lastName.trim()) return;
+    if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+      setError('Completá nombre, apellido y email de cuenta.');
+      return;
+    }
 
     setLoading(true);
     try {
-      await apiClient.createProfessional({
+      const digits = documentNumber.replace(/\D/g, '');
+      const payload: CreateDoctorApiPayload = {
+        email: email.trim().toLowerCase(),
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         specialty: specialty.trim() || undefined,
@@ -51,7 +101,19 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
         phone: phone.trim() || undefined,
         isActive: true,
         managedByClinic,
-      });
+        licenseType: licenseType.trim() || undefined,
+        documentNumber: digits === '' ? undefined : digits,
+        title: title.trim() || undefined,
+        workPhone: workPhone.trim() || undefined,
+        address: address.trim() || undefined,
+        province: province === '' ? undefined : province,
+        prescriptionLegend:
+          prescriptionLegend.trim() === ''
+            ? undefined
+            : prescriptionLegend.trim(),
+      };
+
+      await apiClient.createDoctor(payload);
       const name = `Dr. ${firstName.trim()} ${lastName.trim()}`;
       setSuccess(name);
       setSuccessType(managedByClinic ? 'managed' : 'pending');
@@ -60,6 +122,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
       setSpecialty('');
       setLicenseNumber('');
       setPhone('');
+      resetRecetarioForm();
       onCreated?.();
       setTimeout(() => {
         setIsOpen(false);
@@ -88,6 +151,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
       setLicenseNumber('');
       setPhone('');
       setManagedByClinic(true);
+      resetRecetarioForm();
     }
   };
 
@@ -312,6 +376,123 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                       </div>
                     </div>
                   </div>
+
+                  <fieldset className="rounded-2xl border border-violet-200 bg-violet-50/30 p-4 space-y-4">
+                    <legend className="text-sm font-semibold text-violet-900 px-2">
+                      Recetario.com.ar — recetas electrónicas
+                    </legend>
+                    <p className="text-xs text-violet-900/80">
+                      Opcional en el alta: si completás estos campos, el backend puede sincronizar el médico con la institución vinculada. Provincias y listas salen del API oficial (cache servidor).
+                    </p>
+                    <div>
+                      <label htmlFor="pro-rx-email" className="block text-xs font-medium text-gray-700 mb-1">
+                        Email de cuenta (obligatorio)
+                      </label>
+                      <input
+                        id="pro-rx-email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="usuario@ejemplo.com — también sirve para Recetario"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm"
+                        disabled={loading}
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Tipo matrícula</label>
+                        <select
+                          value={licenseType}
+                          onChange={(e) => setLicenseType(e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm"
+                          disabled={loading}
+                        >
+                          <option value="">—</option>
+                          {licenseTypes.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-700 mb-1">Título</label>
+                        <select
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm"
+                          disabled={loading}
+                        >
+                          <option value="">—</option>
+                          {titles.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        DNI (solo dígitos, sin puntos)
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={documentNumber}
+                        onChange={(e) =>
+                          setDocumentNumber(e.target.value.replace(/\D/g, ''))
+                        }
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 font-mono text-sm"
+                        disabled={loading}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Provincia
+                      </label>
+                      <select
+                        value={province}
+                        onChange={(e) => setProvince(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm"
+                        disabled={loading}
+                      >
+                        <option value="">—</option>
+                        {provinces.map((pr) => (
+                          <option key={pr.id} value={pr.name}>
+                            {pr.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <input
+                        type="text"
+                        value={workPhone}
+                        onChange={(e) => setWorkPhone(e.target.value)}
+                        placeholder="Teléfono laboral"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm"
+                        disabled={loading}
+                      />
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        placeholder="Dirección consultorio"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm sm:col-span-2"
+                        disabled={loading}
+                      />
+                    </div>
+                    <div className="border-t border-violet-200 pt-3 space-y-2">
+                      <p className="text-xs font-medium text-gray-700">
+                        Leyenda en receta (opcional; el resto del perfil en Recetario usa teléfono laboral, dirección y email de contacto arriba)
+                      </p>
+                      <input
+                        type="text"
+                        value={prescriptionLegend}
+                        onChange={(e) => setPrescriptionLegend(e.target.value)}
+                        placeholder="Leyenda / pie de documento"
+                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
+                        disabled={loading}
+                      />
+                    </div>
+                  </fieldset>
 
                   <div className="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 bg-gray-50/50">
                     <input

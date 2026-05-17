@@ -24,6 +24,7 @@ import {
   BarChart3,
   Wallet,
   MessageCircle,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { apiClient } from "@/lib/api";
@@ -64,7 +65,7 @@ const navItems: NavItem[] = [
     label: "Resumen",
     icon: <LayoutDashboard className="w-5 h-5" />,
     href: "/dashboard",
-    roles: ["OWNER", "ADMIN", "STAFF"],
+    roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY'],
   },
   {
     id: "clinic",
@@ -92,21 +93,21 @@ const navItems: NavItem[] = [
     label: "Disponibilidad",
     icon: <Clock className="w-5 h-5" />,
     href: "/dashboard?section=availability",
-    roles: ["OWNER", "ADMIN", "STAFF"],
+    roles: ['OWNER', 'ADMIN', 'DOCTOR'],
   },
   {
     id: "schedule",
     label: "Agenda",
     icon: <Calendar className="w-5 h-5" />,
     href: "/dashboard/agenda",
-    roles: ["OWNER", "ADMIN", "STAFF"],
+    roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY'],
   },
   {
     id: "patients",
     label: "Pacientes",
     icon: <Users className="w-5 h-5" />,
     href: "/dashboard/patients",
-    roles: ["OWNER", "ADMIN", "STAFF"],
+    roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY'],
   },
   {
     id: "conversations",
@@ -120,21 +121,28 @@ const navItems: NavItem[] = [
     label: "Finanzas",
     icon: <Wallet className="w-5 h-5" />,
     href: "/dashboard/finanzas",
-    roles: ["OWNER", "ADMIN", "STAFF"],
+    roles: ['OWNER', 'ADMIN', 'DOCTOR'],
   },
   {
     id: "reports",
     label: "Reportes",
     icon: <BarChart3 className="w-5 h-5" />,
     href: "/dashboard/reports",
-    roles: ["OWNER", "ADMIN", "STAFF"],
+    roles: ['OWNER', 'ADMIN', 'DOCTOR'],
+  },
+  {
+    id: "auditoria",
+    label: "Auditoría",
+    icon: <ShieldCheck className="w-5 h-5" />,
+    href: "/dashboard/auditoria",
+    roles: ["OWNER", "ADMIN"],
   },
   {
     id: "settings",
     label: "Configuración",
     icon: <Settings className="w-5 h-5" />,
     href: "/dashboard?section=settings",
-    roles: ["OWNER", "ADMIN", "STAFF"],
+    roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY'],
   },
 ];
 
@@ -147,7 +155,7 @@ export default function DashboardLayout({
   const patientSearchRef = useRef<HTMLDivElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
   // Notifications
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -236,8 +244,12 @@ export default function DashboardLayout({
     ),
   );
 
-  // Update time every minute
+  // Update time every minute. Inicializamos en cliente (useEffect) para
+  // evitar hydration mismatch: el formateo `toLocaleTimeString` produce
+  // strings con caracteres invisibles distintos según el ICU de Node vs
+  // del navegador (NBSP vs espacio normal antes de a. m. / p. m.).
   useEffect(() => {
+    setCurrentTime(new Date());
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
@@ -307,6 +319,10 @@ export default function DashboardLayout({
         return "from-[#D16A8A] to-[#E89AB0]";
       case "ADMIN":
         return "from-amber-500 to-orange-600";
+      case "DOCTOR":
+        return "from-emerald-500 to-teal-600";
+      case "SECRETARY":
+        return "from-sky-500 to-blue-600";
       case "STAFF":
         return "from-emerald-500 to-teal-600";
       default:
@@ -320,8 +336,12 @@ export default function DashboardLayout({
         return "Propietario";
       case "ADMIN":
         return "Administrador";
+      case "DOCTOR":
+        return "Médico";
+      case "SECRETARY":
+        return "Recepción";
       case "STAFF":
-        return "Profesional";
+        return "Médico";
       default:
         return role;
     }
@@ -810,11 +830,16 @@ export default function DashboardLayout({
                 <p className="text-sm font-medium text-white">
                   {user?.name} {user?.lastName}
                 </p>
-                <p className="text-xs text-white/75">
-                  {currentTime.toLocaleTimeString("es-AR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                <p
+                  className="text-xs text-white/75"
+                  suppressHydrationWarning
+                >
+                  {currentTime
+                    ? currentTime.toLocaleTimeString("es-AR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "--:--"}
                 </p>
               </div>
               <div

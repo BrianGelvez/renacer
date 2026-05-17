@@ -20,6 +20,8 @@ function DashboardRouteLayoutInner({
     '/dashboard/conversaciones': 'conversations',
     '/dashboard/finanzas': 'finanzas',
     '/dashboard/reports': 'reports',
+    '/dashboard/auditoria': 'auditoria',
+    '/dashboard/integraciones/recetario': 'recetario',
   };
 
   const activeSection = isPatientDetail

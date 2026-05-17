@@ -16,7 +16,7 @@ interface PatientOption {
 
 interface BookingModalProps {
   slot: SlotItem;
-  professionalName: string;
+  doctorDisplayName: string;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -26,7 +26,7 @@ const SEARCH_MIN_LENGTH = 1;
 
 export default function BookingModal({
   slot,
-  professionalName,
+  doctorDisplayName,
   onClose,
   onSuccess,
 }: BookingModalProps) {
@@ -98,7 +98,7 @@ export default function BookingModal({
     try {
       if (mode === 'search' && selectedPatientId) {
         await apiClient.createManualAppointment({
-          professionalId: slot.professionalId,
+          doctorUserId: slot.doctorUserId,
           date: slot.date,
           startTime: slot.startTime,
           endTime: slot.endTime,
@@ -107,7 +107,7 @@ export default function BookingModal({
         });
       } else {
         await apiClient.createManualAppointment({
-          professionalId: slot.professionalId,
+          doctorUserId: slot.doctorUserId,
           date: slot.date,
           startTime: slot.startTime,
           endTime: slot.endTime,
@@ -163,7 +163,7 @@ export default function BookingModal({
             <div className="p-3 sm:p-4 rounded-xl bg-gray-50 border border-gray-100">
               <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
                 <User className="w-4 h-4 shrink-0" />
-                {professionalName}
+                {doctorDisplayName}
               </p>
               <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
                 <Clock className="w-4 h-4 shrink-0" />

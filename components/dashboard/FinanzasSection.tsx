@@ -35,12 +35,12 @@ type PaymentRow = {
   appointment?: {
     id: string;
     startTime: string;
-    professional?: { firstName: string; lastName: string } | null;
+    doctor?: { id: string; name: string; lastName: string } | null;
   } | null;
   insuranceClaim?: { id: string; status: string } | null;
 };
 
-type ProfessionalOpt = { id: string; firstName: string; lastName: string };
+type DoctorPickerOpt = { id: string; firstName: string; lastName: string };
 type HiOpt = { id: string; name: string };
 
 const METHOD_LABELS: Record<string, string> = {
@@ -136,7 +136,7 @@ export default function FinanzasSection() {
     bySource: { PRIVATE: number; INSURANCE: number };
   } | null>(null);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
-  const [professionals, setProfessionals] = useState<ProfessionalOpt[]>([]);
+  const [doctorFilterOpts, setDoctorFilterOpts] = useState<DoctorPickerOpt[]>([]);
   const [healthInsurances, setHealthInsurances] = useState<HiOpt[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -147,7 +147,7 @@ export default function FinanzasSection() {
   const [toDate, setToDate] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterSource, setFilterSource] = useState('');
-  const [filterProfessionalId, setFilterProfessionalId] = useState('');
+  const [filterDoctorUserId, setFilterDoctorUserId] = useState('');
   const [filterHealthInsuranceId, setFilterHealthInsuranceId] = useState('');
   const [filterBilling, setFilterBilling] = useState('');
 
@@ -160,14 +160,14 @@ export default function FinanzasSection() {
 
   const loadMeta = useCallback(async () => {
     try {
-      const [profs, his] = await Promise.all([
-        apiClient.getProfessionals(),
+      const [docs, his] = await Promise.all([
+        apiClient.listClinicDoctors(),
         apiClient.getHealthInsurances(true),
       ]);
-      const pList = Array.isArray(profs) ? profs : [];
-      setProfessionals(
-        pList.map((x: { id: string; firstName: string; lastName: string }) => ({
-          id: x.id,
+      const dList = Array.isArray(docs) ? docs : [];
+      setDoctorFilterOpts(
+        dList.map((x: { userId: string; firstName: string; lastName: string }) => ({
+          id: x.userId,
           firstName: x.firstName,
           lastName: x.lastName,
         })),
@@ -177,7 +177,7 @@ export default function FinanzasSection() {
         hList.map((x: { id: string; name: string }) => ({ id: x.id, name: x.name })),
       );
     } catch {
-      setProfessionals([]);
+      setDoctorFilterOpts([]);
       setHealthInsurances([]);
     }
   }, []);
@@ -196,7 +196,7 @@ export default function FinanzasSection() {
           toDate: toDate || undefined,
           status: filterStatus || undefined,
           source: filterSource || undefined,
-          professionalId: filterProfessionalId || undefined,
+          doctorUserId: filterDoctorUserId || undefined,
           healthInsuranceId: filterHealthInsuranceId || undefined,
           insuranceBillingStatus:
             (filterBilling as 'PENDING' | 'INVOICED' | 'COLLECTED') || undefined,
@@ -215,7 +215,7 @@ export default function FinanzasSection() {
     toDate,
     filterStatus,
     filterSource,
-    filterProfessionalId,
+    filterDoctorUserId,
     filterHealthInsuranceId,
     filterBilling,
     refreshKey,
@@ -515,14 +515,14 @@ export default function FinanzasSection() {
               </select>
             </label>
             <label className="text-xs text-gray-500 flex flex-col gap-1">
-              Profesional
+              Médico
               <select
-                value={filterProfessionalId}
-                onChange={(e) => setFilterProfessionalId(e.target.value)}
+                value={filterDoctorUserId}
+                onChange={(e) => setFilterDoctorUserId(e.target.value)}
                 className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm min-w-[160px]"
               >
                 <option value="">Todos</option>
-                {professionals.map((pr) => (
+                {doctorFilterOpts.map((pr) => (
                   <option key={pr.id} value={pr.id}>
                     {pr.firstName} {pr.lastName}
                   </option>
@@ -595,7 +595,7 @@ export default function FinanzasSection() {
                   const badge = rowStateBadge(p);
                   const pp = patientPaidDisplay(p);
                   const ins = insuranceDisplay(p);
-                  const pro = p.appointment?.professional;
+                  const docRow = p.appointment?.doctor;
                   return (
                     <tr key={p.id} className="border-t border-gray-100 hover:bg-gray-50/80">
                       <td className="px-3 py-3 text-gray-700 whitespace-nowrap">
@@ -605,8 +605,8 @@ export default function FinanzasSection() {
                         {p.patient.firstName} {p.patient.lastName}
                       </td>
                       <td className="px-3 py-3 text-gray-600 text-xs max-w-[140px] truncate">
-                        {pro
-                          ? `${pro.lastName}, ${pro.firstName} · ${formatTurno(p.appointment?.startTime)}`
+                        {docRow
+                          ? `${docRow.lastName}, ${docRow.name} · ${formatTurno(p.appointment?.startTime)}`
                           : formatTurno(p.appointment?.startTime)}
                       </td>
                       <td className="px-3 py-3 text-right font-semibold text-gray-900">

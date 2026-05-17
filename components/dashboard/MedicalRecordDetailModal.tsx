@@ -14,9 +14,11 @@ import {
   Clock,
   AlertCircle,
   Shield,
+  History,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import MedicalRecordFilesSection from './MedicalRecordFilesSection';
+import MedicalRecordVersionsPanel from './MedicalRecordVersionsPanel';
 
 interface MedicalRecordDetailModalProps {
   recordId: string | null;
@@ -82,6 +84,7 @@ export default function MedicalRecordDetailModal({
     affiliateNumber?: string | null;
     createdAt: string;
     consultationDate: string;
+    currentVersion?: number;
     professional: { firstName: string; lastName: string; specialty?: string | null };
     patient: { firstName: string; lastName: string };
     appointment?: {
@@ -94,12 +97,14 @@ export default function MedicalRecordDetailModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'detail' | 'versions'>('detail');
   const [form, setForm] = useState({
     reason: '',
     symptoms: '',
     diagnosis: '',
     treatment: '',
     notes: '',
+    changeReason: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -118,6 +123,7 @@ export default function MedicalRecordDetailModal({
         diagnosis: data.diagnosis ?? '',
         treatment: data.treatment ?? '',
         notes: data.notes ?? '',
+        changeReason: '',
       });
     } catch (err: unknown) {
       setError(
@@ -145,6 +151,7 @@ export default function MedicalRecordDetailModal({
         diagnosis: form.diagnosis.trim() || undefined,
         treatment: form.treatment.trim() || undefined,
         notes: form.notes.trim() || undefined,
+        changeReason: form.changeReason.trim() || undefined,
       });
       setEditing(false);
       fetchRecord();
@@ -197,19 +204,52 @@ export default function MedicalRecordDetailModal({
         className="relative z-10 w-full max-w-lg max-h-[90vh] overflow-hidden rounded-2xl bg-white shadow-xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between flex-shrink-0 px-6 py-4 border-b border-gray-100 bg-gray-50/80">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-indigo-600" />
-            Detalle del registro
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-xl text-gray-500 hover:bg-gray-200"
-            aria-label="Cerrar"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        <div className="flex flex-col flex-shrink-0 border-b border-gray-100 bg-gray-50/80">
+          <div className="flex items-center justify-between px-6 pt-4 pb-2">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-indigo-600" />
+              Detalle del registro
+              {record?.currentVersion && record.currentVersion > 1 && (
+                <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700">
+                  v{record.currentVersion}
+                </span>
+              )}
+            </h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-xl text-gray-500 hover:bg-gray-200"
+              aria-label="Cerrar"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex items-center gap-1 px-6 pb-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab('detail')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === 'detail'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-200/60'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Detalle
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('versions')}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeTab === 'versions'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-gray-600 hover:bg-gray-200/60'
+              }`}
+            >
+              <History className="w-3.5 h-3.5" />
+              Historial
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-5">
@@ -224,6 +264,16 @@ export default function MedicalRecordDetailModal({
               <p className="text-sm text-red-800">{error}</p>
             </div>
           ) : record ? (
+            activeTab === 'versions' ? (
+              <MedicalRecordVersionsPanel
+                medicalRecordId={record.id}
+                canEdit={canEdit}
+                onRestored={() => {
+                  void fetchRecord();
+                  onSuccess();
+                }}
+              />
+            ) : (
             <div className="space-y-5">
               <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 space-y-2">
                 {record.appointment ? (
@@ -338,6 +388,24 @@ export default function MedicalRecordDetailModal({
                       }
                       rows={2}
                       className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm resize-none"
+                    />
+                  </div>
+                  <div className="rounded-xl border border-amber-100 bg-amber-50/60 p-3">
+                    <label className="block text-xs font-semibold text-amber-800 uppercase tracking-wider mb-1">
+                      Motivo de la corrección
+                    </label>
+                    <p className="text-[11px] text-amber-700/80 mb-2 leading-snug">
+                      Se generará una nueva versión inmutable. La versión actual quedará registrada como histórica.
+                    </p>
+                    <input
+                      type="text"
+                      placeholder="Ej: Corrección por error de transcripción"
+                      value={form.changeReason}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, changeReason: e.target.value }))
+                      }
+                      maxLength={500}
+                      className="w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400"
                     />
                   </div>
                   <div className="flex gap-2">
@@ -474,6 +542,7 @@ export default function MedicalRecordDetailModal({
                 </>
               )}
             </div>
+            )
           ) : null}
         </div>
       </motion.div>

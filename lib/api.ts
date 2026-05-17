@@ -1,6 +1,71 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 
+export type ClinicTeamRole =
+  | 'OWNER'
+  | 'ADMIN'
+  | 'SECRETARY'
+  | 'DOCTOR';
+
+/** Una fila de `GET /users/team`: `User` + `ClinicUser` en la clínica actual. */
+export type ClinicTeamMemberDto = {
+  id: string;
+  clinicUserId: string;
+  userId: string;
+  email: string;
+  name: string;
+  lastName: string;
+  firstName: string;
+  phone: string | null;
+  role: ClinicTeamRole;
+  isActive: boolean;
+  specialty: string | null;
+  licenseNumber: string | null;
+  managedByClinic: boolean | null;
+  hasAccount: boolean;
+  recetarioUserId: number | null;
+  recetarioActive: boolean | null;
+  recetarioSyncStatus: 'PENDING' | 'SYNCED' | 'FAILED' | null;
+  recetarioSyncedAt: string | null;
+  recetarioLastError: string | null;
+  createdAt: string;
+};
+
+export type UpsertDoctorRecetarioPayload = {
+  contactEmail?: string | null;
+  licenseType?: string | null;
+  documentNumber?: string | null;
+  title?: string | null;
+  workPhone?: string | null;
+  address?: string | null;
+  /** Nombre exacto como en GET /provinces (ej. "Córdoba"). */
+  province?: string | null;
+  signatureUrl?: string | null;
+  prescriptionLegend?: string | null;
+};
+
+export type CreateDoctorApiPayload = {
+  /** Identidad de inicio de sesión; debe coincidir con el User creado. */
+  email: string;
+  firstName: string;
+  lastName: string;
+  specialty?: string;
+  licenseNumber?: string;
+  phone?: string;
+  isActive?: boolean;
+  managedByClinic?: boolean;
+} & UpsertDoctorRecetarioPayload;
+
+export type UpdateDoctorApiPayload = {
+  firstName?: string;
+  lastName?: string;
+  specialty?: string;
+  licenseNumber?: string;
+  phone?: string;
+  isActive?: boolean;
+  managedByClinic?: boolean;
+} & UpsertDoctorRecetarioPayload;
+
 /**
  * Cliente API configurado para el backend NestJS
  * 
@@ -162,6 +227,7 @@ class ApiClient {
     address?: string;
     city?: string;
     province?: string;
+    prescriptionLogoUrl?: string | null;
     isActive?: boolean;
   }) {
     const response = await this.client.patch('/clinics/current', data);
@@ -214,7 +280,21 @@ class ApiClient {
   }
 
   /**
-   * Obtener miembros de la clínica (OWNER, ADMIN, STAFF) con datos del usuario
+   * Equipo multi-tenant: todos los usuarios miembros de la clínica actual (`ClinicUser` activos/no borrados).
+   */
+  async getTeamMembers(): Promise<ClinicTeamMemberDto[]> {
+    const response = await this.client.get('/users/team');
+    return response.data;
+  }
+
+  /** Médicos con rol DOCTOR en la clínica (útil para selectores). */
+  async listClinicDoctors(): Promise<ClinicTeamMemberDto[]> {
+    const team = await this.getTeamMembers();
+    return team.filter((m) => m.role === 'DOCTOR');
+  }
+
+  /**
+   * @deprecated usar `getTeamMembers` (misma información; legacy `/clinics/current/members` solo admins activos).
    */
   async getClinicMembers() {
     const response = await this.client.get('/clinics/current/members');
@@ -229,74 +309,72 @@ class ApiClient {
     return response.data;
   }
 
-  /**
-   * Listar profesionales de la clínica
-   */
-  async getProfessionals() {
-    const response = await this.client.get('/professionals');
+  /** Crear médico (`User` + `ClinicUser` DOCTOR). */
+  async createDoctor(data: CreateDoctorApiPayload) {
+    const response = await this.client.post('/doctors', data);
     return response.data;
   }
 
-  /**
-   * Crear profesional.
-   * managedByClinic: true = la clínica gestiona su horario (sin cuenta). false = aparece como Pendiente hasta que se le envíe invitación.
-   */
-  async createProfessional(data: {
-    firstName: string;
-    lastName: string;
-    specialty?: string;
-    licenseNumber?: string;
-    phone?: string;
-    isActive?: boolean;
-    managedByClinic?: boolean;
-  }) {
-    const response = await this.client.post('/professionals', data);
+  /** Detalle médico en esta clínica. */
+  async getDoctor(doctorUserId: string) {
+    const response = await this.client.get(`/doctors/${doctorUserId}`);
     return response.data;
   }
 
-  /**
-   * Obtener un profesional por id
-   */
-  async getProfessional(id: string) {
-    const response = await this.client.get(`/professionals/${id}`);
+  async updateDoctor(doctorUserId: string, data: UpdateDoctorApiPayload) {
+    const response = await this.client.patch(
+      `/doctors/${doctorUserId}`,
+      data,
+    );
     return response.data;
   }
 
-  /**
-   * Actualizar profesional (parcial)
-   */
-  async updateProfessional(
-    id: string,
-    data: {
-      firstName?: string;
-      lastName?: string;
-      specialty?: string;
-      licenseNumber?: string;
-      phone?: string;
-      isActive?: boolean;
-    },
-  ) {
-    const response = await this.client.patch(`/professionals/${id}`, data);
+  async deactivateDoctorMembership(doctorUserId: string) {
+    const response = await this.client.delete(`/doctors/${doctorUserId}`);
     return response.data;
   }
 
-  /**
-   * Desactivar profesional (soft delete)
-   */
-  async deleteProfessional(id: string) {
-    const response = await this.client.delete(`/professionals/${id}`);
-    return response.data;
-  }
-
-  /**
-   * Invitar profesional por email (envía link de registro)
-   */
-  async inviteProfessional(professionalId: string, email: string) {
+  async inviteDoctor(doctorUserId: string, email: string) {
     const response = await this.client.post(
-      `/professionals/${professionalId}/invite`,
+      `/doctors/${doctorUserId}/invite`,
       { email },
     );
     return response.data;
+  }
+
+  async syncDoctorRecetario(doctorUserId: string) {
+    const response = await this.client.post(
+      `/doctors/${doctorUserId}/recetario/sync`,
+    );
+    return response.data;
+  }
+
+  async setDoctorRecetarioSignature(
+    doctorUserId: string,
+    signatureUrl: string,
+  ) {
+    const response = await this.client.put(
+      `/doctors/${doctorUserId}/recetario/signature`,
+      { signatureUrl },
+    );
+    return response.data;
+  }
+
+  /**
+   * Catálogos estáticos Recetario (tipo matrícula, título).
+   */
+  async getRecetarioProfessionalFields() {
+    const response = await this.client.get('/recetario/professional-fields');
+    return response.data as { licenseTypes: string[]; titles: string[] };
+  }
+
+  /**
+   * Provincias según GET /provinces de Recetario (cache en backend).
+   */
+  async getRecetarioProvinces(refresh = false) {
+    const q = refresh ? '?refresh=1' : '';
+    const response = await this.client.get(`/recetario/provinces${q}`);
+    return response.data as { id: number; name: string }[];
   }
 
   /**
@@ -318,8 +396,8 @@ class ApiClient {
   /**
    * Listar invitaciones de profesionales de la clínica
    */
-  async getProfessionalInvites() {
-    const response = await this.client.get('/professionals/invites');
+  async getDoctorInvites() {
+    const response = await this.client.get('/doctors/invites');
     return response.data;
   }
 
@@ -334,18 +412,18 @@ class ApiClient {
   /**
    * Obtener disponibilidad de un profesional específico (OWNER/ADMIN)
    */
-  async getProfessionalAvailability(professionalId: string) {
+  async getDoctorAvailability(doctorUserId: string) {
     const response = await this.client.get(
-      `/professional-availability/professional/${professionalId}`,
+      `/professional-availability/doctor/${doctorUserId}`,
     );
     return response.data;
   }
 
   /**
-   * Crear disponibilidad. STAFF: sin professionalId. OWNER/ADMIN: enviar professionalId.
+   * Crear disponibilidad. DOCTOR: la propia. OWNER/ADMIN: enviar doctorUserId.
    */
   async createAvailability(data: {
-    professionalId?: string;
+    doctorUserId?: string;
     dayOfWeek: number;
     startTime: string;
     endTime: string;
@@ -403,8 +481,8 @@ class ApiClient {
   /**
    * Listar días bloqueados de un profesional (OWNER/ADMIN, solo lectura)
    */
-  async getProfessionalBlockedDates(
-    professionalId: string,
+  async getDoctorBlockedDates(
+    doctorUserId: string,
     year?: number,
     month?: number,
   ) {
@@ -412,7 +490,7 @@ class ApiClient {
     if (year != null) params.set('year', String(year));
     if (month != null) params.set('month', String(month));
     const qs = params.toString();
-    const url = `/professional-blocked-dates/professional/${professionalId}${qs ? `?${qs}` : ''}`;
+    const url = `/professional-blocked-dates/doctor/${doctorUserId}${qs ? `?${qs}` : ''}`;
     const response = await this.client.get(url);
     return response.data;
   }
@@ -443,14 +521,14 @@ class ApiClient {
   /**
    * Slots del profesional indicado (OWNER/ADMIN). Agrupados por fecha.
    */
-  async getProfessionalSlots(
-    professionalId: string,
+  async getDoctorSlots(
+    doctorUserId: string,
     startDate: string,
     endDate: string,
   ) {
     const params = new URLSearchParams({ startDate, endDate });
     const response = await this.client.get(
-      `/slots/professional/${professionalId}?${params}`,
+      `/slots/doctor/${doctorUserId}?${params}`,
     );
     return response.data;
   }
@@ -478,14 +556,14 @@ class ApiClient {
   /**
    * Turnos de un profesional (OWNER/ADMIN). Agrupados por fecha.
    */
-  async getProfessionalAppointments(
-    professionalId: string,
+  async getDoctorAppointments(
+    doctorUserId: string,
     startDate: string,
     endDate: string,
   ) {
     const params = new URLSearchParams({ startDate, endDate });
     const response = await this.client.get(
-      `/appointments/professional/${professionalId}?${params}`,
+      `/appointments/doctor/${doctorUserId}?${params}`,
     );
     return response.data;
   }
@@ -539,7 +617,7 @@ class ApiClient {
     status?: string;
     source?: string;
     appointmentId?: string;
-    professionalId?: string;
+    doctorUserId?: string;
     healthInsuranceId?: string;
     insuranceBillingStatus?: 'PENDING' | 'INVOICED' | 'COLLECTED';
   }) {
@@ -549,7 +627,7 @@ class ApiClient {
     if (params?.status) q.set('status', params.status);
     if (params?.source) q.set('source', params.source);
     if (params?.appointmentId) q.set('appointmentId', params.appointmentId);
-    if (params?.professionalId) q.set('professionalId', params.professionalId);
+    if (params?.doctorUserId) q.set('doctorUserId', params.doctorUserId);
     if (params?.healthInsuranceId) q.set('healthInsuranceId', params.healthInsuranceId);
     if (params?.insuranceBillingStatus) {
       q.set('insuranceBillingStatus', params.insuranceBillingStatus);
@@ -911,13 +989,13 @@ class ApiClient {
   /**
    * Crear registro médico.
    * consultationDate: obligatorio si no hay appointmentId (YYYY-MM-DD).
-   * professionalId: obligatorio para OWNER/ADMIN cuando no hay appointmentId.
+   * doctorUserId: obligatorio para OWNER/ADMIN cuando no hay appointmentId.
    * healthInsuranceId: opcional; si no se envía, usa la obra social primaria del paciente.
    */
   async createMedicalRecord(data: {
     patientId: string;
     appointmentId?: string;
-    professionalId?: string;
+    doctorUserId?: string;
     consultationDate?: string; // YYYY-MM-DD
     healthInsuranceId?: string;
     reason?: string;
@@ -941,6 +1019,7 @@ class ApiClient {
       diagnosis?: string;
       treatment?: string;
       notes?: string;
+      changeReason?: string;
     },
   ) {
     const response = await this.client.patch(`/medical-records/${id}`, data);
@@ -948,10 +1027,49 @@ class ApiClient {
   }
 
   /**
-   * Eliminar registro médico (soft delete).
+   * Soft delete clínico — el registro queda recuperable y todas las
+   * versiones permanecen intactas.
    */
-  async deleteMedicalRecord(id: string) {
-    const response = await this.client.delete(`/medical-records/${id}`);
+  async deleteMedicalRecord(id: string, reason?: string) {
+    const response = await this.client.delete(`/medical-records/${id}`, {
+      data: reason ? { reason } : undefined,
+    });
+    return response.data;
+  }
+
+  /** Restaurar HC eliminada lógicamente (OWNER/ADMIN). */
+  async restoreMedicalRecord(id: string) {
+    const response = await this.client.post(
+      `/medical-records/${id}/restore`,
+    );
+    return response.data;
+  }
+
+  /** Listar todas las versiones de una HC (más nueva primero). */
+  async getMedicalRecordVersions(id: string) {
+    const response = await this.client.get(
+      `/medical-records/${id}/versions`,
+    );
+    return response.data as MedicalRecordVersion[];
+  }
+
+  /** Obtener una versión específica de la HC. */
+  async getMedicalRecordVersion(versionId: string) {
+    const response = await this.client.get(
+      `/medical-records/versions/${versionId}`,
+    );
+    return response.data as MedicalRecordVersion;
+  }
+
+  /**
+   * Restaurar el contenido de una versión histórica.
+   * NO sobrescribe versiones existentes — crea una nueva versión.
+   */
+  async restoreMedicalRecordVersion(versionId: string, reason?: string) {
+    const response = await this.client.post(
+      `/medical-records/versions/${versionId}/restore`,
+      reason ? { reason } : {},
+    );
     return response.data;
   }
 
@@ -1068,13 +1186,13 @@ class ApiClient {
    */
   async getPublicSlots(params: {
     clinicSlug: string;
-    professionalId: string;
+    doctorUserId: string;
     startDate: string;
     endDate: string;
   }) {
     const q = new URLSearchParams();
     q.set('clinicSlug', params.clinicSlug);
-    q.set('professionalId', params.professionalId);
+    q.set('doctorUserId', params.doctorUserId);
     q.set('startDate', params.startDate);
     q.set('endDate', params.endDate);
     const response = await this.client.get(`/public/slots?${q}`);
@@ -1086,7 +1204,7 @@ class ApiClient {
    */
   async requestPublicAppointment(data: {
     clinicSlug: string;
-    professionalId: string;
+    doctorUserId: string;
     patientId: string;
     date: string;
     startTime: string;
@@ -1102,10 +1220,10 @@ class ApiClient {
 
   /**
    * Reservar turno manual (OWNER/ADMIN).
-   * Body: professionalId, date, startTime, endTime, patientId? o patientData?
+   * Body: doctorUserId, date, startTime, endTime, patientId? o patientData?
    */
   async createManualAppointment(data: {
-    professionalId: string;
+    doctorUserId: string;
     date: string;
     startTime: string;
     endTime: string;
@@ -1207,6 +1325,206 @@ class ApiClient {
     );
     return response.data;
   }
+
+  // --- Auditoría ---
+
+  async getAuditLogs(params?: {
+    entity?: string;
+    userId?: string;
+    action?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const query = new URLSearchParams();
+    if (params?.entity) query.set('entity', params.entity);
+    if (params?.userId) query.set('userId', params.userId);
+    if (params?.action) query.set('action', params.action);
+    if (params?.from) query.set('from', params.from);
+    if (params?.to) query.set('to', params.to);
+    if (params?.page) query.set('page', String(params.page));
+    if (params?.limit) query.set('limit', String(params.limit));
+    const response = await this.client.get(`/audit?${query.toString()}`);
+    return response.data as {
+      items: AuditLogItem[];
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }
+
+  async getAuditLogById(id: string) {
+    const response = await this.client.get(`/audit/${id}`);
+    return response.data as AuditLogItem;
+  }
+
+  // --- Integración Recetario.com.ar ---
+
+  async getRecetarioHealthCenters() {
+    const response = await this.client.get('/recetario/health-centers');
+    return response.data as RecetarioHealthCenter[];
+  }
+
+  async getRecetarioHealthCenterById(id: number) {
+    const response = await this.client.get(`/recetario/health-centers/${id}`);
+    return response.data as RecetarioHealthCenter;
+  }
+
+  async updateRecetarioHealthCenter(
+    id: number,
+    payload: UpdateRecetarioHealthCenterPayload,
+  ) {
+    const response = await this.client.put(
+      `/recetario/health-centers/${id}`,
+      payload,
+    );
+    return response.data as RecetarioHealthCenter;
+  }
+
+  // --- Vinculación clínica ↔ Recetario ---
+
+  async listAvailableRecetarioHealthCenters() {
+    const response = await this.client.get(
+      '/clinics/current/recetario/available',
+    );
+    return response.data as AvailableRecetarioHealthCenter[];
+  }
+
+  async linkRecetario(healthCenterId: number) {
+    const response = await this.client.post(
+      '/clinics/current/recetario/link',
+      { healthCenterId },
+    );
+    return response.data as ClinicWithRecetario;
+  }
+
+  async unlinkRecetario() {
+    const response = await this.client.delete(
+      '/clinics/current/recetario/link',
+    );
+    return response.data as ClinicWithRecetario;
+  }
+
+  async triggerRecetarioSync() {
+    const response = await this.client.post(
+      '/clinics/current/recetario/sync',
+    );
+    return response.data as {
+      result: {
+        status: 'PENDING' | 'SYNCED' | 'FAILED' | 'SKIPPED';
+        message: string;
+        recetarioHealthCenterId?: number;
+        error?: { name: string; message: string };
+      };
+      clinic: ClinicWithRecetario;
+    };
+  }
+}
+
+export interface MedicalRecordVersionContent {
+  reason: string | null;
+  symptoms: string | null;
+  diagnosis: string | null;
+  treatment: string | null;
+  notes: string | null;
+  consultationDate: string;
+  healthInsuranceName: string | null;
+  affiliateNumber: string | null;
+}
+
+export interface MedicalRecordVersion {
+  id: string;
+  medicalRecordId: string;
+  clinicId: string;
+  versionNumber: number;
+  content: MedicalRecordVersionContent;
+  changeReason: string | null;
+  createdById: string;
+  createdAt: string;
+  medicalRecord?: {
+    id: string;
+    patientId: string;
+    doctorUserId: string;
+  };
+}
+
+export interface AuditLogItem {
+  id: string;
+  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'VIEW' | 'DOWNLOAD';
+  entity: string;
+  entityId: string | null;
+  oldValues: Record<string, unknown> | null;
+  newValues: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
+  ipAddress: string | null;
+  userAgent: string | null;
+  createdAt: string;
+  clinicId: string | null;
+  userId: string | null;
+  user: {
+    id: string;
+    name: string;
+    lastName: string;
+    email: string;
+  } | null;
+}
+
+export interface RecetarioHealthCenterUser {
+  id: number | null;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  role: string | null;
+  active: boolean | null;
+}
+
+export interface RecetarioHealthCenter {
+  id: number;
+  name: string;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  logoUrl: string | null;
+  prescriptionLogoUrl: string | null;
+  independentDoctors: boolean;
+  footer: string | null;
+  pdfVersion: number | null;
+  users: RecetarioHealthCenterUser[];
+}
+
+export interface AvailableRecetarioHealthCenter extends RecetarioHealthCenter {
+  isLinked: boolean;
+  linkedToOtherClinic: { id: string; name: string } | null;
+}
+
+export interface ClinicWithRecetario {
+  id: string;
+  name: string;
+  slug: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  province: string | null;
+  prescriptionLogoUrl: string | null;
+  isActive: boolean;
+  recetarioHealthCenterId: number | null;
+  recetarioSyncStatus: 'PENDING' | 'SYNCED' | 'FAILED' | null;
+  recetarioSyncedAt: string | null;
+  recetarioLastError: string | null;
+}
+
+export interface UpdateRecetarioHealthCenterPayload {
+  name?: string;
+  address?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  logoUrl?: string | null;
+  prescriptionLogoUrl?: string | null;
+  independentDoctors?: boolean;
+  footer?: string | null;
 }
 
 export const apiClient = new ApiClient();

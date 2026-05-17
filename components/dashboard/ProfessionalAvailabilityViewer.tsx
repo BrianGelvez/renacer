@@ -2,50 +2,41 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Loader2, AlertCircle, Stethoscope, Search } from 'lucide-react';
-import { apiClient } from '@/lib/api';
+import { Users, Loader2, AlertCircle } from 'lucide-react';
+import { apiClient, type ClinicTeamMemberDto } from '@/lib/api';
 import AvailabilitySection from './AvailabilitySection';
 
-interface Professional {
-  id: string;
-  firstName: string;
-  lastName: string;
-  specialty?: string;
-  userId?: string;
-  managedByClinic?: boolean;
-}
-
 export default function ProfessionalAvailabilityViewer() {
-  const [professionals, setProfessionals] = useState<Professional[]>([]);
-  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>('');
+  const [doctors, setDoctors] = useState<ClinicTeamMemberDto[]>([]);
+  const [selectedDoctorUserId, setSelectedDoctorUserId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadProfessionals();
+    void loadDoctors();
   }, []);
 
-  const loadProfessionals = async () => {
+  const loadDoctors = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiClient.getProfessionals();
+      const data = await apiClient.listClinicDoctors();
       const list = Array.isArray(data) ? data : [];
-      setProfessionals(list);
+      setDoctors(list);
       if (list.length > 0) {
-        setSelectedProfessionalId((prev) =>
-          prev && list.some((p: Professional) => p.id === prev) ? prev : list[0].id
+        setSelectedDoctorUserId((prev) =>
+          prev && list.some((m) => m.userId === prev) ? prev : list[0].userId,
         );
       }
-    } catch (err: unknown) {
-      setError('Error al cargar profesionales.');
-      setProfessionals([]);
+    } catch {
+      setError('Error al cargar médicos.');
+      setDoctors([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const selectedProfessional = professionals.find((p) => p.id === selectedProfessionalId);
+  const selectedDoctor = doctors.find((d) => d.userId === selectedDoctorUserId);
 
   if (loading) {
     return (
@@ -74,7 +65,7 @@ export default function ProfessionalAvailabilityViewer() {
     );
   }
 
-  if (professionals.length === 0) {
+  if (doctors.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -85,10 +76,10 @@ export default function ProfessionalAvailabilityViewer() {
           <Users className="w-8 h-8 text-gray-400" />
         </div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
-          Sin profesionales
+          Sin médicos
         </h3>
         <p className="text-gray-500 max-w-sm mx-auto">
-          Agregá profesionales en la sección Equipo. Podés gestionar la disponibilidad de todos (con o sin cuenta de usuario).
+          Agregá médicos en la sección Equipo. Podés gestionar la disponibilidad con o sin cuenta de usuario.
         </p>
       </motion.div>
     );
@@ -96,7 +87,6 @@ export default function ProfessionalAvailabilityViewer() {
 
   return (
     <div className="space-y-6">
-      {/* Professional Selector */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -108,9 +98,9 @@ export default function ProfessionalAvailabilityViewer() {
               <Users className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Seleccionar profesional</h3>
+              <h3 className="font-semibold text-gray-900">Seleccionar médico</h3>
               <p className="text-sm text-gray-500">
-                {professionals.length} profesional{professionals.length !== 1 ? 'es' : ''}. Gestioná horarios con o sin cuenta.
+                {doctors.length} médico{doctors.length !== 1 ? 's' : ''}. Gestioná horarios con o sin cuenta.
               </p>
             </div>
           </div>
@@ -118,18 +108,19 @@ export default function ProfessionalAvailabilityViewer() {
 
         <div className="p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {professionals.map((prof) => (
+            {doctors.map((prof) => (
               <button
-                key={prof.id}
-                onClick={() => setSelectedProfessionalId(prof.id)}
+                key={prof.userId}
+                type="button"
+                onClick={() => setSelectedDoctorUserId(prof.userId)}
                 className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
-                  selectedProfessionalId === prof.id
+                  selectedDoctorUserId === prof.userId
                     ? 'border-indigo-500 bg-indigo-50'
                     : 'border-gray-200 hover:border-gray-300 bg-white'
                 }`}
               >
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg ${
-                  selectedProfessionalId === prof.id
+                  selectedDoctorUserId === prof.userId
                     ? 'bg-gradient-to-br from-indigo-500 to-violet-600'
                     : 'bg-gradient-to-br from-gray-400 to-gray-500'
                 }`}>
@@ -137,15 +128,19 @@ export default function ProfessionalAvailabilityViewer() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className={`font-medium truncate ${
-                    selectedProfessionalId === prof.id ? 'text-indigo-900' : 'text-gray-900'
+                    selectedDoctorUserId === prof.userId ? 'text-indigo-900' : 'text-gray-900'
                   }`}>
                     Dr. {prof.firstName} {prof.lastName}
                   </p>
                   <p className={`text-sm truncate ${
-                    selectedProfessionalId === prof.id ? 'text-indigo-600' : 'text-gray-500'
+                    selectedDoctorUserId === prof.userId ? 'text-indigo-600' : 'text-gray-500'
                   }`}>
                     {prof.specialty || 'Sin especialidad'}
-                    {prof.userId ? ' · Con cuenta' : prof.managedByClinic ? ' · Gestionado por la clínica' : ' · Pendiente'}
+                    {prof.hasAccount
+                      ? ' · Con cuenta'
+                      : prof.managedByClinic
+                        ? ' · Gestionado por la clínica'
+                        : ' · Pendiente'}
                   </p>
                 </div>
               </button>
@@ -154,8 +149,7 @@ export default function ProfessionalAvailabilityViewer() {
         </div>
       </motion.div>
 
-      {/* Selected Professional Info */}
-      {selectedProfessional && (
+      {selectedDoctor && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -165,29 +159,28 @@ export default function ProfessionalAvailabilityViewer() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3" />
           <div className="relative flex items-center gap-4">
             <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center text-2xl font-bold">
-              {selectedProfessional.firstName[0]}
+              {selectedDoctor.firstName[0]}
             </div>
             <div>
               <h3 className="text-xl font-bold">
-                Dr. {selectedProfessional.firstName} {selectedProfessional.lastName}
+                Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}
               </h3>
               <p className="text-white/80">
-                {selectedProfessional.specialty || 'Sin especialidad asignada'}
+                {selectedDoctor.specialty || 'Sin especialidad asignada'}
               </p>
             </div>
           </div>
         </motion.div>
       )}
 
-      {/* Availability */}
-      {selectedProfessionalId && (
+      {selectedDoctorUserId && (
         <motion.div
-          key={selectedProfessionalId}
+          key={selectedDoctorUserId}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <AvailabilitySection professionalId={selectedProfessionalId} />
+          <AvailabilitySection doctorUserId={selectedDoctorUserId} />
         </motion.div>
       )}
     </div>

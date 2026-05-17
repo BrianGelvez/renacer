@@ -29,7 +29,7 @@ export interface SlotItem {
   startTime: string;
   endTime: string;
   duration: number;
-  professionalId: string;
+  doctorUserId: string;
   clinicId: string;
   status: string;
 }
@@ -172,7 +172,7 @@ function getSortedAgendaItems(
   return items;
 }
 
-export interface ProfessionalOption {
+export interface DoctorPickerOption {
   id: string;
   firstName: string;
   lastName: string;
@@ -182,10 +182,13 @@ export interface ProfessionalOption {
   isActive?: boolean;
 }
 
+/** @deprecated use DoctorPickerOption */
+export type ProfessionalOption = DoctorPickerOption;
+
 export default function ScheduleSection() {
   const { user } = useAuth();
-  const [professionals, setProfessionals] = useState<ProfessionalOption[]>([]);
-  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>('');
+  const [doctors, setDoctors] = useState<DoctorPickerOption[]>([]);
+  const [selectedDoctorUserId, setSelectedDoctorUserId] = useState<string>('');
   const [weekAnchor, setWeekAnchor] = useState(() => new Date());
   const [slotsByDate, setSlotsByDate] = useState<SlotsByDate>({});
   const [appointmentsByDate, setAppointmentsByDate] = useState<AppointmentsByDate>({});
@@ -211,27 +214,43 @@ export default function ScheduleSection() {
   );
 
   const canBook = user?.role === 'OWNER' || user?.role === 'ADMIN';
-  const isStaff = user?.role === 'STAFF';
+  /** Backend usa `DOCTOR`; se acepta `STAFF` por sesiones JWT antiguas. */
+  const isDoctorUser =
+    user?.role === 'DOCTOR' ||
+    user?.role === ('STAFF' as string);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const list = await apiClient.getProfessionals();
+        const list = await apiClient.listClinicDoctors();
         if (cancelled) return;
-        setProfessionals(Array.isArray(list) ? list : []);
-        if (list?.length && !selectedProfessionalId) {
-          setSelectedProfessionalId(list[0].id);
+        const mapped: DoctorPickerOption[] = Array.isArray(list)
+          ? list.map((d) => ({
+              id: d.id,
+              firstName: d.firstName,
+              lastName: d.lastName,
+              specialty: d.specialty,
+              phone: d.phone,
+              licenseNumber: d.licenseNumber,
+              isActive: d.isActive,
+            }))
+          : [];
+        setDoctors(mapped);
+        if (mapped.length && !selectedDoctorUserId) {
+          setSelectedDoctorUserId(mapped[0].id);
         }
       } catch {
-        if (!cancelled) setProfessionals([]);
+        if (!cancelled) setDoctors([]);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    if (!isStaff && !selectedProfessionalId) {
+    if (!isDoctorUser && !selectedDoctorUserId) {
       setSlotsByDate({});
       setAppointmentsByDate({});
       return;
@@ -242,17 +261,17 @@ export default function ScheduleSection() {
     (async () => {
       try {
         const [slotsData, appointmentsData] = await Promise.all([
-          isStaff
+          isDoctorUser
             ? apiClient.getMySlots(startDate, endDate)
-            : apiClient.getProfessionalSlots(
-                selectedProfessionalId,
+            : apiClient.getDoctorSlots(
+                selectedDoctorUserId,
                 startDate,
                 endDate,
               ),
-          isStaff
+          isDoctorUser
             ? apiClient.getMyAppointments(startDate, endDate)
-            : apiClient.getProfessionalAppointments(
-                selectedProfessionalId,
+            : apiClient.getDoctorAppointments(
+                selectedDoctorUserId,
                 startDate,
                 endDate,
               ),
@@ -271,7 +290,7 @@ export default function ScheduleSection() {
       }
     })();
     return () => { cancelled = true; };
-  }, [selectedProfessionalId, startDate, endDate, isStaff, refreshKey]);
+  }, [selectedDoctorUserId, startDate, endDate, isDoctorUser, refreshKey]);
 
   useEffect(() => {
     if (searchParams.get('book') !== '1') {
@@ -300,7 +319,7 @@ export default function ScheduleSection() {
     if (!canBook || searchParams.get('book') !== '1') return;
     if (bookIntentHandled.current) return;
     if (loading) return;
-    if (!isStaff && !selectedProfessionalId) return;
+    if (!isDoctorUser && !selectedDoctorUserId) return;
 
     let first: SlotItem | null = null;
     for (const d of weekDates) {
@@ -325,8 +344,8 @@ export default function ScheduleSection() {
     canBook,
     searchParams,
     loading,
-    selectedProfessionalId,
-    isStaff,
+    selectedDoctorUserId,
+    isDoctorUser,
     weekDates,
     slotsByDate,
     router,
@@ -380,7 +399,7 @@ export default function ScheduleSection() {
     setSelectedAppointmentId(appointmentId);
   };
 
-  const selectedProfessional = professionals.find((p) => p.id === selectedProfessionalId);
+  const selectedDoctor = doctors.find((p) => p.id === selectedDoctorUserId);
   const weekMonthLabel = `${MONTHS[weekAnchor.getMonth()]} ${weekAnchor.getFullYear()}`;
 
   return (
@@ -410,7 +429,7 @@ export default function ScheduleSection() {
       {/* Filtros: profesional + navegación semana + vista */}
       <div className="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm overflow-visible">
         <div className="p-3 sm:p-5 border-b border-gray-100 space-y-3 sm:space-y-4">
-          {!isStaff && (
+          {!isDoctorUser && (
             <div className="space-y-3">
               <label
                 id="professional-label"
@@ -437,15 +456,15 @@ export default function ScheduleSection() {
                     <Stethoscope className="h-5 w-5" aria-hidden />
                   </div>
                   <div className="min-w-0 flex-1">
-                    {selectedProfessional ? (
+                    {selectedDoctor ? (
                       <>
                         <p className="truncate text-base font-semibold text-gray-900">
-                          Dr. {selectedProfessional.firstName}{' '}
-                          {selectedProfessional.lastName}
+                          Dr. {selectedDoctor.firstName}{' '}
+                          {selectedDoctor.lastName}
                         </p>
-                        {selectedProfessional.specialty ? (
+                        {selectedDoctor.specialty ? (
                           <p className="truncate text-sm text-gray-500">
-                            {selectedProfessional.specialty}
+                            {selectedDoctor.specialty}
                           </p>
                         ) : (
                           <p className="text-sm text-gray-400">Ver agenda de este profesional</p>
@@ -482,13 +501,13 @@ export default function ScheduleSection() {
                       transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
                       className="absolute left-0 right-0 z-40 mt-2 max-h-[min(60vh,340px)] overflow-y-auto overflow-x-hidden rounded-2xl border border-gray-200/80 bg-white py-2 shadow-xl shadow-gray-900/10 ring-1 ring-black/[0.04]"
                     >
-                      {professionals.length === 0 ? (
+                      {doctors.length === 0 ? (
                         <li className="px-4 py-6 text-center text-sm text-gray-500" role="presentation">
                           No hay profesionales cargados.
                         </li>
                       ) : null}
-                      {professionals.map((p) => {
-                        const selected = p.id === selectedProfessionalId;
+                      {doctors.map((p) => {
+                        const selected = p.id === selectedDoctorUserId;
                         const inactive = p.isActive === false;
                         return (
                           <li key={p.id} role="presentation" className="px-2">
@@ -497,7 +516,7 @@ export default function ScheduleSection() {
                               role="option"
                               aria-selected={selected}
                               onClick={() => {
-                                setSelectedProfessionalId(p.id);
+                                setSelectedDoctorUserId(p.id);
                                 setProfessionalMenuOpen(false);
                               }}
                               className={`flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
@@ -545,7 +564,7 @@ export default function ScheduleSection() {
                 </AnimatePresence>
               </div>
               {/* Tarjeta con información del profesional seleccionado */}
-              {selectedProfessional && (
+              {selectedDoctor && (
                 <motion.div
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -556,25 +575,25 @@ export default function ScheduleSection() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900 text-base sm:text-lg">
-                      Dr. {selectedProfessional.firstName} {selectedProfessional.lastName}
+                      Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}
                     </p>
-                    {selectedProfessional.specialty && (
+                    {selectedDoctor.specialty && (
                       <p className="flex items-center gap-1.5 text-sm text-emerald-800 mt-0.5">
                         <Stethoscope className="w-4 h-4 shrink-0" />
-                        {selectedProfessional.specialty}
+                        {selectedDoctor.specialty}
                       </p>
                     )}
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-gray-600">
-                      {selectedProfessional.phone && (
+                      {selectedDoctor.phone && (
                         <span className="flex items-center gap-1.5">
                           <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                          {selectedProfessional.phone}
+                          {selectedDoctor.phone}
                         </span>
                       )}
-                      {selectedProfessional.licenseNumber && (
+                      {selectedDoctor.licenseNumber && (
                         <span className="flex items-center gap-1.5">
                           <Award className="w-3.5 h-3.5 text-emerald-600" />
-                          Mat. {selectedProfessional.licenseNumber}
+                          Mat. {selectedDoctor.licenseNumber}
                         </span>
                       )}
                     </div>
@@ -858,10 +877,10 @@ export default function ScheduleSection() {
       </div>
 
       <AnimatePresence>
-        {bookingSlot && selectedProfessional && (
+        {bookingSlot && selectedDoctor && (
           <BookingModal
             slot={bookingSlot}
-            professionalName={`${selectedProfessional.firstName} ${selectedProfessional.lastName}`}
+            doctorDisplayName={`${selectedDoctor.firstName} ${selectedDoctor.lastName}`}
             onClose={handleBookingClose}
             onSuccess={handleBookingSuccess}
           />
