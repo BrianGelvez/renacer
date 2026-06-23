@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import {
   apiClient,
+  type RecetarioDoctorUserSyncStatus,
   type UpdateDoctorApiPayload,
 } from '@/lib/api';
 
@@ -48,9 +49,12 @@ type ProfessionalDetail = {
   prescriptionLegend?: string | null;
   recetarioUserId?: number | null;
   recetarioActive?: boolean | null;
-  recetarioSyncStatus?: 'PENDING' | 'SYNCED' | 'FAILED' | null;
+  recetarioSyncStatus?: RecetarioDoctorUserSyncStatus;
   recetarioSyncedAt?: string | null;
   recetarioLastError?: string | null;
+  recetarioEnvironment?: 'STAGING' | 'PRODUCTION' | null;
+  recetarioIsTestUser?: boolean;
+  recetarioRemoteImmutable?: boolean;
 };
 
 interface EditProfessionalModalProps {
@@ -60,18 +64,29 @@ interface EditProfessionalModalProps {
   onDeactivated?: () => void;
 }
 
-function syncStatusLabel(
-  status: ProfessionalDetail['recetarioSyncStatus'],
-): string {
-  switch (status) {
+function syncStatusLabel(detail: ProfessionalDetail | null): string {
+  if (!detail) return 'Sin registrar';
+  const s = detail.recetarioSyncStatus;
+  switch (s) {
     case 'SYNCED':
       return 'Sincronizado';
+    case 'SYNCED_IMMUTABLE_SANDBOX':
+      return 'Sincronizado (Sandbox Recetario)';
     case 'PENDING':
       return 'Pendiente de sync';
     case 'FAILED':
       return 'Sync con error';
     default:
-      return 'Sin registrar';
+      if (
+        detail.recetarioEnvironment === 'STAGING' ||
+        (detail.user?.email ?? '')
+          .trim()
+          .toLowerCase()
+          .endsWith('@recetario.com.ar')
+      ) {
+        return 'Staging Recetario (sin estado de sync local)';
+      }
+      return 'Pendiente de vincular con Recetario';
   }
 }
 
@@ -273,8 +288,32 @@ export default function EditProfessionalModal({
                 <p className="text-xs text-gray-500 mt-1 flex flex-wrap items-center gap-2">
                   <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5">
                     <Link2 className="w-3 h-3" />
-                    Recetario: {syncStatusLabel(detail.recetarioSyncStatus)}
+                    Recetario: {syncStatusLabel(detail)}
                   </span>
+                  {(detail.recetarioEnvironment === 'STAGING' ||
+                    (detail.user?.email ?? '')
+                      .trim()
+                      .toLowerCase()
+                      .endsWith('@recetario.com.ar')) && (
+                    <span className="inline-flex items-center rounded-md bg-indigo-100 px-2 py-0.5 text-indigo-900">
+                      Recetario Sandbox
+                    </span>
+                  )}
+                  {detail.recetarioRemoteImmutable === true && (
+                    <span className="inline-flex items-center rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-amber-900">
+                      Solo lectura
+                    </span>
+                  )}
+                  {(detail.recetarioIsTestUser === true ||
+                    (detail.user?.email ?? '')
+                      .trim()
+                      .toLowerCase()
+                      .endsWith('@recetario.com.ar')) &&
+                    detail.recetarioSyncStatus !== 'FAILED' && (
+                      <span className="inline-flex items-center rounded-md bg-slate-200 px-2 py-0.5 text-slate-800">
+                        Usuario de pruebas
+                      </span>
+                    )}
                   {detail.recetarioUserId != null && (
                     <span className="text-slate-500">user #{detail.recetarioUserId}</span>
                   )}
@@ -318,7 +357,7 @@ export default function EditProfessionalModal({
           {!detailLoading && !detailError && detail && (
             <>
               {/* Errores Recetario después de última sync */}
-              {detail.recetarioLastError && (
+              {detail.recetarioLastError && detail.recetarioSyncStatus === 'FAILED' && (
                 <div className="px-6 pt-4">
                   <div className="flex gap-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm">
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />

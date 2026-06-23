@@ -10,6 +10,7 @@ interface User {
   lastName: string;
   phone?: string;
   role?: string;
+  isDoctor?: boolean;
 }
 
 export interface ClinicAvailability {
@@ -80,8 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: userData.email,
         name: userData.name,
         lastName: userData.lastName,
-        phone: userData.phone,
+        phone: userData.phone ?? undefined,
         role: userData.role,
+        isDoctor: userData.isDoctor,
       });
       setClinic(clinicData);
       setIsAuthenticated(true);

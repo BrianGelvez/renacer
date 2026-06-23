@@ -11,7 +11,10 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api';
+import { apiClient, type RecetarioHealthInsuranceDto } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { isClinicRecetarioLinked } from '@/lib/recetario-patient-form';
+import RecetarioHealthInsurancePicker from './RecetarioHealthInsurancePicker';
 
 interface PatientInsurance {
   id: string;
@@ -250,10 +253,15 @@ function AddPatientInsuranceModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  const { clinic } = useAuth();
+  const recetarioLinked = isClinicRecetarioLinked(clinic?.recetarioHealthCenterId);
   const [healthInsurances, setHealthInsurances] = useState<
     Array<{ id: string; name: string; code?: string | null }>
   >([]);
+  const [recetarioCatalog, setRecetarioCatalog] = useState<RecetarioHealthInsuranceDto[]>([]);
   const [healthInsuranceId, setHealthInsuranceId] = useState('');
+  const [recetarioHealthInsuranceId, setRecetarioHealthInsuranceId] = useState('');
+  const [insuranceSearch, setInsuranceSearch] = useState('');
   const [affiliateNumber, setAffiliateNumber] = useState('');
   const [isPrimary, setIsPrimary] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -261,32 +269,47 @@ function AddPatientInsuranceModal({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    apiClient
-      .getHealthInsurances()
-      .then((data) => {
-        setHealthInsurances(Array.isArray(data) ? data : []);
-        if (data?.length && !healthInsuranceId) {
-          setHealthInsuranceId(data[0].id);
-        }
-      })
+    const task = recetarioLinked
+      ? apiClient.getRecetarioHealthInsurances(false).then((data) => {
+          setRecetarioCatalog(Array.isArray(data) ? data : []);
+        })
+      : apiClient.getHealthInsurances().then((data) => {
+          const list = Array.isArray(data) ? data : [];
+          setHealthInsurances(list);
+          if (list.length) setHealthInsuranceId(list[0].id);
+        });
+    task
       .catch(() => setError('Error al cargar obras sociales.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [recetarioLinked]);
+
+  const hasCatalog = recetarioLinked ? recetarioCatalog.length > 0 : healthInsurances.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!healthInsuranceId?.trim() || !affiliateNumber?.trim()) {
+    const hasSelection = recetarioLinked
+      ? !!recetarioHealthInsuranceId
+      : !!healthInsuranceId?.trim();
+    if (!hasSelection || !affiliateNumber?.trim()) {
       setError('Completá la obra social y el número de afiliado.');
       return;
     }
     setSubmitting(true);
     try {
-      await apiClient.addPatientInsurance(patientId, {
-        healthInsuranceId,
-        affiliateNumber: affiliateNumber.trim(),
-        isPrimary,
-      });
+      if (recetarioLinked) {
+        await apiClient.addPatientInsurance(patientId, {
+          recetarioHealthInsuranceId: Number.parseInt(recetarioHealthInsuranceId, 10),
+          affiliateNumber: affiliateNumber.trim(),
+          isPrimary,
+        });
+      } else {
+        await apiClient.addPatientInsurance(patientId, {
+          healthInsuranceId,
+          affiliateNumber: affiliateNumber.trim(),
+          isPrimary,
+        });
+      }
       onSuccess();
     } catch (err: unknown) {
       setError(
@@ -304,7 +327,7 @@ function AddPatientInsuranceModal({
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl p-6"
+        className="relative z-10 w-full max-w-lg rounded-2xl bg-white shadow-xl p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -314,9 +337,11 @@ function AddPatientInsuranceModal({
           <div className="py-8 flex justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
           </div>
-        ) : healthInsurances.length === 0 ? (
+        ) : !hasCatalog ? (
           <div className="py-4 text-center text-sm text-gray-600">
-            No hay obras sociales configuradas en la clínica. Agregá obras sociales desde la configuración para poder asignarlas a los pacientes.
+            {recetarioLinked
+              ? 'No se pudo cargar el catálogo Recetario. Verificá la vinculación de la clínica.'
+              : 'No hay obras sociales configuradas en la clínica. Agregá obras sociales desde la configuración para poder asignarlas a los pacientes.'}
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -325,25 +350,36 @@ function AddPatientInsuranceModal({
                 {error}
               </div>
             )}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Obra social
-              </label>
-              <select
-                value={healthInsuranceId}
-                onChange={(e) => setHealthInsuranceId(e.target.value)}
-                required
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Seleccionar...</option>
-                {healthInsurances.map((hi) => (
-                  <option key={hi.id} value={hi.id}>
-                    {hi.name}
-                    {hi.code ? ` (${hi.code})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {recetarioLinked ? (
+              <RecetarioHealthInsurancePicker
+                insurances={recetarioCatalog}
+                value={recetarioHealthInsuranceId}
+                onChange={setRecetarioHealthInsuranceId}
+                search={insuranceSearch}
+                onSearchChange={setInsuranceSearch}
+                emptyLabel="Seleccionar obra social…"
+              />
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Obra social
+                </label>
+                <select
+                  value={healthInsuranceId}
+                  onChange={(e) => setHealthInsuranceId(e.target.value)}
+                  required
+                  className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Seleccionar...</option>
+                  {healthInsurances.map((hi) => (
+                    <option key={hi.id} value={hi.id}>
+                      {hi.name}
+                      {hi.code ? ` (${hi.code})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Número de afiliado

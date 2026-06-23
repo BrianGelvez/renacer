@@ -11,33 +11,16 @@ import {
   MapPin,
   Heart,
   FileText,
+  Shield,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api';
+import { apiClient, type PatientDto } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface EditPatientModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  patient: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    medicalRecordNumber?: number | null;
-    dni?: string | null;
-    phone?: string | null;
-    email?: string | null;
-    birthDate?: string | null;
-    gender?: string | null;
-    address?: string | null;
-    city?: string | null;
-    province?: string | null;
-    department?: string | null;
-    emergencyContactName?: string | null;
-    emergencyContactPhone?: string | null;
-    notes?: string | null;
-    isActive?: boolean;
-  };
+  patient: PatientDto & { isActive?: boolean };
 }
 
 export default function EditPatientModal({
@@ -65,6 +48,7 @@ export default function EditPatientModal({
     emergencyContactName: '',
     emergencyContactPhone: '',
     notes: '',
+    healthInsurancePlan: '',
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,6 +77,7 @@ export default function EditPatientModal({
         emergencyContactName: patient.emergencyContactName ?? '',
         emergencyContactPhone: patient.emergencyContactPhone ?? '',
         notes: patient.notes ?? '',
+        healthInsurancePlan: patient.healthInsurancePlan ?? '',
       });
       setError(null);
     }
@@ -134,6 +119,7 @@ export default function EditPatientModal({
         emergencyContactName: form.emergencyContactName.trim() || undefined,
         emergencyContactPhone: form.emergencyContactPhone.trim() || undefined,
         notes: form.notes.trim() || undefined,
+        healthInsurancePlan: form.healthInsurancePlan.trim() || undefined,
       });
       onSuccess();
       onClose();
@@ -373,6 +359,30 @@ export default function EditPatientModal({
                     placeholder="Ej. +54 11 9876-5432"
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                <Shield className="w-4 h-4 text-indigo-600" />
+                Recetario / cobertura
+              </div>
+              <div className="pl-6 border-l-2 border-gray-100">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Plan de cobertura
+                </label>
+                <input
+                  type="text"
+                  value={form.healthInsurancePlan}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      healthInsurancePlan: e.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px]"
+                  placeholder="Ej. 310, PMO…"
+                />
               </div>
             </div>
 

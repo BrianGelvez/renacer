@@ -9,11 +9,14 @@ import {
   Loader2,
   AlertCircle,
   UserPlus,
-  ChevronRight,
   Mail,
   Phone,
   FileText,
   Calendar,
+  Eye,
+  Pencil,
+  FilePlus2,
+  ClipboardList,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -66,6 +69,20 @@ export default function PatientsSection() {
   >('none');
 
   const canCreate = user?.role === 'OWNER' || user?.role === 'ADMIN';
+  const canPrescribe =
+    user?.role === 'OWNER' ||
+    user?.role === 'ADMIN' ||
+    user?.role === 'DOCTOR';
+  const canCreateOrder =
+    user?.role === 'OWNER' ||
+    user?.role === 'ADMIN' ||
+    user?.role === 'DOCTOR' ||
+    user?.role === 'SECRETARY';
+
+  const canFilterMyAppointments =
+    user?.role === 'DOCTOR' || user?.isDoctor === true;
+
+  const [myAppointmentsOnly, setMyAppointmentsOnly] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query.trim()), DEBOUNCE_MS);
@@ -74,7 +91,7 @@ export default function PatientsSection() {
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedQuery, activeFilter]);
+  }, [debouncedQuery, activeFilter, myAppointmentsOnly]);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,6 +104,7 @@ export default function PatientsSection() {
           limit: 20,
           q: debouncedQuery || undefined,
           activeFilter,
+          ...(myAppointmentsOnly ? { myAppointmentsOnly: true } : {}),
         });
         if (cancelled) return;
         setData(res);
@@ -103,7 +121,7 @@ export default function PatientsSection() {
       }
     })();
     return () => { cancelled = true; };
-  }, [page, debouncedQuery, activeFilter]);
+  }, [page, debouncedQuery, activeFilter, myAppointmentsOnly]);
 
   const handleRowClick = (id: string) => {
     router.push(`/dashboard/patients/${id}`);
@@ -181,6 +199,19 @@ export default function PatientsSection() {
                 {filter === 'active' ? 'Activos' : filter === 'inactive' ? 'Inactivos' : 'Todos'}
               </button>
             ))}
+            {canFilterMyAppointments && (
+              <button
+                type="button"
+                onClick={() => setMyAppointmentsOnly((v) => !v)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  myAppointmentsOnly
+                    ? 'bg-violet-600 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Con turno conmigo
+              </button>
+            )}
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -246,59 +277,104 @@ export default function PatientsSection() {
               {sortedItems.map((patient) => {
                 const inactive = patient.isActive === false;
                 return (
-                  <motion.button
+                  <div
                     key={patient.id}
-                    type="button"
-                    onClick={() => handleRowClick(patient.id)}
-                    className={`w-full text-left px-4 sm:px-5 py-4 flex flex-wrap items-center gap-3 sm:gap-4 transition-colors ${
-                      inactive
-                        ? 'opacity-75 bg-gray-50/50 hover:bg-gray-50'
-                        : 'hover:bg-gray-50 active:bg-gray-100'
+                    className={`px-4 sm:px-5 py-4 flex flex-wrap items-center gap-3 sm:gap-4 ${
+                      inactive ? 'opacity-75 bg-gray-50/50' : ''
                     }`}
                   >
-                    <div className="flex-1 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => handleRowClick(patient.id)}
+                      className="flex-1 min-w-0 text-left hover:opacity-90"
+                    >
                       <p className={`font-medium truncate ${inactive ? 'text-gray-600' : 'text-gray-900'}`}>
                         {patient.lastName}, {patient.firstName}
                       </p>
-                    {patient.medicalRecordNumber != null && (
-                      <p className="mt-1 text-xs font-medium text-indigo-700">
-                        N° HC {patient.medicalRecordNumber}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
-                      {patient.dni && (
-                        <span className="inline-flex items-center gap-1">
-                          <FileText className="w-3.5 h-3.5" />
-                          DNI {patient.dni}
-                        </span>
+                      {patient.medicalRecordNumber != null && (
+                        <p className="mt-1 text-xs font-medium text-indigo-700">
+                          N° HC {patient.medicalRecordNumber}
+                        </p>
                       )}
-                      {patient.phone && (
-                        <span className="inline-flex items-center gap-1 truncate">
-                          <Phone className="w-3.5 h-3.5 shrink-0" />
-                          {patient.phone}
-                        </span>
-                      )}
-                      {patient.email && (
-                        <span className="inline-flex items-center gap-1 truncate">
-                          <Mail className="w-3.5 h-3.5 shrink-0" />
-                          {patient.email}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-sm text-gray-500">
+                        {patient.dni && (
+                          <span className="inline-flex items-center gap-1">
+                            <FileText className="w-3.5 h-3.5" />
+                            DNI {patient.dni}
+                          </span>
+                        )}
+                        {patient.phone && (
+                          <span className="inline-flex items-center gap-1 truncate">
+                            <Phone className="w-3.5 h-3.5 shrink-0" />
+                            {patient.phone}
+                          </span>
+                        )}
+                        {patient.email && (
+                          <span className="inline-flex items-center gap-1 truncate">
+                            <Mail className="w-3.5 h-3.5 shrink-0" />
+                            {patient.email}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
                       {inactive && (
                         <span className="text-xs font-medium px-2 py-0.5 rounded bg-gray-200 text-gray-600">
                           Inactivo
                         </span>
                       )}
-                      <span className="text-xs text-gray-400 hidden sm:inline">
+                      <span className="text-xs text-gray-400 hidden lg:inline">
                         <Calendar className="w-3.5 h-3.5 inline mr-0.5" />
                         {formatDate(patient.createdAt)}
                       </span>
-                      <ChevronRight className="w-5 h-5 text-gray-400" />
+                      <button
+                        type="button"
+                        onClick={() => handleRowClick(patient.id)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 border border-gray-200 hover:bg-gray-50"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        Ver
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(`/dashboard/patients/${patient.id}?edit=1`)
+                        }
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 border border-gray-200 hover:bg-gray-50"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Editar
+                      </button>
+                      {canPrescribe && patient.isActive !== false && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              `/dashboard/prescriptions/new?patientId=${patient.id}`,
+                            )
+                          }
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-indigo-700 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100"
+                        >
+                          <FilePlus2 className="w-3.5 h-3.5" />
+                          Crear receta
+                        </button>
+                      )}
+                      {canCreateOrder && patient.isActive !== false && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              `/dashboard/orders/new?patientId=${patient.id}`,
+                            )
+                          }
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-teal-700 border border-teal-200 bg-teal-50 hover:bg-teal-100"
+                        >
+                          <ClipboardList className="w-3.5 h-3.5" />
+                          Crear orden
+                        </button>
+                      )}
                     </div>
-                  </motion.button>
+                  </div>
                 );
               })}
             </div>

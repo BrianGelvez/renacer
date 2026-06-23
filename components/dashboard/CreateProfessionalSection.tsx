@@ -14,6 +14,7 @@ import {
   ArrowRight,
   X,
   Building2,
+  Link,
   Mail,
 } from 'lucide-react';
 import { apiClient, type CreateDoctorApiPayload } from '@/lib/api';
@@ -42,6 +43,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
   const [address, setAddress] = useState('');
   const [province, setProvince] = useState('');
   const [prescriptionLegend, setPrescriptionLegend] = useState('');
+  const [signatureUrl, setSignatureUrl] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -78,6 +80,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
     setAddress('');
     setProvince('');
     setPrescriptionLegend('');
+    setSignatureUrl('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -111,6 +114,8 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
           prescriptionLegend.trim() === ''
             ? undefined
             : prescriptionLegend.trim(),
+        signatureUrl:
+          signatureUrl.trim() === '' ? undefined : signatureUrl.trim(),
       };
 
       await apiClient.createDoctor(payload);
@@ -491,6 +496,30 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                         className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
                         disabled={loading}
                       />
+                    </div>
+                    <div className="border-t border-violet-200 pt-3 space-y-2">
+                      <label
+                        htmlFor="pro-signature-url"
+                        className="block text-xs font-medium text-gray-700"
+                      >
+                        Firma digital — URL pública (opcional)
+                      </label>
+                      <p className="text-xs text-violet-900/75">
+                        Enlace a la imagen de firma para Recetario (se guarda en el perfil y se usa al sincronizar con la institución).
+                      </p>
+                      <div className="relative">
+                        <Link className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                          id="pro-signature-url"
+                          type="url"
+                          value={signatureUrl}
+                          onChange={(e) => setSignatureUrl(e.target.value)}
+                          placeholder="https://…"
+                          className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-3 text-sm"
+                          disabled={loading}
+                          autoComplete="off"
+                        />
+                      </div>
                     </div>
                   </fieldset>
 

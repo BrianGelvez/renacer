@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -22,13 +22,18 @@ import {
   MapPin,
   Heart,
   Shield,
+  FilePlus2,
+  ClipboardList,
 } from "lucide-react";
-import { apiClient } from "@/lib/api";
+import { apiClient, type PatientDto } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import PatientRecetarioPanel from "@/components/dashboard/PatientRecetarioPanel";
 import AppointmentDetailModal from "@/components/dashboard/AppointmentDetailModal";
 import EditPatientModal from "@/components/dashboard/EditPatientModal";
 import MedicalRecordsSection from "@/components/dashboard/MedicalRecordsSection";
 import PatientInsurancesSection from "@/components/dashboard/PatientInsurancesSection";
+import PatientOrdersSection from "@/components/orders/PatientOrdersSection";
+import MedicalDocumentsSection from "@/components/dashboard/MedicalDocumentsSection";
 
 const STATUS_LABELS: Record<string, string> = {
   SCHEDULED: "Programado",
@@ -59,47 +64,34 @@ function formatTime(iso: string): string {
 
 export default function PatientDetailPage() {
   const params = useParams();
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, clinic } = useAuth();
   const id = params?.id as string | undefined;
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | null
   >(null);
-  const [patient, setPatient] = useState<{
-    id: string;
-    firstName: string;
-    lastName: string;
-    medicalRecordNumber?: number | null;
-    dni?: string | null;
-    phone?: string | null;
-    email?: string | null;
-    birthDate?: string | null;
-    gender?: string | null;
-    address?: string | null;
-    city?: string | null;
-    province?: string | null;
-    department?: string | null;
-    emergencyContactName?: string | null;
-    emergencyContactPhone?: string | null;
-    notes?: string | null;
-    createdAt: string;
-    isActive?: boolean;
-    deactivatedAt?: string | null;
-    appointments: Array<{
-      id: string;
-      startTime: string;
-      endTime: string;
-      status: string;
-      reason?: string | null;
-      professional: { id: string; firstName: string; lastName: string };
-    }>;
-    insurances?: Array<{
-      id: string;
-      affiliateNumber: string;
-      isPrimary: boolean;
-      isActive: boolean;
-      healthInsurance: { id: string; name: string; code?: string | null };
-    }>;
-  } | null>(null);
+  const [patient, setPatient] = useState<
+    | (PatientDto & {
+        createdAt: string;
+        appointments: Array<{
+          id: string;
+          startTime: string;
+          endTime: string;
+          status: string;
+          reason?: string | null;
+          doctor?: { id: string; name: string; lastName: string };
+          professional?: { id: string; firstName: string; lastName: string };
+        }>;
+        insurances?: Array<{
+          id: string;
+          affiliateNumber: string;
+          isPrimary: boolean;
+          isActive: boolean;
+          healthInsurance: { id: string; name: string; code?: string | null };
+        }>;
+      })
+    | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -153,9 +145,44 @@ export default function PatientDetailPage() {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!id || !patient || !clinic?.recetarioHealthCenterId) return;
+    if (
+      patient.recetarioSyncStatus === "SYNCED" ||
+      patient.recetarioSyncStatus === "FAILED"
+    ) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      void apiClient.getPatientById(id).then((data) => setPatient(data));
+    }, 3000);
+    const stop = window.setTimeout(() => window.clearInterval(timer), 30000);
+    return () => {
+      window.clearInterval(timer);
+      window.clearTimeout(stop);
+    };
+  }, [id, patient?.recetarioSyncStatus, clinic?.recetarioHealthCenterId]);
+
   const canEditAppointments = user?.role === "OWNER" || user?.role === "ADMIN";
   const canManagePatient = user?.role === "OWNER" || user?.role === "ADMIN";
+  const canPrescribe =
+    user?.role === "OWNER" ||
+    user?.role === "ADMIN" ||
+    user?.role === "DOCTOR";
+  const canCreateOrder =
+    user?.role === "OWNER" ||
+    user?.role === "ADMIN" ||
+    user?.role === "DOCTOR" ||
+    user?.role === "SECRETARY";
   const isInactive = patient?.isActive === false;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const qs = new URLSearchParams(window.location.search);
+    if (qs.get("edit") === "1" && canManagePatient && patient) {
+      setEditModalOpen(true);
+    }
+  }, [canManagePatient, patient]);
 
   const handleAppointmentActionSuccess = () => {
     fetchPatient();
@@ -378,11 +405,52 @@ export default function PatientDetailPage() {
                     {patient.notes}
                   </p>
                 )}
+                <div className="mt-4 max-w-xl">
+                  <PatientRecetarioPanel
+                    patient={patient}
+                    healthCenterId={clinic?.recetarioHealthCenterId}
+                    canSync={canManagePatient}
+                    onSynced={(updated) =>
+                      setPatient((prev) =>
+                        prev ? { ...prev, ...updated } : prev,
+                      )
+                    }
+                  />
+                </div>
               </div>
             </div>
-            {canManagePatient && (
+            {(canPrescribe || canCreateOrder || canManagePatient) && (
               <div className="flex flex-wrap gap-2 shrink-0">
-                {isInactive ? (
+                {canPrescribe && !isInactive && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/prescriptions/new?patientId=${patient.id}`,
+                      )
+                    }
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 shadow-md shadow-indigo-500/20"
+                  >
+                    <FilePlus2 className="w-4 h-4" />
+                    Crear receta
+                  </button>
+                )}
+                {canCreateOrder && !isInactive && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/orders/new?patientId=${patient.id}`,
+                      )
+                    }
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 shadow-md shadow-teal-500/20"
+                  >
+                    <ClipboardList className="w-4 h-4" />
+                    Crear orden
+                  </button>
+                )}
+                {canManagePatient &&
+                  (isInactive ? (
                   <button
                     type="button"
                     onClick={handleActivate}
@@ -415,7 +483,7 @@ export default function PatientDetailPage() {
                       Desactivar paciente
                     </button>
                   </>
-                )}
+                ))}
               </div>
             )}
           </div>
@@ -458,8 +526,8 @@ export default function PatientDetailPage() {
                         </div>
                         <div>
                           <p className="font-medium text-gray-900">
-                            {apt.professional?.firstName}{" "}
-                            {apt.professional?.lastName}
+                            {apt.doctor?.name ?? apt.professional?.firstName}{" "}
+                            {apt.doctor?.lastName ?? apt.professional?.lastName}
                           </p>
                           <p className="text-sm text-gray-500">
                             {formatDate(apt.startTime)} ·{" "}
@@ -510,6 +578,18 @@ export default function PatientDetailPage() {
           onUpdate={fetchPatient}
         />
       </div>
+
+      {canPrescribe && (
+        <div className="mt-6">
+          <MedicalDocumentsSection patientId={patient.id} compact />
+        </div>
+      )}
+
+      {canCreateOrder && (
+        <div className="mt-6">
+          <PatientOrdersSection patientId={patient.id} compact />
+        </div>
+      )}
 
       <div className="mt-6">
         <MedicalRecordsSection

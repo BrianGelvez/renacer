@@ -25,8 +25,12 @@ import {
   Wallet,
   MessageCircle,
   ShieldCheck,
+  Pill,
+  ClipboardList,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePermissions } from "@/hooks/usePermissions";
+import type { PermissionModule } from "@/lib/permissions";
 import { apiClient } from "@/lib/api";
 import { useNotificationsSocket } from "@/hooks/useNotificationsSocket";
 import {
@@ -39,7 +43,7 @@ interface NavItem {
   label: string;
   icon: ReactNode;
   href: string;
-  roles: string[];
+  permission: PermissionModule;
   badge?: number;
 }
 
@@ -65,84 +69,98 @@ const navItems: NavItem[] = [
     label: "Resumen",
     icon: <LayoutDashboard className="w-5 h-5" />,
     href: "/dashboard",
-    roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY'],
+    permission: "overview",
   },
   {
     id: "clinic",
     label: "Mi Clínica",
     icon: <Building2 className="w-5 h-5" />,
     href: "/dashboard?section=clinic",
-    roles: ["OWNER", "ADMIN"],
+    permission: "clinic",
   },
   {
     id: "team",
     label: "Equipo",
     icon: <Users className="w-5 h-5" />,
     href: "/dashboard?section=team",
-    roles: ["OWNER", "ADMIN"],
+    permission: "team",
   },
   {
     id: "invite",
     label: "Invitaciones",
     icon: <UserPlus className="w-5 h-5" />,
     href: "/dashboard?section=invite",
-    roles: ["OWNER", "ADMIN"],
+    permission: "invite",
   },
   {
     id: "availability",
     label: "Disponibilidad",
     icon: <Clock className="w-5 h-5" />,
     href: "/dashboard?section=availability",
-    roles: ['OWNER', 'ADMIN', 'DOCTOR'],
+    permission: "availability",
   },
   {
     id: "schedule",
     label: "Agenda",
     icon: <Calendar className="w-5 h-5" />,
     href: "/dashboard/agenda",
-    roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY'],
+    permission: "schedule",
   },
   {
     id: "patients",
     label: "Pacientes",
     icon: <Users className="w-5 h-5" />,
     href: "/dashboard/patients",
-    roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY'],
+    permission: "patients",
+  },
+  {
+    id: "prescriptions",
+    label: "Recetas",
+    icon: <Pill className="w-5 h-5" />,
+    href: "/dashboard/prescriptions",
+    permission: "prescriptions",
+  },
+  {
+    id: "orders",
+    label: "Órdenes",
+    icon: <ClipboardList className="w-5 h-5" />,
+    href: "/dashboard/orders",
+    permission: "orders",
   },
   {
     id: "conversations",
     label: "Conversaciones",
     icon: <MessageCircle className="w-5 h-5" />,
     href: "/dashboard/conversaciones",
-    roles: ["OWNER", "ADMIN"],
+    permission: "conversations",
   },
   {
     id: "finanzas",
     label: "Finanzas",
     icon: <Wallet className="w-5 h-5" />,
     href: "/dashboard/finanzas",
-    roles: ['OWNER', 'ADMIN', 'DOCTOR'],
+    permission: "finance",
   },
   {
     id: "reports",
     label: "Reportes",
     icon: <BarChart3 className="w-5 h-5" />,
     href: "/dashboard/reports",
-    roles: ['OWNER', 'ADMIN', 'DOCTOR'],
+    permission: "reports",
   },
   {
     id: "auditoria",
     label: "Auditoría",
     icon: <ShieldCheck className="w-5 h-5" />,
     href: "/dashboard/auditoria",
-    roles: ["OWNER", "ADMIN"],
+    permission: "audit",
   },
   {
     id: "settings",
     label: "Configuración",
     icon: <Settings className="w-5 h-5" />,
     href: "/dashboard?section=settings",
-    roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY'],
+    permission: "settings",
   },
 ];
 
@@ -151,6 +169,7 @@ export default function DashboardLayout({
   activeSection = "overview",
 }: DashboardLayoutProps) {
   const { user, clinic, logout } = useAuth();
+  const { canAccess } = usePermissions();
   const router = useRouter();
   const patientSearchRef = useRef<HTMLDivElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -255,8 +274,8 @@ export default function DashboardLayout({
   }, []);
 
   // Filter nav items by user role
-  const filteredNavItems = navItems.filter(
-    (item) => user?.role && item.roles.includes(user.role),
+  const filteredNavItems = navItems.filter((item) =>
+    canAccess(item.permission),
   );
 
   const canSearchPatients = filteredNavItems.some((item) => item.id === "patients");

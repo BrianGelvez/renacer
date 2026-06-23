@@ -3,6 +3,7 @@
 import { Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import DashboardPermissionGate from '@/components/auth/DashboardPermissionGate';
 
 function DashboardRouteLayoutInner({
   children,
@@ -13,6 +14,8 @@ function DashboardRouteLayoutInner({
   const searchParams = useSearchParams();
 
   const isPatientDetail = pathname?.match(/^\/dashboard\/patients\/[^/]+$/);
+  const isOrdersRoute = pathname?.startsWith('/dashboard/orders');
+  const isPrescriptionsRoute = pathname?.startsWith('/dashboard/prescriptions');
 
   const pathSectionMap: Record<string, string> = {
     '/dashboard/agenda': 'schedule',
@@ -26,14 +29,20 @@ function DashboardRouteLayoutInner({
 
   const activeSection = isPatientDetail
     ? 'patients'
-    : pathSectionMap[pathname || ''] ??
-      searchParams?.get('section') ??
-      'overview';
+    : isOrdersRoute
+      ? 'orders'
+      : isPrescriptionsRoute
+        ? 'prescriptions'
+        : pathSectionMap[pathname || ''] ??
+          searchParams?.get('section') ??
+          'overview';
 
   return (
-    <DashboardLayout activeSection={activeSection}>
-      {children}
-    </DashboardLayout>
+    <DashboardPermissionGate>
+      <DashboardLayout activeSection={activeSection}>
+        {children}
+      </DashboardLayout>
+    </DashboardPermissionGate>
   );
 }
 

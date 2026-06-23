@@ -16,8 +16,12 @@ import {
   ChevronRight,
   ChevronLeft,
 } from 'lucide-react';
-import { apiClient } from '@/lib/api';
+import { apiClient, type RecetarioHealthInsuranceDto } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  isClinicRecetarioLinked,
+  validateRecetarioPatientForm,
+} from '@/lib/recetario-patient-form';
 
 const STEPS = [
   { id: 1, title: 'Datos personales', icon: User },
@@ -34,7 +38,7 @@ interface CreatePatientModalProps {
   navigateAfterCreate?: boolean;
 }
 
-interface HealthInsuranceOption {
+interface LocalHealthInsuranceOption {
   id: string;
   name: string;
   code?: string | null;
@@ -47,7 +51,8 @@ export default function CreatePatientModal({
   navigateAfterCreate = true,
 }: CreatePatientModalProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, clinic } = useAuth();
+  const recetarioLinked = isClinicRecetarioLinked(clinic?.recetarioHealthCenterId);
   const canManageMedicalRecordNumber =
     user?.role === 'OWNER' || user?.role === 'ADMIN';
   const [step, setStep] = useState(1);
@@ -65,22 +70,41 @@ export default function CreatePatientModal({
     province: '',
     department: '',
     healthInsuranceId: '',
+    recetarioHealthInsuranceId: '',
     affiliateNumber: '',
+    insuranceSearch: '',
+    healthInsurancePlan: '',
     emergencyContactName: '',
     emergencyContactPhone: '',
     notes: '',
   });
-  const [healthInsurances, setHealthInsurances] = useState<
-    HealthInsuranceOption[]
+  const [localHealthInsurances, setLocalHealthInsurances] = useState<
+    LocalHealthInsuranceOption[]
   >([]);
+  const [recetarioHealthInsurances, setRecetarioHealthInsurances] = useState<
+    RecetarioHealthInsuranceDto[]
+  >([]);
+  const [loadingInsurances, setLoadingInsurances] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchHealthInsurances = useCallback(() => {
-    apiClient.getHealthInsurances().then((data: HealthInsuranceOption[]) => {
-      setHealthInsurances(Array.isArray(data) ? data : []);
-    });
-  }, []);
+    setLoadingInsurances(true);
+    const tasks = recetarioLinked
+      ? [
+          apiClient.getRecetarioHealthInsurances(false).then((data) => {
+            setRecetarioHealthInsurances(Array.isArray(data) ? data : []);
+          }),
+        ]
+      : [
+          apiClient.getHealthInsurances().then((data: LocalHealthInsuranceOption[]) => {
+            setLocalHealthInsurances(Array.isArray(data) ? data : []);
+          }),
+        ];
+    Promise.all(tasks)
+      .catch(() => setError('No se pudieron cargar las obras sociales.'))
+      .finally(() => setLoadingInsurances(false));
+  }, [recetarioLinked]);
 
   useEffect(() => {
     if (open) fetchHealthInsurances();
@@ -103,7 +127,10 @@ export default function CreatePatientModal({
         province: '',
         department: '',
         healthInsuranceId: '',
+        recetarioHealthInsuranceId: '',
         affiliateNumber: '',
+        insuranceSearch: '',
+        healthInsurancePlan: '',
         emergencyContactName: '',
         emergencyContactPhone: '',
         notes: '',
@@ -119,9 +146,18 @@ export default function CreatePatientModal({
       setError('Nombre y apellido son obligatorios.');
       return;
     }
-    if (form.healthInsuranceId && !form.affiliateNumber.trim()) {
+    const hasInsurance =
+      !!form.healthInsuranceId || !!form.recetarioHealthInsuranceId;
+    if (hasInsurance && !form.affiliateNumber.trim()) {
       setError('El número de afiliado es obligatorio cuando se selecciona obra social.');
       return;
+    }
+    if (recetarioLinked) {
+      const recetarioErr = validateRecetarioPatientForm(form);
+      if (recetarioErr) {
+        setError(recetarioErr);
+        return;
+      }
     }
     if (canManageMedicalRecordNumber && form.medicalRecordNumber.trim()) {
       const mrn = Number.parseInt(form.medicalRecordNumber, 10);
@@ -152,8 +188,14 @@ export default function CreatePatientModal({
         emergencyContactName: form.emergencyContactName.trim() || undefined,
         emergencyContactPhone: form.emergencyContactPhone.trim() || undefined,
         notes: form.notes.trim() || undefined,
-        healthInsuranceId: form.healthInsuranceId || undefined,
+        healthInsuranceId: recetarioLinked
+          ? undefined
+          : form.healthInsuranceId || undefined,
+        recetarioHealthInsuranceId: recetarioLinked && form.recetarioHealthInsuranceId
+          ? Number.parseInt(form.recetarioHealthInsuranceId, 10)
+          : undefined,
         affiliateNumber: form.affiliateNumber.trim() || undefined,
+        healthInsurancePlan: form.healthInsurancePlan.trim() || undefined,
       });
       onClose();
       if (onSuccess) onSuccess(patient.id);
@@ -180,7 +222,10 @@ export default function CreatePatientModal({
       setError('Nombre y apellido son obligatorios.');
       return;
     }
-    if (step === 3 && form.healthInsuranceId && !form.affiliateNumber.trim()) {
+    const step3HasInsurance = recetarioLinked
+      ? !!form.recetarioHealthInsuranceId
+      : !!form.healthInsuranceId;
+    if (step === 3 && step3HasInsurance && !form.affiliateNumber.trim()) {
       setError('El número de afiliado es obligatorio cuando se selecciona obra social.');
       return;
     }
@@ -193,6 +238,18 @@ export default function CreatePatientModal({
   };
 
   if (!open) return null;
+
+  const hasSelectedInsurance = recetarioLinked
+    ? !!form.recetarioHealthInsuranceId
+    : !!form.healthInsuranceId;
+
+  const insuranceQuery = form.insuranceSearch.trim().toLowerCase();
+  const filteredRecetarioInsurances = recetarioHealthInsurances
+    .filter(
+      (hi) =>
+        !insuranceQuery || hi.name.toLowerCase().includes(insuranceQuery),
+    )
+    .slice(0, 250);
 
   const inputCls =
     'w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px]';
@@ -296,6 +353,11 @@ export default function CreatePatientModal({
                   >
                     <p className="text-sm text-gray-500 mb-4">
                       Información básica del paciente
+                      {recetarioLinked && (
+                        <span className="block mt-1 text-indigo-600">
+                          Recetario: DNI, fecha de nacimiento y género son obligatorios.
+                        </span>
+                      )}
                     </p>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
@@ -320,7 +382,9 @@ export default function CreatePatientModal({
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">DNI</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        DNI{recetarioLinked ? ' *' : ''}
+                      </label>
                       <input
                         type="text"
                         value={form.dni}
@@ -348,7 +412,9 @@ export default function CreatePatientModal({
                       </div>
                     )}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de nacimiento</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Fecha de nacimiento{recetarioLinked ? ' *' : ''}
+                      </label>
                       <input
                         type="date"
                         value={form.birthDate}
@@ -358,7 +424,9 @@ export default function CreatePatientModal({
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Género</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Género{recetarioLinked ? ' *' : ''}
+                      </label>
                       <select
                         value={form.gender}
                         onChange={(e) => update('gender', e.target.value)}
@@ -461,38 +529,119 @@ export default function CreatePatientModal({
                   >
                     <p className="text-sm text-gray-500 mb-4">
                       Obra social del paciente (opcional)
+                      {recetarioLinked && (
+                        <span className="block mt-1 text-indigo-600">
+                          Catálogo oficial Recetario ({recetarioHealthInsurances.length}{' '}
+                          obras sociales/prepagas)
+                        </span>
+                      )}
                     </p>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Obra social</label>
-                      <select
-                        value={form.healthInsuranceId}
-                        onChange={(e) => {
-                          update('healthInsuranceId', e.target.value);
-                          if (!e.target.value) update('affiliateNumber', '');
-                        }}
-                        className={inputCls}
-                      >
-                        <option value="">Sin obra social</option>
-                        {healthInsurances.map((hi) => (
-                          <option key={hi.id} value={hi.id}>
-                            {hi.name}
-                            {hi.code ? ` (${hi.code})` : ''}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {form.healthInsuranceId && (
+                    {loadingInsurances ? (
+                      <div className="flex items-center gap-2 text-sm text-gray-500 py-4">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Cargando obras sociales…
+                      </div>
+                    ) : recetarioLinked ? (
+                      <>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Buscar obra social
+                          </label>
+                          <input
+                            type="search"
+                            value={form.insuranceSearch}
+                            onChange={(e) => update('insuranceSearch', e.target.value)}
+                            className={inputCls}
+                            placeholder="Ej. OSDE, Swiss Medical, igualdad…"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Obra social / prepaga
+                          </label>
+                          <select
+                            value={form.recetarioHealthInsuranceId}
+                            onChange={(e) => {
+                              update('recetarioHealthInsuranceId', e.target.value);
+                              if (!e.target.value) update('affiliateNumber', '');
+                            }}
+                            className={inputCls}
+                            size={Math.min(8, Math.max(4, filteredRecetarioInsurances.length + 1))}
+                          >
+                            <option value="">Sin obra social (particular)</option>
+                            {filteredRecetarioInsurances.map((hi) => (
+                              <option key={hi.id} value={String(hi.id)}>
+                                {hi.name}
+                              </option>
+                            ))}
+                          </select>
+                          {insuranceQuery && filteredRecetarioInsurances.length === 0 && (
+                            <p className="mt-1 text-xs text-amber-700">
+                              Sin resultados. Probá otro término de búsqueda.
+                            </p>
+                          )}
+                          {insuranceQuery && filteredRecetarioInsurances.length >= 250 && (
+                            <p className="mt-1 text-xs text-gray-500">
+                              Mostrando las primeras 250 coincidencias. Refiná la búsqueda.
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Obra social (clínica)
+                        </label>
+                        <select
+                          value={form.healthInsuranceId}
+                          onChange={(e) => {
+                            update('healthInsuranceId', e.target.value);
+                            if (!e.target.value) update('affiliateNumber', '');
+                          }}
+                          className={inputCls}
+                        >
+                          <option value="">Sin obra social</option>
+                          {localHealthInsurances.map((hi) => (
+                            <option key={hi.id} value={hi.id}>
+                              {hi.name}
+                              {hi.code ? ` (${hi.code})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    {hasSelectedInsurance && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Número de afiliado *</label>
                         <input
                           type="text"
                           value={form.affiliateNumber}
                           onChange={(e) => update('affiliateNumber', e.target.value)}
-                          required={!!form.healthInsuranceId}
+                          required={hasSelectedInsurance}
                           className={inputCls}
                           placeholder="Ej. 12345678"
                         />
                       </div>
+                    )}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Plan de cobertura
+                      </label>
+                      <input
+                        type="text"
+                        value={form.healthInsurancePlan}
+                        onChange={(e) => update('healthInsurancePlan', e.target.value)}
+                        className={inputCls}
+                        placeholder="Ej. 310, PMO, plan básico…"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Opcional. Se envía a Recetario como plan de la obra social.
+                      </p>
+                    </div>
+                    {!hasSelectedInsurance && recetarioLinked && (
+                      <p className="text-xs text-indigo-600 rounded-lg bg-indigo-50 px-3 py-2">
+                        Sin obra social se registrará como &quot;particular&quot; en Recetario.
+                      </p>
                     )}
                   </motion.div>
                 )}

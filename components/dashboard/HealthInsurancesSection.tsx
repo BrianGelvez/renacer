@@ -2,8 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, Plus, Loader2, Pencil, Trash2 } from 'lucide-react';
-import { apiClient } from '@/lib/api';
+import { Shield, Plus, Loader2, Pencil, Trash2, RefreshCw } from 'lucide-react';
+import { apiClient, type RecetarioHealthInsuranceDto } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { isClinicRecetarioLinked } from '@/lib/recetario-patient-form';
+import RecetarioHealthInsurancePicker from './RecetarioHealthInsurancePicker';
 
 interface HealthInsurance {
   id: string;
@@ -14,6 +17,8 @@ interface HealthInsurance {
 }
 
 export default function HealthInsurancesSection() {
+  const { clinic } = useAuth();
+  const recetarioLinked = isClinicRecetarioLinked(clinic?.recetarioHealthCenterId);
   const [insurances, setInsurances] = useState<HealthInsurance[]>([]);
   const [loading, setLoading] = useState(true);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -61,14 +66,22 @@ export default function HealthInsurancesSection() {
           Agregar
         </button>
       </div>
+
+      {recetarioLinked && (
+        <p className="text-xs text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg px-3 py-2 mb-4">
+          Podés elegir obras sociales del catálogo oficial Recetario (GET /health-insurances).
+          Se guardan en tu clínica para asignarlas a pacientes y finanzas.
+        </p>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-8">
           <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
         </div>
       ) : insurances.length === 0 ? (
         <p className="text-sm text-gray-500 py-4">
-          No hay obras sociales configuradas. Agregá las que trabaja tu clínica para
-          asignarlas a los pacientes.
+          No hay obras sociales configuradas. Agregá las que trabaja tu clínica desde el
+          catálogo Recetario o manualmente.
         </p>
       ) : (
         <div className="space-y-2">
@@ -120,6 +133,7 @@ export default function HealthInsurancesSection() {
 
       {addModalOpen && (
         <HealthInsuranceFormModal
+          recetarioLinked={recetarioLinked}
           onClose={() => setAddModalOpen(false)}
           onSuccess={() => {
             fetchInsurances();
@@ -129,6 +143,7 @@ export default function HealthInsurancesSection() {
       )}
       {editId && (
         <HealthInsuranceFormModal
+          recetarioLinked={false}
           insurance={insurances.find((i) => i.id === editId)!}
           onClose={() => setEditId(null)}
           onSuccess={() => {
@@ -154,21 +169,45 @@ export default function HealthInsurancesSection() {
 
 function HealthInsuranceFormModal({
   insurance,
+  recetarioLinked,
   onClose,
   onSuccess,
 }: {
   insurance?: HealthInsurance;
+  recetarioLinked: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }) {
   const isEdit = !!insurance;
+  const [mode, setMode] = useState<'recetario' | 'manual'>(
+    recetarioLinked && !isEdit ? 'recetario' : 'manual',
+  );
   const [name, setName] = useState(insurance?.name ?? '');
   const [code, setCode] = useState(insurance?.code ?? '');
   const [coveragePercent, setCoveragePercent] = useState(
     insurance?.coveragePercent != null ? String(insurance.coveragePercent) : '0',
   );
+  const [recetarioCatalog, setRecetarioCatalog] = useState<RecetarioHealthInsuranceDto[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+  const [recetarioHealthInsuranceId, setRecetarioHealthInsuranceId] = useState('');
+  const [insuranceSearch, setInsuranceSearch] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const loadCatalog = useCallback((refresh = false) => {
+    setCatalogLoading(true);
+    apiClient
+      .getRecetarioHealthInsurances(refresh)
+      .then((data) => setRecetarioCatalog(Array.isArray(data) ? data : []))
+      .catch(() => setError('No se pudo cargar el catálogo Recetario.'))
+      .finally(() => setCatalogLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (recetarioLinked && mode === 'recetario' && !isEdit) {
+      loadCatalog(false);
+    }
+  }, [recetarioLinked, mode, isEdit, loadCatalog]);
 
   useEffect(() => {
     if (!insurance) return;
@@ -182,20 +221,37 @@ function HealthInsuranceFormModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!name.trim()) {
-      setError('El nombre es obligatorio.');
-      return;
-    }
     setSubmitting(true);
     try {
-      const pct = Math.min(100, Math.max(0, parseFloat(coveragePercent.replace(',', '.')) || 0));
+      const pct = Math.min(
+        100,
+        Math.max(0, parseFloat(coveragePercent.replace(',', '.')) || 0),
+      );
       if (isEdit && insurance) {
+        if (!name.trim()) {
+          setError('El nombre es obligatorio.');
+          return;
+        }
         await apiClient.updateHealthInsurance(insurance.id, {
           name: name.trim(),
           code: code.trim() || undefined,
           coveragePercent: pct,
         });
+      } else if (mode === 'recetario' && recetarioLinked) {
+        if (!recetarioHealthInsuranceId) {
+          setError('Seleccioná una obra social del catálogo.');
+          return;
+        }
+        await apiClient.createHealthInsurance({
+          recetarioHealthInsuranceId: Number.parseInt(recetarioHealthInsuranceId, 10),
+          code: code.trim() || undefined,
+          coveragePercent: pct,
+        });
       } else {
+        if (!name.trim()) {
+          setError('El nombre es obligatorio.');
+          return;
+        }
         await apiClient.createHealthInsurance({
           name: name.trim(),
           code: code.trim() || undefined,
@@ -219,7 +275,7 @@ function HealthInsuranceFormModal({
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative z-10 w-full max-w-md rounded-2xl bg-white shadow-xl p-6"
+        className="relative z-10 w-full max-w-lg rounded-2xl bg-white shadow-xl p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -231,19 +287,73 @@ function HealthInsuranceFormModal({
               {error}
             </div>
           )}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="Ej: OSDE"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
+
+          {!isEdit && recetarioLinked && (
+            <div className="flex rounded-xl border border-gray-200 p-1 bg-gray-50">
+              <button
+                type="button"
+                onClick={() => setMode('recetario')}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium ${
+                  mode === 'recetario'
+                    ? 'bg-white shadow text-gray-900'
+                    : 'text-gray-500'
+                }`}
+              >
+                Catálogo Recetario
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('manual')}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium ${
+                  mode === 'manual'
+                    ? 'bg-white shadow text-gray-900'
+                    : 'text-gray-500'
+                }`}
+              >
+                Manual
+              </button>
+            </div>
+          )}
+
+          {!isEdit && mode === 'recetario' && recetarioLinked ? (
+            <>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => loadCatalog(true)}
+                  disabled={catalogLoading}
+                  className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${catalogLoading ? 'animate-spin' : ''}`} />
+                  Actualizar catálogo
+                </button>
+              </div>
+              <RecetarioHealthInsurancePicker
+                insurances={recetarioCatalog}
+                value={recetarioHealthInsuranceId}
+                onChange={setRecetarioHealthInsuranceId}
+                search={insuranceSearch}
+                onSearchChange={setInsuranceSearch}
+                loading={catalogLoading}
+                emptyLabel="Seleccionar obra social…"
+              />
+            </>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Nombre
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required={mode === 'manual' || isEdit}
+                placeholder="Ej: OSDE"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Código (opcional)
@@ -265,12 +375,9 @@ function HealthInsuranceFormModal({
               inputMode="decimal"
               value={coveragePercent}
               onChange={(e) => setCoveragePercent(e.target.value)}
-              placeholder="Ej: 10 (la OS cubre 10%, el paciente 90%)"
+              placeholder="Ej: 10"
               className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500"
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Usado al registrar pagos con copago. 0 = particular paga todo.
-            </p>
           </div>
           <div className="flex gap-3 pt-2">
             <button

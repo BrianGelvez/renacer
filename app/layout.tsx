@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
+import QueryProvider from '@/components/QueryProvider';
 import ConditionalChatbot from '@/components/ConditionalChatbot'; // Importa el nuevo componente
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
@@ -22,11 +23,13 @@ export default function RootLayout({
       <body
         className={`${inter.className} font-sans w-full overflow-x-hidden ensigna-page-bg text-ensigna-text antialiased`}
       >
-        <AuthProvider>
-          {children}
-          {/* El componente ahora decide internamente si mostrarse o no */}
-          <ConditionalChatbot />
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            {children}
+            {/* El componente ahora decide internamente si mostrarse o no */}
+            <ConditionalChatbot />
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

@@ -43,10 +43,37 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 function getNavigationForNotification(n: NotificationItem): string | null {
-  const meta = n.metadata as { appointmentId?: string; patientId?: string } | null;
+  const meta = n.metadata as {
+    appointmentId?: string;
+    patientId?: string;
+    prescriptionId?: string;
+    medicalOrderId?: string;
+  } | null;
   if (!meta) return null;
+  if (meta.prescriptionId) {
+    return `/dashboard/prescriptions/pending/${meta.prescriptionId}`;
+  }
+  if (meta.medicalOrderId) {
+    return `/dashboard/orders/pending/${meta.medicalOrderId}`;
+  }
   if (meta.appointmentId) return '/dashboard?section=schedule';
   if (meta.patientId) return `/dashboard/patients/${meta.patientId}`;
+  if (
+    n.type === 'PRESCRIPTION_PENDING_APPROVAL' ||
+    n.type === 'PRESCRIPTION_REJECTED' ||
+    n.type === 'PRESCRIPTION_CHANGES_REQUESTED' ||
+    n.type === 'PRESCRIPTION_CORRECTION_READY' ||
+    n.type === 'PRESCRIPTION_ISSUED'
+  ) {
+    return '/dashboard/prescriptions/pending';
+  }
+  if (
+    n.type === 'MEDICAL_ORDER_PENDING_APPROVAL' ||
+    n.type === 'MEDICAL_ORDER_REJECTED' ||
+    n.type === 'MEDICAL_ORDER_EMITTED'
+  ) {
+    return '/dashboard/orders/pending';
+  }
   return null;
 }
 

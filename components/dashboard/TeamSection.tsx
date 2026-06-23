@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Users,
@@ -16,50 +17,109 @@ import {
   Phone,
   Pencil,
   Building2,
+  FileText,
 } from 'lucide-react';
 import { apiClient, type ClinicTeamMemberDto } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import CreateProfessionalSection from './CreateProfessionalSection';
 import EditProfessionalModal, {
   type ProfessionalToEdit,
 } from './EditProfessionalModal';
+import EditMyProfileModal from './EditMyProfileModal';
+
+function isRecetarioSandboxMailbox(email: string): boolean {
+  return email.trim().toLowerCase().endsWith('@recetario.com.ar');
+}
 
 function RecetarioStatusChips({
+  email,
   recetarioSyncStatus,
+  recetarioEnvironment,
+  recetarioIsTestUser,
+  recetarioRemoteImmutable,
   isActive,
 }: {
+  email: string;
   recetarioSyncStatus?: ClinicTeamMemberDto['recetarioSyncStatus'];
+  recetarioEnvironment?: ClinicTeamMemberDto['recetarioEnvironment'];
+  recetarioIsTestUser?: boolean;
+  recetarioRemoteImmutable?: boolean;
   isActive: boolean;
 }) {
+  const sandboxMailbox = isRecetarioSandboxMailbox(email);
+  const sandboxEnv =
+    recetarioEnvironment === 'STAGING' || sandboxMailbox === true;
+
   const sync =
-    recetarioSyncStatus === 'SYNCED'
+    recetarioSyncStatus === 'SYNCED' ||
+    recetarioSyncStatus === 'SYNCED_IMMUTABLE_SANDBOX'
       ? 'bg-emerald-100 text-emerald-800'
       : recetarioSyncStatus === 'FAILED'
         ? 'bg-rose-100 text-rose-800'
         : recetarioSyncStatus === 'PENDING'
           ? 'bg-amber-100 text-amber-800'
-          : 'bg-slate-100 text-slate-600';
+          : sandboxEnv
+            ? 'bg-violet-100 text-violet-800'
+            : 'bg-slate-100 text-slate-600';
 
-  const syncLabel =
-    recetarioSyncStatus === 'SYNCED'
-      ? 'Recetario OK'
-      : recetarioSyncStatus === 'FAILED'
-        ? 'Recetario error'
-        : recetarioSyncStatus === 'PENDING'
-          ? 'Recetario pendiente'
-          : 'Recetario sin sync';
+  let syncLabel: string;
+  if (recetarioSyncStatus === 'SYNCED_IMMUTABLE_SANDBOX') {
+    syncLabel = 'Sincronizado (Sandbox)';
+  } else if (recetarioSyncStatus === 'SYNCED') {
+    syncLabel = 'Sincronizado';
+  } else if (recetarioSyncStatus === 'FAILED') {
+    syncLabel = 'Recetario error';
+  } else if (recetarioSyncStatus === 'PENDING') {
+    syncLabel = 'Recetario pendiente';
+  } else if (sandboxEnv) {
+    syncLabel =
+      'Usuario Recetario staging: pendiente de vincular o sin estado local';
+  } else {
+    syncLabel = 'Pendiente de vincular con Recetario';
+  }
 
   const act = isActive ? 'bg-teal-50 text-teal-800' : 'bg-gray-200 text-gray-600';
   const actLabel = isActive ? 'Activo' : 'Inactivo';
 
   return (
-    <div className="flex flex-wrap gap-1.5 mt-1">
+    <div className="flex flex-wrap gap-1.5 mt-1 items-center">
       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${sync}`}>
         {syncLabel}
       </span>
+      {(recetarioEnvironment === 'STAGING' || sandboxMailbox) && (
+        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-900">
+          Recetario Sandbox
+        </span>
+      )}
+      {recetarioRemoteImmutable === true && (
+        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md border border-amber-300 text-amber-900 bg-amber-50">
+          Solo lectura
+        </span>
+      )}
+      {(recetarioIsTestUser === true || sandboxMailbox) &&
+        recetarioSyncStatus !== 'FAILED' && (
+          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-200 text-slate-700">
+            Usuario de pruebas
+          </span>
+        )}
       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${act}`}>
         {actLabel}
       </span>
     </div>
+  );
+}
+
+function PhysicianBadge({ isDoctor }: { isDoctor: boolean }) {
+  return (
+    <span
+      className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+        isDoctor
+          ? 'bg-emerald-100 text-emerald-800'
+          : 'bg-slate-100 text-slate-600'
+      }`}
+    >
+      {isDoctor ? 'Médico' : 'No médico'}
+    </span>
   );
 }
 
@@ -101,6 +161,8 @@ interface TeamSectionProps {
 }
 
 export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
+  const router = useRouter();
+  const { user, loadUserData } = useAuth();
   const [team, setTeam] = useState<ClinicTeamMemberDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -108,6 +170,7 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [editDoctorTarget, setEditDoctorTarget] =
     useState<ProfessionalToEdit | null>(null);
+  const [editMyProfileOpen, setEditMyProfileOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -136,7 +199,7 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
   }, [refreshKey]);
 
   const staff = team.filter((m) => m.role !== 'DOCTOR');
-  const doctors = team.filter((m) => m.role === 'DOCTOR');
+  const physicians = team.filter((m) => m.isDoctor);
 
   const adminCount = team.filter(
     (m) => m.role === 'OWNER' || m.role === 'ADMIN',
@@ -151,8 +214,8 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
       .includes(lowered),
   );
 
-  const filteredDoctors = doctors.filter((d) =>
-    `${d.firstName} ${d.lastName} ${d.specialty ?? ''} ${d.licenseNumber ?? ''}`
+  const filteredDoctors = physicians.filter((d) =>
+    `${d.firstName} ${d.lastName} ${d.specialty ?? ''} ${d.licenseNumber ?? ''} ${d.role}`
       .toLowerCase()
       .includes(lowered),
   );
@@ -215,7 +278,7 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
           },
           {
             label: 'Médicos',
-            value: doctors.length,
+            value: physicians.length,
             color: 'bg-emerald-50 text-emerald-600',
           },
         ].map((stat, index) => (
@@ -323,10 +386,23 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
                             </span>
                           )}
                         </div>
+                        {m.isDoctor && (
+                          <RecetarioStatusChips
+                            email={m.email}
+                            recetarioSyncStatus={m.recetarioSyncStatus}
+                            recetarioEnvironment={m.recetarioEnvironment}
+                            recetarioIsTestUser={m.recetarioIsTestUser}
+                            recetarioRemoteImmutable={m.recetarioRemoteImmutable}
+                            isActive={m.isActive}
+                          />
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <RoleBadge role={m.role} />
+                      {(m.role === 'OWNER' || m.role === 'ADMIN') && (
+                        <PhysicianBadge isDoctor={m.isDoctor} />
+                      )}
                       <span
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${m.isActive ? 'bg-teal-50 text-teal-800' : 'bg-gray-200 text-gray-600'}`}
                       >
@@ -358,9 +434,38 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
                               <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
                                 {m.email}
                               </div>
-                              <p className="px-4 py-2 text-sm text-gray-500">
-                                Sin opciones de edición desde Equipo.
-                              </p>
+                              {user?.id === m.userId ? (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditMyProfileOpen(true);
+                                    setMenuOpenId(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                  Editar mi perfil
+                                </button>
+                              ) : (
+                                <p className="px-4 py-2 text-sm text-gray-500">
+                                  Sin opciones de edición desde Equipo.
+                                </p>
+                              )}
+                              {m.isDoctor && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMenuOpenId(null);
+                                    router.push(
+                                      `/dashboard/prescriptions?doctorUserId=${m.userId}`,
+                                    );
+                                  }}
+                                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-indigo-700 hover:bg-indigo-50 rounded-lg"
+                                >
+                                  <FileText className="w-4 h-4" />
+                                  Documentos emitidos
+                                </button>
+                              )}
                             </motion.div>
                           )}
                         </AnimatePresence>
@@ -396,13 +501,23 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold text-gray-900 truncate">
-                          Dr. {p.firstName} {p.lastName}
+                          {p.role === 'DOCTOR' ? 'Dr. ' : ''}
+                          {p.firstName} {p.lastName}
                         </p>
                         <p className="text-sm text-gray-500 truncate">
                           {p.specialty || 'Sin especialidad'}
                         </p>
+                        {p.role !== 'DOCTOR' && (
+                          <div className="flex gap-1.5 mt-1">
+                            <RoleBadge role={p.role} />
+                          </div>
+                        )}
                         <RecetarioStatusChips
+                          email={p.email}
                           recetarioSyncStatus={p.recetarioSyncStatus}
+                          recetarioEnvironment={p.recetarioEnvironment}
+                          recetarioIsTestUser={p.recetarioIsTestUser}
+                          recetarioRemoteImmutable={p.recetarioRemoteImmutable}
                           isActive={p.isActive}
                         />
                         {p.recetarioSyncStatus === 'FAILED' &&
@@ -457,13 +572,19 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  setEditDoctorTarget({ id: p.id });
+                                  if (user?.id === p.userId) {
+                                    setEditMyProfileOpen(true);
+                                  } else {
+                                    setEditDoctorTarget({ id: p.id });
+                                  }
                                   setMenuOpenId(null);
                                 }}
                                 className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 rounded-lg"
                               >
                                 <Pencil className="w-4 h-4" />
-                                Editar médico
+                                {user?.id === p.userId
+                                  ? 'Editar mi perfil'
+                                  : 'Editar médico'}
                               </button>
                             </motion.div>
                           )}
@@ -485,6 +606,16 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
       </motion.div>
 
       <AnimatePresence>
+        {editMyProfileOpen && (
+          <EditMyProfileModal
+            onClose={() => setEditMyProfileOpen(false)}
+            onSaved={() => {
+              void load(true);
+              void loadUserData();
+              setEditMyProfileOpen(false);
+            }}
+          />
+        )}
         {editDoctorTarget && (
           <EditProfessionalModal
             professional={editDoctorTarget}

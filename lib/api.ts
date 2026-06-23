@@ -7,6 +7,14 @@ export type ClinicTeamRole =
   | 'SECRETARY'
   | 'DOCTOR';
 
+/** Estado de sincronización del médico con Recetario (User). */
+export type RecetarioDoctorUserSyncStatus =
+  | 'PENDING'
+  | 'SYNCED'
+  | 'SYNCED_IMMUTABLE_SANDBOX'
+  | 'FAILED'
+  | null;
+
 /** Una fila de `GET /users/team`: `User` + `ClinicUser` en la clínica actual. */
 export type ClinicTeamMemberDto = {
   id: string;
@@ -19,16 +27,70 @@ export type ClinicTeamMemberDto = {
   phone: string | null;
   role: ClinicTeamRole;
   isActive: boolean;
+  /** Indica si el usuario puede actuar como médico (emitir recetas). */
+  isDoctor: boolean;
   specialty: string | null;
   licenseNumber: string | null;
   managedByClinic: boolean | null;
   hasAccount: boolean;
   recetarioUserId: number | null;
   recetarioActive: boolean | null;
-  recetarioSyncStatus: 'PENDING' | 'SYNCED' | 'FAILED' | null;
+  recetarioSyncStatus: RecetarioDoctorUserSyncStatus;
   recetarioSyncedAt: string | null;
   recetarioLastError: string | null;
+  recetarioEnvironment?: 'STAGING' | 'PRODUCTION' | null;
+  recetarioIsTestUser?: boolean;
+  recetarioRemoteImmutable?: boolean;
   createdAt: string;
+};
+
+export type UserProfileDto = {
+  id: string;
+  email: string;
+  name: string;
+  lastName: string;
+  phone: string | null;
+  avatar: string | null;
+  role?: ClinicTeamRole;
+  clinicId?: string;
+  isDoctor: boolean;
+  title?: string | null;
+  specialty?: string | null;
+  licenseType?: string | null;
+  licenseNumber?: string | null;
+  documentNumber?: string | null;
+  workPhone?: string | null;
+  address?: string | null;
+  province?: string | null;
+  prescriptionLegend?: string | null;
+  signatureUrl?: string | null;
+  recetarioUserId?: number | null;
+  recetarioActive?: boolean | null;
+  recetarioSyncStatus?: RecetarioDoctorUserSyncStatus;
+  recetarioSyncedAt?: string | null;
+  recetarioLastError?: string | null;
+  recetarioEnvironment?: 'STAGING' | 'PRODUCTION' | null;
+  recetarioIsTestUser?: boolean;
+  recetarioRemoteImmutable?: boolean;
+};
+
+export type UpdateMeApiPayload = {
+  name?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string | null;
+  avatar?: string | null;
+  isDoctor?: boolean;
+  title?: string | null;
+  specialty?: string | null;
+  licenseType?: string | null;
+  licenseNumber?: string | null;
+  documentNumber?: string | null;
+  workPhone?: string | null;
+  address?: string | null;
+  province?: string | null;
+  prescriptionLegend?: string | null;
+  signatureUrl?: string | null;
 };
 
 export type UpsertDoctorRecetarioPayload = {
@@ -65,6 +127,473 @@ export type UpdateDoctorApiPayload = {
   isActive?: boolean;
   managedByClinic?: boolean;
 } & UpsertDoctorRecetarioPayload;
+
+/** Estado de sincronización del paciente con Recetario (PUT /patients). */
+export type RecetarioPatientSyncStatus =
+  | 'PENDING'
+  | 'SYNCED'
+  | 'FAILED'
+  | null;
+
+export type PatientRecetarioFields = {
+  healthInsurancePlan?: string | null;
+  recetarioSyncStatus?: RecetarioPatientSyncStatus;
+  recetarioSyncedAt?: string | null;
+  recetarioLastError?: string | null;
+};
+
+export type PatientDto = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  medicalRecordNumber?: number | null;
+  dni?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  birthDate?: string | null;
+  gender?: string | null;
+  address?: string | null;
+  city?: string | null;
+  province?: string | null;
+  department?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  notes?: string | null;
+  createdAt?: string;
+  isActive?: boolean;
+  deactivatedAt?: string | null;
+} & PatientRecetarioFields;
+
+export type CreatePatientApiPayload = {
+  firstName: string;
+  lastName: string;
+  medicalRecordNumber?: number;
+  dni?: string;
+  phone?: string;
+  email?: string;
+  birthDate?: string;
+  gender?: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  department?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  notes?: string;
+  healthInsuranceId?: string;
+  /** Id numérico del catálogo Recetario (`GET /health-insurances`). */
+  recetarioHealthInsuranceId?: number;
+  affiliateNumber?: string;
+  healthInsurancePlan?: string;
+};
+
+export type RecetarioHealthInsuranceDto = {
+  id: number;
+  name: string;
+  description?: string | null;
+};
+
+// --- Medicamentos Recetario (vademécum para futuras recetas) ---
+
+export type RecetarioMedicationPowerDto = {
+  value: string | null;
+  unit: string | null;
+};
+
+export type RecetarioMedicationPackageDto = {
+  id: number;
+  /** Id requerido por Recetario al generar una nueva receta (POST /prescriptions). */
+  externalId: string;
+  name: string;
+  shape: string | null;
+  action: string | null;
+  barcode: string | null;
+  disabled: boolean;
+  drugExternalId: string | null;
+  power: RecetarioMedicationPowerDto | null;
+};
+
+export type RecetarioMedicationDto = {
+  id: number;
+  brand: string;
+  drug: string;
+  requiresDuplicate: boolean;
+  hivSpecific: boolean;
+  packages: RecetarioMedicationPackageDto[];
+};
+
+/**
+ * Medicamento + presentación elegidos en el autocomplete.
+ * Conserva todo lo necesario para construir el payload de Nueva Receta.
+ */
+export type SelectedMedication = {
+  medicationId: number;
+  brand: string;
+  drug: string;
+  requiresDuplicate: boolean;
+  hivSpecific: boolean;
+  package: {
+    id: number;
+    externalId: string;
+    name: string;
+    shape: string | null;
+    action?: string | null;
+    power: RecetarioMedicationPowerDto | null;
+  };
+};
+
+// --- Diagnósticos ICD-10 (NIH Clinical Tables) ---
+
+export type DiagnosisSearchResult = {
+  code: string;
+  /** Descripción en español (display). */
+  description: string;
+  descriptionEn: string;
+};
+
+export type SelectedDiagnosis = DiagnosisSearchResult;
+
+// --- Recetas electrónicas (POST /prescriptions) ---
+
+export type PrescriptionStatus =
+  | 'DRAFT'
+  | 'PENDING_APPROVAL'
+  | 'CHANGES_REQUESTED'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'ISSUED'
+  | 'CANCELLED'
+  | 'FAILED';
+
+export type PrescriptionCorrectionEvent = {
+  type: 'CHANGES_REQUESTED' | 'ADMIN_CORRECTED' | 'RESUBMITTED';
+  at: string;
+  userId: string;
+  userName?: string;
+  note?: string;
+};
+
+export type PrescriptionCorrectionPayload = {
+  diagnosis: string;
+  diagnosisCode: string;
+  diagnosisDescriptionEs: string;
+  diagnosisDescriptionEn: string;
+  reference?: string;
+  clinicalNotes?: string;
+  hiv?: boolean;
+  recurring?: {
+    days: 30 | 60 | 90;
+    quantity: number;
+  };
+  medicines: CreatePrescriptionMedicinePayload[];
+};
+
+export type PrescriptionClinicalRequest = {
+  date: string | null;
+  reference: string | null;
+  clinicalNotes: string | null;
+  hiv: boolean;
+  recurring: unknown;
+  medicines: unknown[];
+};
+
+// --- Órdenes médicas (POST /medical-orders) ---
+
+export type MedicalOrderStatus =
+  | 'DRAFT'
+  | 'PENDING_APPROVAL'
+  | 'APPROVED'
+  | 'REJECTED'
+  | 'EMITTED'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'PENDING'
+  | 'ISSUED';
+
+export type MedicalOrderTemplateCategory = 'MANUAL' | 'IMAGING' | 'LABORATORY';
+
+export type MedicalOrderRequestItemPayload = {
+  description: string;
+  category?: MedicalOrderTemplateCategory;
+};
+
+export type CreateMedicalOrderPayload = {
+  doctorId: string;
+  patientId: string;
+  diagnosisCode: string;
+  diagnosisDescription: string;
+  requestItems: MedicalOrderRequestItemPayload[];
+  date: string;
+  reference?: string;
+};
+
+export type MedicalOrderRequestItemDto = {
+  id: string;
+  description: string;
+  sortOrder: number;
+  category: MedicalOrderTemplateCategory;
+};
+
+export type MedicalOrderTemplateDto = {
+  id: string;
+  name: string;
+  category: MedicalOrderTemplateCategory;
+  items: Array<{ id: string; description: string; sortOrder?: number }>;
+};
+
+export type MedicalOrderDto = {
+  id: string;
+  clinicId: string;
+  doctorId: string;
+  patientId: string;
+  recetarioOrderId: number | null;
+  reference: string | null;
+  diagnosisCode: string;
+  diagnosisDescription: string;
+  orderText: string;
+  orderDate: string;
+  pdfUrl: string | null;
+  status: MedicalOrderStatus;
+  errorMessage: string | null;
+  rejectionReason?: string | null;
+  approvedAt?: string | null;
+  rejectedAt?: string | null;
+  createdByUserId: string;
+  doctorSnapshot?: unknown;
+  patientSnapshot?: unknown;
+  rawRequest?: unknown;
+  rawResponse?: unknown;
+  requestItems?: MedicalOrderRequestItemDto[];
+  createdAt: string;
+  updatedAt: string;
+  doctor?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    recetarioUserId: number | null;
+  };
+  patient?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    dni?: string | null;
+  };
+  createdBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  approvedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+  rejectedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+};
+
+export type ListMedicalOrdersParams = {
+  patientId?: string;
+  doctorId?: string;
+  page?: number;
+  limit?: number;
+};
+
+export type MedicalOrdersListResponse = {
+  items: MedicalOrderDto[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export type CreatePrescriptionMedicinePayload = {
+  externalId: string;
+  quantity: number;
+  longTerm: boolean;
+  posology: string;
+  genericOnly?: boolean;
+  brandRecommendation?: boolean;
+  requiresDuplicate?: boolean;
+};
+
+export type CreatePrescriptionPayload = {
+  doctorId: string;
+  patientId: string;
+  date: string;
+  diagnosis: string;
+  diagnosisCode: string;
+  diagnosisDescriptionEs: string;
+  diagnosisDescriptionEn: string;
+  reference?: string;
+  /** Observaciones clínicas — solo almacenamiento local, no se envía a Recetario. */
+  clinicalNotes?: string;
+  hiv?: boolean;
+  recurring?: {
+    days: 30 | 60 | 90;
+    quantity: number;
+  };
+  medicines: CreatePrescriptionMedicinePayload[];
+};
+
+export type PrescriptionDto = {
+  id: string;
+  clinicId: string;
+  doctorId: string;
+  patientId: string;
+  createdById: string;
+  diagnosis: string;
+  diagnosisCode: string | null;
+  diagnosisDescriptionEs: string | null;
+  diagnosisDescriptionEn: string | null;
+  recetarioPrescriptionId: number | null;
+  recetarioExternalId: string | null;
+  pdfUrl: string | null;
+  status: PrescriptionStatus;
+  approvedById: string | null;
+  rejectedById: string | null;
+  approvedAt: string | null;
+  rejectedAt: string | null;
+  rejectionReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+  doctor?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    recetarioUserId: number | null;
+  };
+  patient?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    dni: string | null;
+  };
+  createdBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+  approvedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+  rejectedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  } | null;
+  clinicalRequest?: PrescriptionClinicalRequest | null;
+  correctionHistory?: PrescriptionCorrectionEvent[];
+};
+
+export type MedicalDocumentType =
+  | 'PRESCRIPTION'
+  | 'STUDY_ORDER'
+  | 'PRACTICE_ORDER'
+  | 'OTHER';
+
+export type MedicalDocumentStatus =
+  | 'ISSUED'
+  | 'CANCELLED'
+  | 'EXPIRED'
+  | 'DRAFT'
+  | 'UNKNOWN';
+
+export type MedicalDocumentListItemDto = {
+  id: string;
+  issuedAt: string;
+  expiresAt: string | null;
+  patientId: string | null;
+  patientName: string;
+  patientDni: string | null;
+  doctorUserId: string | null;
+  doctorName: string;
+  documentType: MedicalDocumentType;
+  documentTypeLabel: string;
+  status: MedicalDocumentStatus;
+  statusLabel: string;
+  healthInsurance: string | null;
+  documentNumber: string | null;
+  pdfUrl: string | null;
+  diagnosis: string | null;
+};
+
+export type MedicalDocumentsStatsDto = {
+  total: number;
+  prescriptions: number;
+  studyOrders: number;
+  cancelled: number;
+  issuedToday: number;
+};
+
+export type MedicalDocumentsListResponse = {
+  items: MedicalDocumentListItemDto[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+export type MedicalDocumentDetailDto = MedicalDocumentListItemDto & {
+  institutionName: string | null;
+  qrUrl: string | null;
+  indications: string | null;
+  recetarioDocumentId: number | null;
+  prescriptionId: string | null;
+  syncedAt: string;
+  patient: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    dni: string | null;
+    email: string | null;
+    phone: string | null;
+    healthInsurancePlan: string | null;
+    insurances: Array<{
+      name: string;
+      affiliateNumber: string;
+      isPrimary: boolean;
+    }>;
+  } | null;
+  doctor: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    specialty: string | null;
+    licenseNumber: string | null;
+    recetarioUserId: number | null;
+  } | null;
+  medicines: Array<Record<string, unknown>>;
+  futureActions: {
+    renew: boolean;
+    repeat: boolean;
+    cancel: boolean;
+    whatsapp: boolean;
+    email: boolean;
+  };
+};
+
+export type ListMedicalDocumentsParams = {
+  page?: number;
+  limit?: number;
+  q?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  doctorUserId?: string;
+  patientId?: string;
+  documentType?: MedicalDocumentType;
+  status?: MedicalDocumentStatus;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+};
+
+export type UpdatePatientApiPayload = Partial<
+  Omit<CreatePatientApiPayload, 'healthInsuranceId' | 'affiliateNumber'>
+>;
 
 /**
  * Cliente API configurado para el backend NestJS
@@ -290,7 +819,7 @@ class ApiClient {
   /** Médicos con rol DOCTOR en la clínica (útil para selectores). */
   async listClinicDoctors(): Promise<ClinicTeamMemberDto[]> {
     const team = await this.getTeamMembers();
-    return team.filter((m) => m.role === 'DOCTOR');
+    return team.filter((m) => m.isDoctor && m.isActive);
   }
 
   /**
@@ -304,8 +833,18 @@ class ApiClient {
   /**
    * Obtener datos del usuario autenticado
    */
-  async getMe() {
+  async getMe(): Promise<UserProfileDto> {
     const response = await this.client.get('/auth/me');
+    return response.data;
+  }
+
+  async patchMe(data: UpdateMeApiPayload): Promise<UserProfileDto> {
+    const response = await this.client.patch('/users/me', data);
+    return response.data;
+  }
+
+  async syncMyRecetario() {
+    const response = await this.client.post('/users/me/recetario/sync');
     return response.data;
   }
 
@@ -375,6 +914,243 @@ class ApiClient {
     const q = refresh ? '?refresh=1' : '';
     const response = await this.client.get(`/recetario/provinces${q}`);
     return response.data as { id: number; name: string }[];
+  }
+
+  /** Obras sociales/prepagas nacionales (cache upstream Recetario). */
+  async getRecetarioHealthInsurances(refresh = false) {
+    const q = refresh ? '?refresh=1' : '';
+    const response = await this.client.get(
+      `/recetario/health-insurances${q}`,
+    );
+    return response.data as RecetarioHealthInsuranceDto[];
+  }
+
+  /**
+   * Buscar medicamentos del vademécum Recetario (mínimo 3 caracteres).
+   * `signal` permite cancelar requests anteriores desde React Query.
+   */
+  async searchRecetarioMedications(search: string, signal?: AbortSignal) {
+    const response = await this.client.get(
+      `/recetario/medications?search=${encodeURIComponent(search)}`,
+      { signal },
+    );
+    return response.data as RecetarioMedicationDto[];
+  }
+
+  /** Búsqueda ICD-10-CM vía backend (`GET /icd10/search?q=`). */
+  async searchIcd10(q: string, signal?: AbortSignal) {
+    const response = await this.client.get(
+      `/icd10/search?q=${encodeURIComponent(q)}`,
+      { signal },
+    );
+    return response.data as DiagnosisSearchResult[];
+  }
+
+  /** @deprecated usar `searchIcd10` */
+  async searchDiagnosis(q: string, signal?: AbortSignal) {
+    return this.searchIcd10(q, signal);
+  }
+
+  /** Crear borrador de receta (DRAFT). */
+  async createPrescription(
+    data: CreatePrescriptionPayload,
+  ): Promise<PrescriptionDto> {
+    const response = await this.client.post('/prescriptions', data);
+    return response.data as PrescriptionDto;
+  }
+
+  async submitPrescription(id: string): Promise<PrescriptionDto> {
+    const response = await this.client.post(`/prescriptions/${id}/submit`);
+    return response.data as PrescriptionDto;
+  }
+
+  async approvePrescription(id: string): Promise<PrescriptionDto> {
+    const response = await this.client.post(`/prescriptions/${id}/approve`);
+    return response.data as PrescriptionDto;
+  }
+
+  async rejectPrescription(
+    id: string,
+    rejectionReason: string,
+  ): Promise<PrescriptionDto> {
+    const response = await this.client.post(`/prescriptions/${id}/reject`, {
+      rejectionReason,
+    });
+    return response.data as PrescriptionDto;
+  }
+
+  /** Emite en Recetario (requiere APPROVED + médico sincronizado). */
+  async issuePrescription(id: string): Promise<PrescriptionDto> {
+    const response = await this.client.post(`/prescriptions/${id}/issue`);
+    return response.data as PrescriptionDto;
+  }
+
+  /** Detalle de receta emitida (auditoría / reimpresión). */
+  async getPrescription(id: string): Promise<PrescriptionDto> {
+    const response = await this.client.get(`/prescriptions/${id}`);
+    return response.data as PrescriptionDto;
+  }
+
+  async listPendingPrescriptions(): Promise<PrescriptionDto[]> {
+    const response = await this.client.get('/prescriptions/pending');
+    return response.data as PrescriptionDto[];
+  }
+
+  async approveAndIssuePrescription(id: string): Promise<PrescriptionDto> {
+    const response = await this.client.post(
+      `/prescriptions/${id}/approve-and-issue`,
+    );
+    return response.data as PrescriptionDto;
+  }
+
+  async requestPrescriptionChanges(
+    id: string,
+    changesNote: string,
+  ): Promise<PrescriptionDto> {
+    const response = await this.client.post(
+      `/prescriptions/${id}/request-changes`,
+      { changesNote },
+    );
+    return response.data as PrescriptionDto;
+  }
+
+  async applyPrescriptionCorrection(
+    id: string,
+    data: PrescriptionCorrectionPayload,
+  ): Promise<PrescriptionDto> {
+    const response = await this.client.patch(`/prescriptions/${id}/correction`, data);
+    return response.data as PrescriptionDto;
+  }
+
+  async getPrescriptionCorrectionHistory(id: string): Promise<{
+    prescriptionId: string;
+    events: PrescriptionCorrectionEvent[];
+  }> {
+    const response = await this.client.get(
+      `/prescriptions/${id}/correction-history`,
+    );
+    return response.data;
+  }
+
+  // ── Órdenes médicas (POST /medical-orders → Recetario POST /orders) ──
+
+  async createMedicalOrder(
+    data: CreateMedicalOrderPayload,
+  ): Promise<MedicalOrderDto> {
+    const response = await this.client.post('/medical-orders', data);
+    return response.data as MedicalOrderDto;
+  }
+
+  async submitMedicalOrder(id: string): Promise<MedicalOrderDto> {
+    const response = await this.client.post(`/medical-orders/${id}/submit`);
+    return response.data as MedicalOrderDto;
+  }
+
+  async listPendingMedicalOrders(): Promise<MedicalOrderDto[]> {
+    const response = await this.client.get('/medical-orders/pending');
+    return response.data as MedicalOrderDto[];
+  }
+
+  async approveMedicalOrder(id: string): Promise<MedicalOrderDto> {
+    const response = await this.client.post(`/medical-orders/${id}/approve`);
+    return response.data as MedicalOrderDto;
+  }
+
+  async approveAndIssueMedicalOrder(id: string): Promise<MedicalOrderDto> {
+    const response = await this.client.post(
+      `/medical-orders/${id}/approve-and-issue`,
+    );
+    return response.data as MedicalOrderDto;
+  }
+
+  async rejectMedicalOrder(
+    id: string,
+    rejectionReason: string,
+  ): Promise<MedicalOrderDto> {
+    const response = await this.client.post(`/medical-orders/${id}/reject`, {
+      rejectionReason,
+    });
+    return response.data as MedicalOrderDto;
+  }
+
+  async issueMedicalOrder(id: string): Promise<MedicalOrderDto> {
+    const response = await this.client.post(`/medical-orders/${id}/issue`);
+    return response.data as MedicalOrderDto;
+  }
+
+  async cancelMedicalOrder(id: string): Promise<MedicalOrderDto> {
+    const response = await this.client.post(`/medical-orders/${id}/cancel`);
+    return response.data as MedicalOrderDto;
+  }
+
+  async listMedicalOrderTemplates(category?: MedicalOrderTemplateCategory) {
+    const response = await this.client.get('/medical-orders/templates', {
+      params: category ? { category } : undefined,
+    });
+    return response.data as MedicalOrderTemplateDto[];
+  }
+
+  async createMedicalOrderTemplate(data: {
+    name: string;
+    category: MedicalOrderTemplateCategory;
+    items: Array<{ description: string }>;
+  }): Promise<MedicalOrderTemplateDto> {
+    const response = await this.client.post('/medical-orders/templates', data);
+    return response.data as MedicalOrderTemplateDto;
+  }
+
+  async listMedicalOrders(params: ListMedicalOrdersParams = {}) {
+    const response = await this.client.get('/medical-orders', { params });
+    return response.data as MedicalOrdersListResponse;
+  }
+
+  async getMedicalOrder(id: string): Promise<MedicalOrderDto> {
+    const response = await this.client.get(`/medical-orders/${id}`);
+    return response.data as MedicalOrderDto;
+  }
+
+  async retryMedicalOrder(id: string): Promise<MedicalOrderDto> {
+    const response = await this.client.post(`/medical-orders/${id}/retry`);
+    return response.data as MedicalOrderDto;
+  }
+
+  // ── Documentos médicos Recetario (GET /medical-documents cache local) ──
+
+  async getMedicalDocumentsStats(): Promise<MedicalDocumentsStatsDto> {
+    const response = await this.client.get('/medical-documents/stats');
+    return response.data as MedicalDocumentsStatsDto;
+  }
+
+  async listMedicalDocuments(params: ListMedicalDocumentsParams = {}) {
+    const response = await this.client.get('/medical-documents', { params });
+    return response.data as MedicalDocumentsListResponse;
+  }
+
+  async getMedicalDocument(id: string): Promise<MedicalDocumentDetailDto> {
+    const response = await this.client.get(`/medical-documents/${id}`);
+    return response.data as MedicalDocumentDetailDto;
+  }
+
+  async syncMedicalDocuments(force = false): Promise<{ synced: number }> {
+    const response = await this.client.post(
+      '/medical-documents/sync',
+      {},
+      force ? { params: { force: 'true' } } : undefined,
+    );
+    return response.data as { synced: number };
+  }
+
+  async downloadMedicalDocument(id: string): Promise<{
+    id: string;
+    pdfUrl: string | null;
+    documentNumber: string | null;
+  }> {
+    const response = await this.client.get(`/medical-documents/${id}/download`);
+    return response.data as {
+      id: string;
+      pdfUrl: string | null;
+      documentNumber: string | null;
+    };
   }
 
   /**
@@ -746,6 +1522,10 @@ class ApiClient {
       status: string;
       minutesUntil: number;
     } | null;
+    medicalDocumentsTotal: number;
+    medicalDocumentsIssuedToday: number;
+    prescriptionsIssuedTotal: number;
+    ordersIssuedTotal: number;
   }> {
     const response = await this.client.get('/dashboard/summary');
     return response.data;
@@ -762,6 +1542,7 @@ class ApiClient {
     limit?: number;
     q?: string;
     activeFilter?: 'active' | 'inactive' | 'all';
+    myAppointmentsOnly?: boolean;
   }) {
     const search = new URLSearchParams();
     if (params?.page != null) search.set('page', String(params.page));
@@ -769,6 +1550,8 @@ class ApiClient {
     if (params?.q?.trim()) search.set('q', params.q.trim());
     if (params?.activeFilter && params.activeFilter !== 'active')
       search.set('activeFilter', params.activeFilter);
+    if (params?.myAppointmentsOnly === true)
+      search.set('myAppointmentsOnly', 'true');
     const qs = search.toString();
     const response = await this.client.get(`/patients${qs ? `?${qs}` : ''}`);
     return response.data;
@@ -807,25 +1590,7 @@ class ApiClient {
    * Crear paciente (OWNER/ADMIN).
    * Incluye datos personales ampliados y obra social opcional.
    */
-  async createPatient(data: {
-    firstName: string;
-    lastName: string;
-    medicalRecordNumber?: number;
-    dni?: string;
-    phone?: string;
-    email?: string;
-    birthDate?: string;
-    gender?: string;
-    address?: string;
-    city?: string;
-    province?: string;
-    department?: string;
-    emergencyContactName?: string;
-    emergencyContactPhone?: string;
-    notes?: string;
-    healthInsuranceId?: string;
-    affiliateNumber?: string;
-  }) {
+  async createPatient(data: CreatePatientApiPayload): Promise<PatientDto> {
     const response = await this.client.post('/patients', data);
     return response.data;
   }
@@ -833,28 +1598,24 @@ class ApiClient {
   /**
    * Editar paciente (parcial). Solo OWNER/ADMIN.
    */
-  async updatePatient(
-    id: string,
-    data: {
-      firstName?: string;
-      lastName?: string;
-      medicalRecordNumber?: number;
-      dni?: string;
-      phone?: string;
-      email?: string;
-      birthDate?: string;
-      gender?: string;
-      address?: string;
-      city?: string;
-      province?: string;
-      department?: string;
-      emergencyContactName?: string;
-      emergencyContactPhone?: string;
-      notes?: string;
-    },
-  ) {
+  async updatePatient(id: string, data: UpdatePatientApiPayload) {
     const response = await this.client.patch(`/patients/${id}`, data);
     return response.data;
+  }
+
+  /** Sincronizar paciente con Recetario (PUT /patients). OWNER/ADMIN. */
+  async syncPatientRecetario(patientId: string) {
+    const response = await this.client.post(
+      `/patients/${patientId}/recetario/sync`,
+    );
+    return response.data as {
+      result: {
+        status: string;
+        message: string;
+        error?: unknown;
+      };
+      patient: PatientDto;
+    };
   }
 
   /**
@@ -888,7 +1649,12 @@ class ApiClient {
    */
   async addPatientInsurance(
     patientId: string,
-    data: { healthInsuranceId: string; affiliateNumber: string; isPrimary?: boolean },
+    data: {
+      healthInsuranceId?: string;
+      recetarioHealthInsuranceId?: number;
+      affiliateNumber: string;
+      isPrimary?: boolean;
+    },
   ) {
     const response = await this.client.post(
       `/patients/${patientId}/insurances`,
@@ -937,7 +1703,8 @@ class ApiClient {
    * Crear obra social. OWNER/ADMIN.
    */
   async createHealthInsurance(data: {
-    name: string;
+    name?: string;
+    recetarioHealthInsuranceId?: number;
     code?: string;
     /** % de la consulta cubierto por la OS (0–100). */
     coveragePercent?: number;

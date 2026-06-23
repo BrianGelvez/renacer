@@ -22,8 +22,12 @@ import {
   Wallet,
   MessageCircle,
   CalendarClock,
+  Pill,
+  ClipboardList,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
+import type { PermissionModule } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
 import DashboardCard from './DashboardCard';
 import QuickActionModals, { type QuickActionKey } from './QuickActionModals';
@@ -31,11 +35,13 @@ import QuickActionModals, { type QuickActionKey } from './QuickActionModals';
 type DashboardSummary = Awaited<ReturnType<typeof apiClient.getDashboardSummary>>;
 
 interface StatCardProps {
+  id: string;
   title: string;
   value: string;
   icon: React.ReactNode;
   color: string;
   href?: string;
+  permission: PermissionModule;
   /** Texto secundario bajo el valor (p. ej. variación % ingresos) */
   trend?: { text: string; className: string };
 }
@@ -158,6 +164,7 @@ function monthlyIncomeTrend(summary: DashboardSummary): {
 export default function OverviewSection() {
   const router = useRouter();
   const { user, clinic } = useAuth();
+  const { canAccess } = usePermissions();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -192,117 +199,101 @@ export default function OverviewSection() {
     return 'Buenas noches';
   };
 
-  const isStaff = user?.role === 'STAFF';
+  const isDoctor = user?.role === 'DOCTOR';
   const go = (href: string) => {
-    console.log('Dashboard click:', href);
     router.push(href);
   };
 
   const incomeMomTrend = summary ? monthlyIncomeTrend(summary) : undefined;
 
-  const stats: StatCardProps[] = summary
-    ? isStaff
-      ? [
-          {
-            title: 'Mis turnos hoy',
-            value: String(summary.appointmentsToday),
-            icon: <Calendar className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-            href: '/dashboard/agenda?filter=hoy',
-          },
-          {
-            title: 'Pendientes',
-            value: String(summary.appointmentsPending),
-            icon: <Clock className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-amber-500 to-amber-600',
-            href: '/dashboard/agenda?estado=pendiente_confirmacion',
-          },
-          {
-            title: 'Ingresos mensuales',
-            value: formatMoneyArs(summary.monthlyIncome ?? 0),
-            icon: <Wallet className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-teal-500 to-teal-600',
-            trend: incomeMomTrend,
-            href: '/dashboard/finanzas',
-          },
-          {
-            title: 'Tasa asistencia (7 días)',
-            value: `${summary.attendanceRate}%`,
-            icon: <Activity className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-purple-500 to-purple-600',
-            href: '/dashboard/reports',
-          },
-          {
-            title: 'Profesionales activos',
-            value: String(summary.professionalsActive),
-            icon: <Users className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-blue-500 to-blue-600',
-            href: '/dashboard?section=team',
-          },
-          {
-            title: 'Pacientes totales',
-            value: String(summary.patientsTotal ?? 0),
-            icon: <UsersRound className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-[#D16A8A] to-[#E89AB0]',
-            href: '/dashboard/patients',
-          },
-        ]
-      : [
-          {
-            title: 'Profesionales activos',
-            value: String(summary.professionalsActive),
-            icon: <Users className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-blue-500 to-blue-600',
-            href: '/dashboard?section=team',
-          },
-          {
-            title: 'Pacientes totales',
-            value: String(summary.patientsTotal ?? 0),
-            icon: <UsersRound className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-[#D16A8A] to-[#E89AB0]',
-            href: '/dashboard/patients',
-          },
-          {
-            title: 'Turnos hoy',
-            value: String(summary.appointmentsToday),
-            icon: <Calendar className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-            href: '/dashboard/agenda?filter=hoy',
-          },
-          {
-            title: 'Pendientes',
-            value: String(summary.appointmentsPending),
-            icon: <Clock className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-amber-500 to-amber-600',
-            href: '/dashboard/agenda?estado=pendiente_confirmacion',
-          },
-          {
-            title: 'Tasa asistencia (7 días)',
-            value: `${summary.attendanceRate}%`,
-            icon: <Activity className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-purple-500 to-purple-600',
-            href: '/dashboard/reports',
-          },
-          {
-            title: 'Ingresos mensuales',
-            value: formatMoneyArs(summary.monthlyIncome ?? 0),
-            icon: <Wallet className="w-6 h-6 text-white" />,
-            color: 'bg-gradient-to-br from-teal-500 to-teal-600',
-            trend: incomeMomTrend,
-            href: '/dashboard/finanzas',
-          },
-        ]
+  const allStats: StatCardProps[] = summary
+    ? [
+        {
+          id: 'professionals',
+          permission: 'team',
+          title: 'Profesionales activos',
+          value: String(summary.professionalsActive),
+          icon: <Users className="w-6 h-6 text-white" />,
+          color: 'bg-gradient-to-br from-blue-500 to-blue-600',
+          href: '/dashboard?section=team',
+        },
+        {
+          id: 'patients',
+          permission: 'patients',
+          title: 'Pacientes totales',
+          value: String(summary.patientsTotal ?? 0),
+          icon: <UsersRound className="w-6 h-6 text-white" />,
+          color: 'bg-gradient-to-br from-[#D16A8A] to-[#E89AB0]',
+          href: '/dashboard/patients',
+        },
+        {
+          id: 'appointments-today',
+          permission: 'schedule',
+          title: isDoctor ? 'Mis turnos hoy' : 'Turnos hoy',
+          value: String(summary.appointmentsToday),
+          icon: <Calendar className="w-6 h-6 text-white" />,
+          color: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
+          href: '/dashboard/agenda?filter=hoy',
+        },
+        {
+          id: 'appointments-pending',
+          permission: 'schedule',
+          title: 'Pendientes',
+          value: String(summary.appointmentsPending),
+          icon: <Clock className="w-6 h-6 text-white" />,
+          color: 'bg-gradient-to-br from-amber-500 to-amber-600',
+          href: '/dashboard/agenda?estado=pendiente_confirmacion',
+        },
+        {
+          id: 'attendance',
+          permission: 'reports',
+          title: 'Tasa asistencia (7 días)',
+          value: `${summary.attendanceRate}%`,
+          icon: <Activity className="w-6 h-6 text-white" />,
+          color: 'bg-gradient-to-br from-purple-500 to-purple-600',
+          href: '/dashboard/reports',
+        },
+        {
+          id: 'prescriptions',
+          permission: 'prescriptions',
+          title: 'Recetas emitidas',
+          value: String(
+            summary.prescriptionsIssuedTotal ?? summary.medicalDocumentsTotal ?? 0,
+          ),
+          icon: <Pill className="w-6 h-6 text-white" />,
+          color: 'bg-gradient-to-br from-indigo-500 to-violet-600',
+          href: '/dashboard/prescriptions',
+        },
+        {
+          id: 'orders',
+          permission: 'orders',
+          title: 'Órdenes emitidas',
+          value: String(summary.ordersIssuedTotal ?? 0),
+          icon: <ClipboardList className="w-6 h-6 text-white" />,
+          color: 'bg-gradient-to-br from-cyan-500 to-teal-600',
+          href: '/dashboard/orders',
+        },
+        {
+          id: 'finance',
+          permission: 'finance',
+          title: 'Ingresos mensuales',
+          value: formatMoneyArs(summary.monthlyIncome ?? 0),
+          icon: <Wallet className="w-6 h-6 text-white" />,
+          color: 'bg-gradient-to-br from-teal-500 to-teal-600',
+          trend: incomeMomTrend,
+          href: '/dashboard/finanzas',
+        },
+      ]
     : [];
 
-  const role = user?.role;
+  const stats = allStats.filter((stat) => canAccess(stat.permission));
 
   type QuickActionDef = {
     key: QuickActionKey;
     label: string;
     icon: typeof Calendar;
     className: string;
-    /** Si se define, solo esos roles ven la acción */
-    roles?: readonly ('OWNER' | 'ADMIN' | 'STAFF')[];
+    permission: PermissionModule;
   };
 
   const quickActionDefs: QuickActionDef[] = [
@@ -311,73 +302,76 @@ export default function OverviewSection() {
       label: 'Nuevo turno',
       icon: Calendar,
       className: 'bg-blue-50 text-blue-600 hover:bg-blue-100',
-      roles: ['OWNER', 'ADMIN'],
+      permission: 'schedule',
     },
     {
       key: 'agenda',
       label: 'Ver agenda',
       icon: Clock,
       className: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100',
+      permission: 'schedule',
     },
     {
       key: 'patients',
       label: 'Pacientes',
       icon: Users,
       className: 'bg-purple-50 text-purple-600 hover:bg-purple-100',
+      permission: 'patients',
     },
     {
       key: 'reports',
       label: 'Reportes',
       icon: TrendingUp,
       className: 'bg-amber-50 text-amber-600 hover:bg-amber-100',
+      permission: 'reports',
     },
     {
       key: 'finanzas',
       label: 'Finanzas',
       icon: Wallet,
       className: 'bg-teal-50 text-teal-600 hover:bg-teal-100',
+      permission: 'finance',
     },
     {
       key: 'availability',
       label: 'Disponibilidad',
       icon: CalendarClock,
       className: 'bg-sky-50 text-sky-600 hover:bg-sky-100',
+      permission: 'availability',
     },
     {
       key: 'team',
       label: 'Equipo',
       icon: UsersRound,
       className: 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100',
-      roles: ['OWNER', 'ADMIN'],
+      permission: 'team',
     },
     {
       key: 'clinic',
       label: 'Mi clínica',
       icon: Building2,
       className: 'bg-rose-50 text-rose-600 hover:bg-rose-100',
-      roles: ['OWNER', 'ADMIN'],
+      permission: 'clinic',
     },
     {
       key: 'conversations',
       label: 'Conversaciones',
       icon: MessageCircle,
       className: 'bg-cyan-50 text-cyan-600 hover:bg-cyan-100',
-      roles: ['OWNER', 'ADMIN'],
+      permission: 'conversations',
     },
     {
       key: 'invite',
       label: 'Invitaciones',
       icon: UserPlus,
       className: 'bg-violet-50 text-violet-600 hover:bg-violet-100',
-      roles: ['OWNER', 'ADMIN'],
+      permission: 'invite',
     },
   ];
 
-  const quickActions = quickActionDefs.filter((a) => {
-    if (!a.roles) return true;
-    if (role !== 'OWNER' && role !== 'ADMIN' && role !== 'STAFF') return false;
-    return a.roles.includes(role);
-  });
+  const quickActions = quickActionDefs.filter((action) =>
+    canAccess(action.permission),
+  );
 
   return (
     <div className="space-y-6 min-w-0 max-w-full">
@@ -411,7 +405,9 @@ export default function OverviewSection() {
                   ? 'Resumen operativo de tu clínica en tiempo real.'
                   : user?.role === 'ADMIN'
                     ? 'Métricas y turnos para la operación diaria.'
-                    : 'Tu agenda y próximos turnos.'}
+                    : user?.role === 'DOCTOR'
+                      ? 'Tu agenda, pacientes y documentación clínica.'
+                      : 'Tu agenda y tareas operativas del día.'}
               </p>
               {summary?.nextUpcoming && (
                 <div
@@ -491,10 +487,21 @@ export default function OverviewSection() {
           <p className="text-sm text-gray-500">Cargando métricas...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {stats.map((stat, index) => (
-            <DashboardCard key={stat.title} {...stat} delay={index * 0.1} />
-          ))}
+        <div
+          className={`grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${
+            stats.length >= 6
+              ? 'xl:grid-cols-6'
+              : stats.length >= 4
+                ? 'lg:grid-cols-4'
+                : 'lg:grid-cols-3'
+          }`}
+        >
+          {stats.map((stat, index) => {
+            const { id, permission: _permission, ...cardProps } = stat;
+            return (
+              <DashboardCard key={id} {...cardProps} delay={index * 0.1} />
+            );
+          })}
         </div>
       )}
 
@@ -550,19 +557,21 @@ export default function OverviewSection() {
                   tabIndex={0}
                   title="Ver detalles"
                   onClick={() => {
-                    const href =
-                      activity.type.startsWith('APPOINTMENT_')
-                        ? '/dashboard/agenda'
-                        : '/dashboard/reports';
+                    const href = activity.type.startsWith('APPOINTMENT_')
+                      ? '/dashboard/agenda'
+                      : canAccess('reports')
+                        ? '/dashboard/reports'
+                        : '/dashboard/patients';
                     go(href);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
-                      const href =
-                        activity.type.startsWith('APPOINTMENT_')
-                          ? '/dashboard/agenda'
-                          : '/dashboard/reports';
+                      const href = activity.type.startsWith('APPOINTMENT_')
+                        ? '/dashboard/agenda'
+                        : canAccess('reports')
+                          ? '/dashboard/reports'
+                          : '/dashboard/patients';
                       go(href);
                     }
                   }}
