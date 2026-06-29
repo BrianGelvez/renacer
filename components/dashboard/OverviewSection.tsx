@@ -17,7 +17,6 @@ import {
   UserPlus,
   UsersRound,
   Stethoscope,
-  Loader2,
   AlertCircle,
   Wallet,
   MessageCircle,
@@ -31,6 +30,7 @@ import type { PermissionModule } from '@/lib/permissions';
 import { apiClient } from '@/lib/api';
 import DashboardCard from './DashboardCard';
 import QuickActionModals, { type QuickActionKey } from './QuickActionModals';
+import { SkeletonDashboardCards } from '@/components/ui/Skeleton';
 
 type DashboardSummary = Awaited<ReturnType<typeof apiClient.getDashboardSummary>>;
 
@@ -44,6 +44,8 @@ interface StatCardProps {
   permission: PermissionModule;
   /** Texto secundario bajo el valor (p. ej. variación % ingresos) */
   trend?: { text: string; className: string };
+  actionLabel?: string;
+  roles?: Array<'OWNER' | 'ADMIN' | 'DOCTOR' | 'SECRETARY' | 'STAFF'>;
 }
 
 function formatRelativeTime(iso: string): string {
@@ -200,6 +202,12 @@ export default function OverviewSection() {
   };
 
   const isDoctor = user?.role === 'DOCTOR';
+  const currentRole = (user?.role ?? 'STAFF') as
+    | 'OWNER'
+    | 'ADMIN'
+    | 'DOCTOR'
+    | 'SECRETARY'
+    | 'STAFF';
   const go = (href: string) => {
     router.push(href);
   };
@@ -216,6 +224,8 @@ export default function OverviewSection() {
           icon: <Users className="w-6 h-6 text-white" />,
           color: 'bg-gradient-to-br from-blue-500 to-blue-600',
           href: '/dashboard?section=team',
+          actionLabel: 'Revisar cobertura del equipo',
+          roles: ['OWNER', 'ADMIN'],
         },
         {
           id: 'patients',
@@ -225,6 +235,8 @@ export default function OverviewSection() {
           icon: <UsersRound className="w-6 h-6 text-white" />,
           color: 'bg-gradient-to-br from-[#D16A8A] to-[#E89AB0]',
           href: '/dashboard/patients',
+          actionLabel: 'Buscar o crear paciente',
+          roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY', 'STAFF'],
         },
         {
           id: 'appointments-today',
@@ -234,6 +246,8 @@ export default function OverviewSection() {
           icon: <Calendar className="w-6 h-6 text-white" />,
           color: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
           href: '/dashboard/agenda?filter=hoy',
+          actionLabel: isDoctor ? 'Abrir agenda clinica' : 'Gestionar agenda de hoy',
+          roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY', 'STAFF'],
         },
         {
           id: 'appointments-pending',
@@ -243,6 +257,8 @@ export default function OverviewSection() {
           icon: <Clock className="w-6 h-6 text-white" />,
           color: 'bg-gradient-to-br from-amber-500 to-amber-600',
           href: '/dashboard/agenda?estado=pendiente_confirmacion',
+          actionLabel: 'Confirmar o resolver turnos',
+          roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY'],
         },
         {
           id: 'attendance',
@@ -252,6 +268,8 @@ export default function OverviewSection() {
           icon: <Activity className="w-6 h-6 text-white" />,
           color: 'bg-gradient-to-br from-purple-500 to-purple-600',
           href: '/dashboard/reports',
+          actionLabel: 'Detectar ausentismo',
+          roles: ['OWNER', 'ADMIN'],
         },
         {
           id: 'prescriptions',
@@ -263,6 +281,8 @@ export default function OverviewSection() {
           icon: <Pill className="w-6 h-6 text-white" />,
           color: 'bg-gradient-to-br from-indigo-500 to-violet-600',
           href: '/dashboard/prescriptions',
+          actionLabel: 'Ver recetas o emitir nueva',
+          roles: ['OWNER', 'ADMIN', 'DOCTOR', 'STAFF'],
         },
         {
           id: 'orders',
@@ -272,6 +292,8 @@ export default function OverviewSection() {
           icon: <ClipboardList className="w-6 h-6 text-white" />,
           color: 'bg-gradient-to-br from-cyan-500 to-teal-600',
           href: '/dashboard/orders',
+          actionLabel: 'Ver ordenes o crear nueva',
+          roles: ['OWNER', 'ADMIN', 'DOCTOR', 'SECRETARY', 'STAFF'],
         },
         {
           id: 'finance',
@@ -282,11 +304,17 @@ export default function OverviewSection() {
           color: 'bg-gradient-to-br from-teal-500 to-teal-600',
           trend: incomeMomTrend,
           href: '/dashboard/finanzas',
+          actionLabel: 'Revisar cobros del mes',
+          roles: ['OWNER'],
         },
       ]
     : [];
 
-  const stats = allStats.filter((stat) => canAccess(stat.permission));
+  const stats = allStats.filter(
+    (stat) =>
+      canAccess(stat.permission) &&
+      (!stat.roles || stat.roles.includes(currentRole)),
+  );
 
   type QuickActionDef = {
     key: QuickActionKey;
@@ -481,11 +509,52 @@ export default function OverviewSection() {
         </div>
       )}
 
-      {loading && !summary ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <Loader2 className="w-10 h-10 animate-spin text-ensigna-primary" />
-          <p className="text-sm text-gray-500">Cargando métricas...</p>
+      {(canAccess('prescriptions') || canAccess('orders') || canAccess('schedule')) && (
+        <div className="grid grid-cols-1 gap-3 lg:hidden">
+          {canAccess('prescriptions') && (
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/prescriptions/new')}
+              className="touch-row flex items-center justify-between rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-4 text-left text-indigo-800"
+            >
+              <span>
+                <span className="block text-base font-semibold">Nueva receta</span>
+                <span className="text-sm text-indigo-700">Emitir en segundos</span>
+              </span>
+              <Pill className="h-6 w-6" />
+            </button>
+          )}
+          {canAccess('orders') && (
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/orders/new')}
+              className="touch-row flex items-center justify-between rounded-2xl border border-teal-100 bg-teal-50 px-4 py-4 text-left text-teal-800"
+            >
+              <span>
+                <span className="block text-base font-semibold">Nueva orden</span>
+                <span className="text-sm text-teal-700">Solicitudes y diagnóstico</span>
+              </span>
+              <ClipboardList className="h-6 w-6" />
+            </button>
+          )}
+          {canAccess('schedule') && (
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/agenda?filter=hoy')}
+              className="touch-row flex items-center justify-between rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-4 text-left text-emerald-800"
+            >
+              <span>
+                <span className="block text-base font-semibold">Agenda de hoy</span>
+                <span className="text-sm text-emerald-700">Turnos y confirmaciones</span>
+              </span>
+              <Calendar className="h-6 w-6" />
+            </button>
+          )}
         </div>
+      )}
+
+      {loading && !summary ? (
+        <SkeletonDashboardCards count={currentRole === 'OWNER' ? 6 : 4} />
       ) : (
         <div
           className={`grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 ${
@@ -515,6 +584,36 @@ export default function OverviewSection() {
           <h3 className="text-lg font-semibold text-gray-900 mb-4">
             Acciones rápidas
           </h3>
+          {(canAccess('prescriptions') || canAccess('orders')) && (
+            <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {canAccess('prescriptions') && (
+                <button
+                  type="button"
+                  onClick={() => router.push('/dashboard/prescriptions/new')}
+                  className="flex items-center justify-between rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-left text-indigo-800 transition-colors hover:bg-indigo-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                >
+                  <span>
+                    <span className="block text-sm font-semibold">Nueva receta</span>
+                    <span className="text-xs text-indigo-700">Paciente, vademecum y diagnostico</span>
+                  </span>
+                  <Pill className="h-5 w-5" />
+                </button>
+              )}
+              {canAccess('orders') && (
+                <button
+                  type="button"
+                  onClick={() => router.push('/dashboard/orders/new')}
+                  className="flex items-center justify-between rounded-xl border border-teal-100 bg-teal-50 px-4 py-3 text-left text-teal-800 transition-colors hover:bg-teal-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+                >
+                  <span>
+                    <span className="block text-sm font-semibold">Nueva orden</span>
+                    <span className="text-xs text-teal-700">Solicitudes, plantillas y diagnostico</span>
+                  </span>
+                  <ClipboardList className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 min-w-0">
             {quickActions.map((action) => {
               const Icon = action.icon;
@@ -523,7 +622,7 @@ export default function OverviewSection() {
                   key={action.key}
                   type="button"
                   onClick={() => setQuickModal(action.key)}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-colors min-h-[92px] sm:min-h-0 ${action.className}`}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-colors min-h-[96px] touch-target sm:min-h-[92px] lg:min-h-0 ${action.className}`}
                 >
                   <Icon className="w-6 h-6 shrink-0" />
                   <span className="text-sm font-medium text-center leading-tight">
@@ -611,7 +710,7 @@ export default function OverviewSection() {
           <button
             type="button"
             onClick={() => router.push('/dashboard/agenda')}
-            className="text-sm font-medium text-ensigna-primary hover:text-ensigna-primary-dark"
+            className="touch-target text-sm font-medium text-ensigna-primary hover:text-ensigna-primary-dark px-2 py-1"
           >
             Ver todos
           </button>
@@ -621,14 +720,22 @@ export default function OverviewSection() {
             No hay turnos programados o confirmados para el resto del día.
           </p>
         ) : (
-          <div className="overflow-x-auto -mx-6 px-6 scrollbar-thin">
-            <div className="flex gap-4 min-w-max py-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:gap-4 lg:overflow-x-auto lg:py-2">
               {summary.upcomingAppointments.map((apt) => {
                 const st = upcomingStatusStyle(apt.status);
                 return (
                   <div
                     key={apt.id}
-                    className={`flex-shrink-0 w-52 p-4 rounded-xl bg-gray-50 border border-gray-100 ring-2 ${st.ring} hover:border-gray-200 transition-colors`}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => go(`/dashboard/agenda?appointmentId=${apt.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        go(`/dashboard/agenda?appointmentId=${apt.id}`);
+                      }
+                    }}
+                    className={`touch-row w-full rounded-xl border border-gray-100 bg-gray-50 p-4 ring-2 ${st.ring} transition-colors hover:border-gray-200 lg:w-52 lg:flex-shrink-0`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-lg font-bold text-gray-900">
@@ -651,7 +758,6 @@ export default function OverviewSection() {
                   </div>
                 );
               })}
-            </div>
           </div>
         )}
       </motion.div>

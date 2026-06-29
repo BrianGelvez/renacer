@@ -30,6 +30,10 @@ import MedicationAutocomplete from '@/components/dashboard/MedicationAutocomplet
 import DiagnosisAutocomplete, {
   type DiagnosisSelection,
 } from '@/components/prescriptions/DiagnosisAutocomplete';
+import WizardSummaryPanel from '@/components/ui/WizardSummaryPanel';
+import WizardStickyFooter from '@/components/ui/WizardStickyFooter';
+import Alert from '@/components/ui/Alert';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChanges';
 
 const MAX_MEDICINES = 3;
 const PATIENT_SEARCH_DEBOUNCE_MS = 500;
@@ -314,6 +318,78 @@ export default function PrescriptionWizard({
     );
   }, [selectedPatient]);
 
+  const filledMedicines = useMemo(
+    () => medicines.filter((m) => m.selection && m.posology.trim()),
+    [medicines],
+  );
+
+  const selectedMedicines = useMemo(
+    () => medicines.filter((m) => m.selection),
+    [medicines],
+  );
+
+  useUnsavedChangesGuard(
+    (!!doctorId || !!selectedPatient || filledMedicines.length > 0 || !!selectedDiagnosis) &&
+      !issuedPrescription,
+  );
+
+  const summaryItems = useMemo(
+    () => [
+      {
+        id: 'doctor',
+        label: 'Médico',
+        value: selectedDoctor
+          ? `Dr/a. ${selectedDoctor.firstName} ${selectedDoctor.lastName}`
+          : null,
+        complete: !!selectedDoctor,
+      },
+      {
+        id: 'patient',
+        label: 'Paciente',
+        value: selectedPatient
+          ? `${selectedPatient.firstName} ${selectedPatient.lastName}`
+          : null,
+        complete: !!selectedPatient,
+      },
+      {
+        id: 'medicines',
+        label: 'Medicamentos',
+        value:
+          filledMedicines.length > 0
+            ? filledMedicines
+                .map(
+                  (m) =>
+                    `${m.selection!.brand} — ${m.posology} (x${m.quantity})`,
+                )
+                .join('\n')
+            : null,
+        complete: filledMedicines.length > 0,
+        multiline: true,
+      },
+      {
+        id: 'diagnosis',
+        label: 'Diagnóstico',
+        value: selectedDiagnosis
+          ? `${selectedDiagnosis.diagnosisCode} — ${selectedDiagnosis.diagnosisDescriptionEs}`
+          : null,
+        complete: !!selectedDiagnosis?.diagnosisCode,
+      },
+      {
+        id: 'date',
+        label: 'Fecha',
+        value: dateIso,
+        complete: !!dateIso,
+      },
+    ],
+    [
+      selectedDoctor,
+      selectedPatient,
+      filledMedicines,
+      selectedDiagnosis,
+      dateIso,
+    ],
+  );
+
   const loadPatient = useCallback(async (id: string) => {
     setPatientLoading(true);
     setError(null);
@@ -407,20 +483,18 @@ export default function PrescriptionWizard({
     });
   };
 
-  const filledMedicines = medicines.filter((m) => m.selection);
-
   const validateStep = (currentStep: number): string | null => {
     if (currentStep === 1) {
       if (!doctorId) return 'Seleccioná el profesional responsable.';
       if (!selectedPatient) return 'Seleccioná un paciente.';
     }
     if (currentStep === 2) {
-      if (filledMedicines.length === 0) return 'Agregá al menos un medicamento.';
-      if (filledMedicines.some((m) => !m.posology.trim())) {
+      if (selectedMedicines.length === 0) return 'Agregá al menos un medicamento.';
+      if (selectedMedicines.some((m) => !m.posology.trim())) {
         return 'Completá la posología de cada medicamento.';
       }
       if (
-        filledMedicines.some((m) => m.genericOnly && m.brandRecommendation)
+        selectedMedicines.some((m) => m.genericOnly && m.brandRecommendation)
       ) {
         return 'Genérico solamente y recomendar marca son incompatibles.';
       }
@@ -580,7 +654,7 @@ export default function PrescriptionWizard({
             : 'Resumen';
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="wizard-mobile-shell mx-auto max-w-6xl space-y-4 lg:space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Nueva receta</h1>
         <p className="mt-1 text-sm text-gray-600">
@@ -588,6 +662,8 @@ export default function PrescriptionWizard({
         </p>
       </div>
 
+      <div className="grid gap-4 lg:gap-6 lg:grid-cols-[1fr_280px]">
+        <div className="order-2 min-w-0 space-y-4 lg:order-1 lg:space-y-6">
       {/* Stepper */}
       <nav aria-label="Pasos de la receta" className="overflow-x-auto">
         <ol className="flex min-w-max gap-1 sm:gap-2">
@@ -1201,19 +1277,29 @@ export default function PrescriptionWizard({
       </div>
 
       {error && (
-        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+        <Alert variant="error" onDismiss={() => setError(null)}>
           {error}
-        </div>
+        </Alert>
       )}
+        </div>
 
-      <div className="flex flex-wrap gap-3">
+        <div className="order-1 lg:order-2">
+        <WizardSummaryPanel
+          items={summaryItems}
+          accent="indigo"
+          currentStep={step}
+          totalSteps={STEPS.length}
+        />
+        </div>
+      </div>
+
+      <WizardStickyFooter>
         {step > 1 && (
           <button
             type="button"
             onClick={goBack}
             disabled={submitting}
-            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            className="btn-ensigna-secondary inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-5 py-3 text-base font-medium sm:flex-none lg:text-sm"
           >
             <ArrowLeft className="h-4 w-4" />
             Anterior
@@ -1224,7 +1310,7 @@ export default function PrescriptionWizard({
           <button
             type="button"
             onClick={goNext}
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-base font-semibold text-white hover:bg-indigo-700 sm:flex-none lg:text-sm touch-target"
           >
             Siguiente
             <ArrowRight className="h-4 w-4" />
@@ -1234,7 +1320,7 @@ export default function PrescriptionWizard({
             type="button"
             onClick={() => void handleEmit()}
             disabled={submitting || activeDoctors.length === 0}
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none lg:text-sm touch-target"
           >
             {submitting ? (
               <>
@@ -1251,7 +1337,7 @@ export default function PrescriptionWizard({
             )}
           </button>
         )}
-      </div>
+      </WizardStickyFooter>
 
       {issuedPrescription && (
         <PrescriptionSuccessModal

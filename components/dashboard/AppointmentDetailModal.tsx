@@ -790,16 +790,16 @@ export default function AppointmentDetailModal({
 
                 {/* Historia clínica (turno COMPLETED) */}
                 {detail.status === 'COMPLETED' && onAddMedicalRecord && (
-                  <div className="rounded-2xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/60 to-white p-4 shadow-sm">
+                  <div className="rounded-2xl border border-ensigna-soft/90 bg-gradient-to-br from-ensigna-accent/60 to-white p-4 shadow-sm">
                     <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-ensigna-accent text-ensigna-primary-dark">
                         <ClipboardList className="h-5 w-5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-indigo-950">
+                        <p className="text-sm font-semibold text-ensigna-primary-dark">
                           Historia clínica
                         </p>
-                        <p className="text-xs text-indigo-900/70 mt-0.5 leading-relaxed">
+                        <p className="text-xs text-ensigna-primary-dark/70 mt-0.5 leading-relaxed">
                           ¿Querés dejar constancia de esta consulta en la historia del paciente?
                         </p>
                         <button
@@ -807,7 +807,7 @@ export default function AppointmentDetailModal({
                           onClick={() =>
                             onAddMedicalRecord(detail.patient.id, detail.id)
                           }
-                          className="mt-3 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-sm min-h-[2.75rem] touch-manipulation"
+                          className="mt-3 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-ensigna-primary text-white text-sm font-semibold hover:bg-ensigna-primary-dark shadow-sm min-h-[2.75rem] touch-manipulation"
                         >
                           <ClipboardList className="w-4 h-4 shrink-0" />
                           Agregar a historia clínica

@@ -18,6 +18,7 @@ import {
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import RegisterPaymentModal from './RegisterPaymentModal';
+import MobileDataCard from '@/components/ui/MobileDataCard';
 
 type PaymentRow = {
   id: string;
@@ -560,7 +561,77 @@ export default function FinanzasSection() {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="space-y-3 p-4 md:hidden">
+          {loading ? (
+            <div className="py-12 text-center text-gray-500">
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-amber-500" />
+            </div>
+          ) : payments.length === 0 ? (
+            <p className="py-8 text-center text-sm text-gray-500">
+              No hay pagos con los filtros seleccionados.
+            </p>
+          ) : (
+            payments.map((p) => {
+              const badge = rowStateBadge(p);
+              const pp = patientPaidDisplay(p);
+              const ins = insuranceDisplay(p);
+              const docRow = p.appointment?.doctor;
+              return (
+                <MobileDataCard
+                  key={p.id}
+                  title={`${p.patient.firstName} ${p.patient.lastName}`}
+                  subtitle={formatDateTime(p.createdAt)}
+                  badge={
+                    <span className={`inline-flex rounded-lg border px-2 py-0.5 text-xs font-medium ${badge.className}`}>
+                      {badge.label}
+                    </span>
+                  }
+                  fields={[
+                    { label: 'Total', value: formatMoney(p.amount) },
+                    { label: 'Paciente', value: formatMoney(pp) },
+                    { label: 'Obra social', value: p.healthInsurance?.name ?? '—' },
+                    {
+                      label: 'Turno',
+                      value: docRow
+                        ? `${docRow.lastName}, ${docRow.name}`
+                        : formatTurno(p.appointment?.startTime),
+                    },
+                    { label: 'Método', value: METHOD_LABELS[p.method] ?? p.method },
+                    { label: 'OS pendiente', value: formatMoney(ins) },
+                  ]}
+                  actions={
+                    canManageStatus ? (
+                      <>
+                        {p.status === 'PENDING' && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={actionId === p.id}
+                              onClick={() => handlePatchStatus(p.id, 'PAID')}
+                              className="touch-target inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                            >
+                              Cobrado
+                            </button>
+                            <button
+                              type="button"
+                              disabled={actionId === p.id}
+                              onClick={() => handlePatchStatus(p.id, 'CANCELED')}
+                              className="touch-target inline-flex flex-1 items-center justify-center rounded-xl border border-red-200 px-4 py-2.5 text-sm font-medium text-red-700 disabled:opacity-50"
+                            >
+                              Anular
+                            </button>
+                          </>
+                        )}
+                      </>
+                    ) : undefined
+                  }
+                />
+              );
+            })
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full text-sm min-w-[960px]">
             <thead>
               <tr className="bg-gray-50 text-left text-gray-600">

@@ -629,9 +629,9 @@ function FramedContent({
               Vista compacta de los mismos KPI del resumen. Actualizá para refrescar cifras.
             </p>
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-gray-100 bg-purple-50/60 p-3">
-                <p className="text-xs text-purple-800">Asistencia (7 días)</p>
-                <p className="text-xl font-bold text-purple-950">{dashboardSummary.attendanceRate}%</p>
+              <div className="rounded-xl border border-gray-100 bg-ensigna-accent/60 p-3">
+                <p className="text-xs text-ensigna-primary-dark">Asistencia (7 días)</p>
+                <p className="text-xl font-bold text-ensigna-primary-dark">{dashboardSummary.attendanceRate}%</p>
               </div>
               <div className="rounded-xl border border-gray-100 bg-amber-50/60 p-3">
                 <p className="text-xs text-amber-900">Pendientes</p>
@@ -660,12 +660,12 @@ function FramedContent({
         return (
           <div className="space-y-4">
             {paySummaryLoading ? (
-              <Loader2 className="mx-auto h-8 w-8 animate-spin text-teal-600" />
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-ensigna-primary-dark" />
             ) : paySummary ? (
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-teal-100 bg-teal-50/80 p-3">
-                  <p className="text-xs text-teal-800">Ingresos hoy</p>
-                  <p className="text-lg font-bold text-teal-950">{formatMoneyArs(paySummary.todayIncome)}</p>
+                <div className="rounded-xl border border-ensigna-soft/50 bg-ensigna-accent/80 p-3">
+                  <p className="text-xs text-ensigna-primary-dark">Ingresos hoy</p>
+                  <p className="text-lg font-bold text-ensigna-primary-dark">{formatMoneyArs(paySummary.todayIncome)}</p>
                 </div>
                 <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                   <p className="text-xs text-gray-600">Pendiente de cobro</p>
@@ -682,7 +682,7 @@ function FramedContent({
             <button
               type="button"
               onClick={() => setPayOpen(true)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-3 text-sm font-semibold text-white hover:bg-teal-700"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-ensigna-primary-dark px-4 py-3 text-sm font-semibold text-white hover:bg-ensigna-primary-dark"
             >
               <Wallet className="h-4 w-4" />
               Registrar cobro
@@ -844,7 +844,7 @@ function FramedContent({
               Activá o desactivá profesionales sin salir del resumen.
             </p>
             {teamLoading ? (
-              <Loader2 className="mx-auto h-8 w-8 animate-spin text-indigo-600" />
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-ensigna-primary" />
             ) : (
               <ul className="max-h-80 space-y-2 overflow-y-auto">
                 {teamList.map((p) => (
@@ -1051,7 +1051,7 @@ function FramedContent({
                   setInviteLoading(false);
                 }
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-ensigna-primary py-3 text-sm font-semibold text-white hover:bg-ensigna-primary-dark disabled:opacity-50"
             >
               {inviteLoading ? (
                 <Loader2 className="h-5 w-5 animate-spin" />

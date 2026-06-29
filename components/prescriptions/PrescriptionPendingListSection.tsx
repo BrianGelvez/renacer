@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { apiClient, type PrescriptionDto } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import EmptyState from '@/components/ui/EmptyState';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString('es-AR', {
@@ -90,17 +92,17 @@ export default function PrescriptionPendingListSection() {
 
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         {loading ? (
-          <div className="flex flex-col items-center justify-center gap-3 py-16">
-            <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
-            <p className="text-sm text-gray-500">Cargando...</p>
+          <div className="p-6">
+            <SkeletonTable rows={5} cols={4} />
           </div>
         ) : items.length === 0 ? (
-          <div className="py-16 text-center px-4">
-            <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500" />
-            <p className="mt-3 font-medium text-gray-700">
-              No hay recetas pendientes
-            </p>
-          </div>
+          <EmptyState
+            icon={<CheckCircle2 className="h-7 w-7" />}
+            title="No hay recetas pendientes"
+            description="Todas las recetas fueron procesadas. Emití una nueva cuando lo necesites."
+            actionLabel="Emitir receta"
+            actionHref="/dashboard/prescriptions/new"
+          />
         ) : (
           <ul className="divide-y divide-gray-100">
             {items.map((rx) => (

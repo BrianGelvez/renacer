@@ -19,7 +19,7 @@ const DAY_COLORS = [
   'from-ensigna-primary/10 to-ensigna-soft/20 border-[rgba(209,106,138,0.2)]',
   'from-blue-500/10 to-blue-500/5 border-blue-200',
   'from-emerald-500/10 to-emerald-500/5 border-emerald-200',
-  'from-purple-500/10 to-purple-500/5 border-purple-200',
+  'from-ensigna-primary/10 to-ensigna-primary-light/5 border-ensigna-soft',
   'from-amber-500/10 to-amber-500/5 border-amber-200',
   'from-pink-500/10 to-pink-500/5 border-pink-200',
   'from-orange-500/10 to-orange-500/5 border-orange-200',
@@ -51,7 +51,7 @@ function BlockCard({
       className={`rounded-xl border p-3 bg-white shadow-sm group ${
         readOnly
           ? 'border-gray-200'
-          : 'border-gray-200 active:border-purple-300 transition-all'
+          : 'border-gray-200 active:border-ensigna-soft transition-all'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
@@ -75,7 +75,7 @@ function BlockCard({
                   e.stopPropagation();
                   onEditBlock(block);
                 }}
-                className="p-2 rounded-lg text-gray-400 active:text-purple-600 active:bg-purple-50 transition-colors touch-manipulation"
+                className="p-2 rounded-lg text-gray-400 active:text-ensigna-primary active:bg-ensigna-accent transition-colors touch-manipulation"
                 aria-label="Editar"
               >
                 <Edit2 className="w-4 h-4" />
@@ -158,7 +158,7 @@ export default function WeekAvailabilityCalendar({
                 <button
                   type="button"
                   onClick={() => onAddDay(dayIndex)}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 active:border-purple-400 active:text-purple-600 active:bg-purple-50/50 transition-colors text-sm font-medium touch-manipulation"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 active:border-ensigna-primary active:text-ensigna-primary active:bg-ensigna-accent/50 transition-colors text-sm font-medium touch-manipulation"
                 >
                   <Plus className="w-5 h-5" />
                   Agregar horario
@@ -197,7 +197,7 @@ export default function WeekAvailabilityCalendar({
                 <button
                   type="button"
                   onClick={() => onAddDay(dayIndex)}
-                  className="mt-auto flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600 hover:bg-purple-50/50 transition-colors text-sm font-medium"
+                  className="mt-auto flex items-center justify-center gap-1.5 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-gray-500 hover:border-ensigna-soft hover:text-ensigna-primary hover:bg-ensigna-accent/50 transition-colors text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" />
                   Agregar

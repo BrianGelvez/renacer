@@ -17,10 +17,13 @@ import {
   Pencil,
   FilePlus2,
   ClipboardList,
+  MessageCircle,
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import CreatePatientModal from './CreatePatientModal';
+import EmptyState from '@/components/ui/EmptyState';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 
 const DEBOUNCE_MS = 300;
 
@@ -46,6 +49,29 @@ function formatDate(iso: string): string {
 }
 
 type ActiveFilter = 'active' | 'inactive' | 'all';
+type PatientColumn = 'hc' | 'dni' | 'phone' | 'email' | 'createdAt';
+
+const PATIENTS_TABLE_PREFS_KEY = 'renacer.patients.tablePrefs.v1';
+
+function PatientsSkeleton() {
+  return (
+    <div className="divide-y divide-gray-100">
+      {Array.from({ length: 8 }).map((_, index) => (
+        <div key={index} className="px-4 py-4 sm:px-5">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="min-w-[220px] flex-1 space-y-2">
+              <div className="ensigna-skeleton h-4 w-48" />
+              <div className="ensigna-skeleton h-3 w-32" />
+            </div>
+            <div className="ensigna-skeleton h-8 w-24" />
+            <div className="ensigna-skeleton h-8 w-28" />
+            <div className="ensigna-skeleton h-8 w-28" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function PatientsSection() {
   const router = useRouter();
@@ -67,6 +93,13 @@ export default function PatientsSection() {
   const [sortByMedicalRecord, setSortByMedicalRecord] = useState<
     'none' | 'asc' | 'desc'
   >('none');
+  const [visibleColumns, setVisibleColumns] = useState<Record<PatientColumn, boolean>>({
+    hc: true,
+    dni: true,
+    phone: true,
+    email: true,
+    createdAt: true,
+  });
 
   const canCreate = user?.role === 'OWNER' || user?.role === 'ADMIN';
   const canPrescribe =
@@ -78,11 +111,48 @@ export default function PatientsSection() {
     user?.role === 'ADMIN' ||
     user?.role === 'DOCTOR' ||
     user?.role === 'SECRETARY';
+  const canSchedule =
+    user?.role === 'OWNER' ||
+    user?.role === 'ADMIN' ||
+    user?.role === 'DOCTOR' ||
+    user?.role === 'SECRETARY';
+  const canStartConversation =
+    user?.role === 'OWNER' || user?.role === 'ADMIN' || user?.role === 'SECRETARY';
 
   const canFilterMyAppointments =
     user?.role === 'DOCTOR' || user?.isDoctor === true;
 
   const [myAppointmentsOnly, setMyAppointmentsOnly] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(PATIENTS_TABLE_PREFS_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as {
+        activeFilter?: ActiveFilter;
+        myAppointmentsOnly?: boolean;
+        sortByMedicalRecord?: 'none' | 'asc' | 'desc';
+        visibleColumns?: Partial<Record<PatientColumn, boolean>>;
+      };
+      if (saved.activeFilter) setActiveFilter(saved.activeFilter);
+      if (typeof saved.myAppointmentsOnly === 'boolean') {
+        setMyAppointmentsOnly(saved.myAppointmentsOnly);
+      }
+      if (saved.sortByMedicalRecord) setSortByMedicalRecord(saved.sortByMedicalRecord);
+      if (saved.visibleColumns) {
+        setVisibleColumns((current) => ({ ...current, ...saved.visibleColumns }));
+      }
+    } catch {
+      /* preferencias corruptas: se ignoran */
+    }
+  }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      PATIENTS_TABLE_PREFS_KEY,
+      JSON.stringify({ activeFilter, myAppointmentsOnly, sortByMedicalRecord, visibleColumns }),
+    );
+  }, [activeFilter, myAppointmentsOnly, sortByMedicalRecord, visibleColumns]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query.trim()), DEBOUNCE_MS);
@@ -245,6 +315,37 @@ export default function PatientsSection() {
                   : 'Descendente'}
             </button>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-gray-500">Columnas:</span>
+            {(
+              [
+                ['hc', 'HC'],
+                ['dni', 'DNI'],
+                ['phone', 'Telefono'],
+                ['email', 'Email'],
+                ['createdAt', 'Alta'],
+              ] as Array<[PatientColumn, string]>
+            ).map(([column, label]) => (
+              <button
+                key={column}
+                type="button"
+                onClick={() =>
+                  setVisibleColumns((current) => ({
+                    ...current,
+                    [column]: !current[column],
+                  }))
+                }
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  visibleColumns[column]
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                aria-pressed={visibleColumns[column]}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {error && (
@@ -256,22 +357,21 @@ export default function PatientsSection() {
 
         <div className="min-h-[280px]">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-              <p className="text-sm text-gray-500">Cargando pacientes...</p>
+            <div className="p-6">
+              <SkeletonTable rows={8} cols={5} />
             </div>
           ) : !data?.items?.length ? (
-            <div className="text-center py-16 px-4">
-              <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-gray-400" />
-              </div>
-              <p className="text-gray-700 font-medium">
-                {debouncedQuery ? 'No hay resultados para tu búsqueda' : 'Aún no hay pacientes'}
-              </p>
-              <p className="text-sm text-gray-500 mt-1">
-                {debouncedQuery ? 'Probá con otro término.' : 'Creá el primero desde "Nuevo paciente".'}
-              </p>
-            </div>
+            <EmptyState
+              icon={<Users className="h-7 w-7" />}
+              title={debouncedQuery ? 'No hay resultados para tu búsqueda' : 'Aún no hay pacientes'}
+              description={
+                debouncedQuery
+                  ? 'Probá con DNI, apellido o un término más corto.'
+                  : 'Registrá el primer paciente para comenzar a emitir recetas, órdenes y turnos.'
+              }
+              actionLabel={debouncedQuery ? undefined : 'Nuevo paciente'}
+              onAction={debouncedQuery ? undefined : () => setModalOpen(true)}
+            />
           ) : (
             <div className="divide-y divide-gray-100">
               {sortedItems.map((patient) => {
@@ -330,7 +430,7 @@ export default function PatientsSection() {
                       <button
                         type="button"
                         onClick={() => handleRowClick(patient.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 border border-gray-200 hover:bg-gray-50"
+                        className="touch-row inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         Ver
@@ -340,7 +440,7 @@ export default function PatientsSection() {
                         onClick={() =>
                           router.push(`/dashboard/patients/${patient.id}?edit=1`)
                         }
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 border border-gray-200 hover:bg-gray-50"
+                        className="touch-row inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                         Editar
@@ -353,7 +453,7 @@ export default function PatientsSection() {
                               `/dashboard/prescriptions/new?patientId=${patient.id}`,
                             )
                           }
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-indigo-700 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100"
+                          className="touch-row inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
                         >
                           <FilePlus2 className="w-3.5 h-3.5" />
                           Crear receta
@@ -367,7 +467,7 @@ export default function PatientsSection() {
                               `/dashboard/orders/new?patientId=${patient.id}`,
                             )
                           }
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-teal-700 border border-teal-200 bg-teal-50 hover:bg-teal-100"
+                          className="touch-row inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-medium text-teal-700 hover:bg-teal-100"
                         >
                           <ClipboardList className="w-3.5 h-3.5" />
                           Crear orden

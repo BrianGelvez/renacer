@@ -382,11 +382,11 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                     </div>
                   </div>
 
-                  <fieldset className="rounded-2xl border border-violet-200 bg-violet-50/30 p-4 space-y-4">
-                    <legend className="text-sm font-semibold text-violet-900 px-2">
+                  <fieldset className="rounded-2xl border border-ensigna-soft bg-ensigna-accent/50 p-4 space-y-4">
+                    <legend className="text-sm font-semibold text-ensigna-primary-dark px-2">
                       Recetario.com.ar — recetas electrónicas
                     </legend>
-                    <p className="text-xs text-violet-900/80">
+                    <p className="text-xs text-ensigna-primary-dark/80">
                       Opcional en el alta: si completás estos campos, el backend puede sincronizar el médico con la institución vinculada. Provincias y listas salen del API oficial (cache servidor).
                     </p>
                     <div>
@@ -484,7 +484,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                         disabled={loading}
                       />
                     </div>
-                    <div className="border-t border-violet-200 pt-3 space-y-2">
+                    <div className="border-t border-ensigna-soft pt-3 space-y-2">
                       <p className="text-xs font-medium text-gray-700">
                         Leyenda en receta (opcional; el resto del perfil en Recetario usa teléfono laboral, dirección y email de contacto arriba)
                       </p>
@@ -497,14 +497,14 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                         disabled={loading}
                       />
                     </div>
-                    <div className="border-t border-violet-200 pt-3 space-y-2">
+                    <div className="border-t border-ensigna-soft pt-3 space-y-2">
                       <label
                         htmlFor="pro-signature-url"
                         className="block text-xs font-medium text-gray-700"
                       >
                         Firma digital — URL pública (opcional)
                       </label>
-                      <p className="text-xs text-violet-900/75">
+                      <p className="text-xs text-ensigna-primary-dark/75">
                         Enlace a la imagen de firma para Recetario (se guarda en el perfil y se usa al sincronizar con la institución).
                       </p>
                       <div className="relative">

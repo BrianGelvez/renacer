@@ -22,6 +22,7 @@ import {
   Globe,
 } from 'lucide-react';
 import { apiClient, type AuditLogItem } from '@/lib/api';
+import MobileDataCard from '@/components/ui/MobileDataCard';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -53,8 +54,8 @@ const ACTION_COLORS: Record<
     icon: Trash2,
   },
   VIEW: {
-    bg: 'bg-purple-100 text-purple-700',
-    text: 'text-purple-700',
+    bg: 'bg-ensigna-accent text-ensigna-primary-dark',
+    text: 'text-ensigna-primary-dark',
     icon: Eye,
   },
   DOWNLOAD: {
@@ -476,7 +477,28 @@ export default function AuditSection() {
         )}
 
         {!loading && !error && logs.length > 0 && (
-          <div className="overflow-x-auto">
+          <>
+          <div className="space-y-3 p-4 md:hidden">
+            {logs.map((log) => {
+              const userName = log.user
+                ? `${log.user.name} ${log.user.lastName}`
+                : 'Sistema';
+              return (
+                <MobileDataCard
+                  key={log.id}
+                  title={ACTION_LABELS[log.action] ?? log.action}
+                  subtitle={formatDate(log.createdAt)}
+                  badge={<EntityBadge entity={log.entity} />}
+                  fields={[
+                    { label: 'Usuario', value: userName },
+                    { label: 'Entidad ID', value: log.entityId ?? '—' },
+                    { label: 'IP', value: log.ipAddress ?? '—' },
+                  ]}
+                />
+              );
+            })}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm min-w-[700px]">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/60">
@@ -511,6 +533,7 @@ export default function AuditSection() {
               </tbody>
             </table>
           </div>
+          </>
         )}
 
         {/* Pagination */}

@@ -12,6 +12,9 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { apiClient, type MedicalOrderDto } from '@/lib/api';
+import EmptyState from '@/components/ui/EmptyState';
+import { SkeletonTable } from '@/components/ui/Skeleton';
+import MobileDataCard from '@/components/ui/MobileDataCard';
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('es-AR', {
@@ -121,22 +124,84 @@ export default function OrdersListSection() {
 
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         {loading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+          <div className="p-6">
+            <SkeletonTable rows={6} cols={7} />
           </div>
         ) : items.length === 0 ? (
-          <div className="px-6 py-16 text-center text-sm text-gray-500">
-            <ClipboardList className="mx-auto h-10 w-10 text-gray-300" />
-            <p className="mt-3">No hay órdenes médicas emitidas.</p>
-            <Link
-              href="/dashboard/orders/new"
-              className="mt-4 inline-block text-teal-600 hover:underline"
-            >
-              Crear primera orden
-            </Link>
-          </div>
+          <EmptyState
+            icon={<ClipboardList className="h-7 w-7" />}
+            title="No hay órdenes médicas emitidas"
+            description="Creá la primera orden para este paciente o desde el listado general."
+            actionLabel="Crear primera orden"
+            actionHref="/dashboard/orders/new"
+          />
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="space-y-3 p-4 md:hidden">
+            {items.map((row) => (
+              <MobileDataCard
+                key={row.id}
+                title={
+                  row.patient
+                    ? `${row.patient.lastName}, ${row.patient.firstName}`
+                    : 'Orden médica'
+                }
+                subtitle={formatDate(row.createdAt)}
+                badge={
+                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusClass(row.status)}`}>
+                    {statusLabel(row.status)}
+                  </span>
+                }
+                fields={[
+                  {
+                    label: 'Doctor',
+                    value: row.doctor ? `Dr. ${row.doctor.lastName}` : '—',
+                  },
+                  { label: 'Diagnóstico', value: row.diagnosisDescription || '—' },
+                  { label: 'Recetario ID', value: row.recetarioOrderId ?? '—' },
+                ]}
+                actions={
+                  <>
+                    {row.pdfUrl && (
+                      <a
+                        href={row.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-ensigna-secondary inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        PDF
+                      </a>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/dashboard/orders/${row.id}`)}
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white touch-target"
+                    >
+                      <Eye className="h-4 w-4" />
+                      Detalle
+                    </button>
+                    {row.status === 'FAILED' && (
+                      <button
+                        type="button"
+                        disabled={retryingId === row.id}
+                        onClick={() => void handleRetry(row.id)}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-800 touch-target disabled:opacity-50"
+                      >
+                        {retryingId === row.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )}
+                        Reemitir
+                      </button>
+                    )}
+                  </>
+                }
+              />
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/80 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -217,6 +282,7 @@ export default function OrdersListSection() {
               </tbody>
             </table>
           </div>
+          </>
         )}
 
         {totalPages > 1 && (
@@ -229,7 +295,7 @@ export default function OrdersListSection() {
                 type="button"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 disabled:opacity-50"
+                className="touch-target rounded-lg border border-gray-200 px-4 py-2.5 text-sm disabled:opacity-50"
               >
                 Anterior
               </button>
@@ -237,7 +303,7 @@ export default function OrdersListSection() {
                 type="button"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
-                className="rounded-lg border border-gray-200 px-3 py-1.5 disabled:opacity-50"
+                className="touch-target rounded-lg border border-gray-200 px-4 py-2.5 text-sm disabled:opacity-50"
               >
                 Siguiente
               </button>

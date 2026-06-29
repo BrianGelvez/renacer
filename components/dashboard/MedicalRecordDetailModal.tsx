@@ -207,10 +207,10 @@ export default function MedicalRecordDetailModal({
         <div className="flex flex-col flex-shrink-0 border-b border-gray-100 bg-gray-50/80">
           <div className="flex items-center justify-between px-6 pt-4 pb-2">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-indigo-600" />
+              <FileText className="w-5 h-5 text-ensigna-primary" />
               Detalle del registro
               {record?.currentVersion && record.currentVersion > 1 && (
-                <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700">
+                <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-ensigna-accent text-ensigna-primary-dark">
                   v{record.currentVersion}
                 </span>
               )}
@@ -230,7 +230,7 @@ export default function MedicalRecordDetailModal({
               onClick={() => setActiveTab('detail')}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTab === 'detail'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-ensigna-primary text-white'
                   : 'text-gray-600 hover:bg-gray-200/60'
               }`}
             >
@@ -242,7 +242,7 @@ export default function MedicalRecordDetailModal({
               onClick={() => setActiveTab('versions')}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTab === 'versions'
-                  ? 'bg-indigo-600 text-white'
+                  ? 'bg-ensigna-primary text-white'
                   : 'text-gray-600 hover:bg-gray-200/60'
               }`}
             >
@@ -255,7 +255,7 @@ export default function MedicalRecordDetailModal({
         <div className="flex-1 overflow-y-auto px-6 py-5">
           {loading ? (
             <div className="flex flex-col items-center py-12 gap-3">
-              <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+              <Loader2 className="w-10 h-10 animate-spin text-ensigna-primary" />
               <p className="text-sm text-gray-500">Cargando...</p>
             </div>
           ) : error ? (
@@ -278,7 +278,7 @@ export default function MedicalRecordDetailModal({
               <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4 space-y-2">
                 {record.appointment ? (
                   <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <Clock className="w-4 h-4 text-indigo-600" />
+                    <Clock className="w-4 h-4 text-ensigna-primary" />
                     <span className="font-medium">
                       Turno: {formatAppointmentSlot(record.appointment)}
                     </span>
@@ -419,7 +419,7 @@ export default function MedicalRecordDetailModal({
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-medium disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                      className="flex-1 py-2.5 rounded-xl bg-ensigna-primary text-white font-medium disabled:opacity-50 inline-flex items-center justify-center gap-2"
                     >
                       {submitting ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

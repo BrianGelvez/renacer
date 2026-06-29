@@ -295,7 +295,7 @@ export default function EditProfessionalModal({
                       .trim()
                       .toLowerCase()
                       .endsWith('@recetario.com.ar')) && (
-                    <span className="inline-flex items-center rounded-md bg-indigo-100 px-2 py-0.5 text-indigo-900">
+                    <span className="inline-flex items-center rounded-md bg-ensigna-accent px-2 py-0.5 text-ensigna-primary-dark">
                       Recetario Sandbox
                     </span>
                   )}
@@ -494,8 +494,8 @@ export default function EditProfessionalModal({
                   </div>
                 </div>
 
-                <fieldset className="rounded-2xl border border-violet-200 bg-violet-50/40 p-4 space-y-4">
-                  <legend className="text-sm font-semibold text-violet-900 px-2">
+                <fieldset className="rounded-2xl border border-ensigna-soft bg-ensigna-accent/60 p-4 space-y-4">
+                  <legend className="text-sm font-semibold text-ensigna-primary-dark px-2">
                     Datos legales / Recetario.com.ar
                   </legend>
 
@@ -606,7 +606,7 @@ export default function EditProfessionalModal({
                     </div>
                   </div>
 
-                  <div className="border-t border-violet-200 pt-4 space-y-3">
+                  <div className="border-t border-ensigna-soft pt-4 space-y-3">
                     <p className="text-xs font-medium text-gray-700">
                       Leyenda en receta (opcional)
                     </p>
@@ -619,7 +619,7 @@ export default function EditProfessionalModal({
                     />
                   </div>
 
-                  <div className="border-t border-violet-200 pt-4 space-y-2">
+                  <div className="border-t border-ensigna-soft pt-4 space-y-2">
                     <label className="block text-xs font-medium text-gray-700">
                       Firma digital (URL pública, ej. después de subir a storage)
                     </label>
@@ -635,7 +635,7 @@ export default function EditProfessionalModal({
                       type="button"
                       onClick={() => void handleSignatureOnly()}
                       disabled={signatureSubmitting || !detail.recetarioUserId}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-50"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-ensigna-primary text-white hover:bg-ensigna-primary-dark disabled:opacity-50"
                     >
                       {signatureSubmitting ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

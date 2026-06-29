@@ -145,7 +145,7 @@ export default function MedicalRecordFilesSection({
     <div className="rounded-xl border border-gray-100 bg-gray-50/30 p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-          <FileText className="w-4 h-4 text-indigo-600" />
+          <FileText className="w-4 h-4 text-ensigna-primary" />
           Archivos adjuntos
         </h3>
         {canEdit && (
@@ -161,7 +161,7 @@ export default function MedicalRecordFilesSection({
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={uploading}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-ensigna-primary text-white text-sm font-medium hover:bg-ensigna-primary-dark disabled:opacity-50"
             >
               {uploading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

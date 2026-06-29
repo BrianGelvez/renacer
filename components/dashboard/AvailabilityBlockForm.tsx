@@ -110,7 +110,7 @@ export default function AvailabilityBlockForm({
                         disabled={isSubmitting}
                         className={`min-w-[2.75rem] px-3 py-2.5 rounded-xl text-sm font-medium transition-all touch-manipulation ${
                           state.dayOfWeek === idx
-                            ? 'bg-purple-600 text-white shadow-md'
+                            ? 'bg-ensigna-primary text-white shadow-md'
                             : 'bg-gray-100 text-gray-600 active:bg-gray-200'
                         }`}
                       >
@@ -131,7 +131,7 @@ export default function AvailabilityBlockForm({
                         type="time"
                         value={state.startTime}
                         onChange={(e) => setState((s) => ({ ...s, startTime: e.target.value }))}
-                        className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                        className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-ensigna-primary/20 focus:border-ensigna-primary"
                         required
                         disabled={isSubmitting}
                       />
@@ -147,7 +147,7 @@ export default function AvailabilityBlockForm({
                         type="time"
                         value={state.endTime}
                         onChange={(e) => setState((s) => ({ ...s, endTime: e.target.value }))}
-                        className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+                        className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-ensigna-primary/20 focus:border-ensigna-primary"
                         required
                         disabled={isSubmitting}
                       />
@@ -166,7 +166,7 @@ export default function AvailabilityBlockForm({
                       onChange={(e) =>
                         setState((s) => ({ ...s, slotDuration: Number(e.target.value) }))
                       }
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 appearance-none bg-white"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-ensigna-primary/20 focus:border-ensigna-primary appearance-none bg-white"
                       disabled={isSubmitting}
                     >
                       {SLOT_OPTIONS.map((min) => (
@@ -190,7 +190,7 @@ export default function AvailabilityBlockForm({
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-purple-600 text-white rounded-xl font-medium active:bg-purple-700 disabled:opacity-60 transition-colors touch-manipulation"
+                    className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 bg-ensigna-primary text-white rounded-xl font-medium active:bg-ensigna-primary-dark disabled:opacity-60 transition-colors touch-manipulation"
                   >
                     {isSubmitting ? (
                       <>

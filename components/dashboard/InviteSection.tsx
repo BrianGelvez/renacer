@@ -206,7 +206,7 @@ export default function InviteSection({ refreshKey = 0, canInviteAdmin = true }:
             </p>
           </div>
         )}
-        <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white relative overflow-hidden">
+        <div className="bg-gradient-to-br from-ensigna-primary to-ensigna-primary-light rounded-2xl p-6 text-white relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3" />
           <Stethoscope className="w-10 h-10 mb-3 relative z-10" />
           <h3 className="text-lg font-semibold mb-1 relative z-10">Médicos</h3>

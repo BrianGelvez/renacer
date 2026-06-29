@@ -22,8 +22,6 @@ import {
   MapPin,
   Heart,
   Shield,
-  FilePlus2,
-  ClipboardList,
 } from "lucide-react";
 import { apiClient, type PatientDto } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +32,8 @@ import MedicalRecordsSection from "@/components/dashboard/MedicalRecordsSection"
 import PatientInsurancesSection from "@/components/dashboard/PatientInsurancesSection";
 import PatientOrdersSection from "@/components/orders/PatientOrdersSection";
 import MedicalDocumentsSection from "@/components/dashboard/MedicalDocumentsSection";
+import PatientQuickActions from "@/components/ui/PatientQuickActions";
+import { Skeleton, SkeletonText } from "@/components/ui/Skeleton";
 
 const STATUS_LABELS: Record<string, string> = {
   SCHEDULED: "Programado",
@@ -232,10 +232,21 @@ export default function PatientDetailPage() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex flex-col items-center justify-center py-20 gap-3"
+        className="space-y-6"
+        aria-busy="true"
+        aria-label="Cargando paciente"
       >
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-        <p className="text-sm text-gray-500">Cargando paciente...</p>
+        <Skeleton className="h-4 w-32" />
+        <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm space-y-4">
+          <div className="flex gap-4">
+            <Skeleton className="h-14 w-14 rounded-2xl" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-7 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <SkeletonText lines={3} />
+        </div>
       </motion.div>
     );
   }
@@ -271,10 +282,10 @@ export default function PatientDetailPage() {
       transition={{ duration: 0.25 }}
       className="space-y-6"
     >
-      <Link
-        href="/dashboard?section=patients"
-        className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-indigo-600"
-      >
+        <Link
+          href="/dashboard/patients"
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-indigo-600"
+        >
         <ArrowLeft className="w-4 h-4" />
         Volver a Pacientes
       </Link>
@@ -421,34 +432,6 @@ export default function PatientDetailPage() {
             </div>
             {(canPrescribe || canCreateOrder || canManagePatient) && (
               <div className="flex flex-wrap gap-2 shrink-0">
-                {canPrescribe && !isInactive && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        `/dashboard/prescriptions/new?patientId=${patient.id}`,
-                      )
-                    }
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 shadow-md shadow-indigo-500/20"
-                  >
-                    <FilePlus2 className="w-4 h-4" />
-                    Crear receta
-                  </button>
-                )}
-                {canCreateOrder && !isInactive && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      router.push(
-                        `/dashboard/orders/new?patientId=${patient.id}`,
-                      )
-                    }
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 text-white text-sm font-medium hover:bg-teal-700 shadow-md shadow-teal-500/20"
-                  >
-                    <ClipboardList className="w-4 h-4" />
-                    Crear orden
-                  </button>
-                )}
                 {canManagePatient &&
                   (isInactive ? (
                   <button
@@ -488,6 +471,14 @@ export default function PatientDetailPage() {
             )}
           </div>
         </div>
+
+        <PatientQuickActions
+          patientId={patient.id}
+          patientName={`${patient.lastName}, ${patient.firstName}`}
+          patientDni={patient.dni}
+          disabled={isInactive}
+          className="mx-6 sm:mx-8 mb-0"
+        />
 
         <div className="p-6 sm:p-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">

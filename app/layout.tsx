@@ -3,7 +3,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
 import QueryProvider from '@/components/QueryProvider';
-import ConditionalChatbot from '@/components/ConditionalChatbot'; // Importa el nuevo componente
+import ConditionalChatbot from '@/components/ConditionalChatbot';
+import { ToastProvider } from '@/components/ui/ToastProvider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -11,6 +12,13 @@ export const metadata: Metadata = {
   title: 'Renacer - Centro Médico | Tecnología y Excelencia en Salud',
   description:
     'Centro médico de vanguardia que combina excelencia profesional con tecnología avanzada para brindarte la mejor atención médica.',
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -25,9 +33,10 @@ export default function RootLayout({
       >
         <QueryProvider>
           <AuthProvider>
-            {children}
-            {/* El componente ahora decide internamente si mostrarse o no */}
-            <ConditionalChatbot />
+            <ToastProvider>
+              {children}
+              <ConditionalChatbot />
+            </ToastProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

@@ -160,14 +160,14 @@ export default function MedicalRecordsSection({
       <div className="p-6 sm:p-8 border-b border-gray-100">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-indigo-600" />
+            <FileText className="w-5 h-5 text-ensigna-primary" />
             Historia clínica
           </h2>
           {canCreate && (
             <button
               type="button"
               onClick={() => handleOpenCreate()}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-ensigna-primary text-white text-sm font-medium hover:bg-ensigna-primary-dark"
             >
               <Plus className="w-4 h-4" />
               Nuevo registro
@@ -179,7 +179,7 @@ export default function MedicalRecordsSection({
       <div className="p-6 sm:p-8">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+            <Loader2 className="w-10 h-10 animate-spin text-ensigna-primary" />
             <p className="text-sm text-gray-500">Cargando historia clínica...</p>
           </div>
         ) : error ? (
@@ -199,7 +199,7 @@ export default function MedicalRecordsSection({
               <button
                 type="button"
                 onClick={() => handleOpenCreate()}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-ensigna-primary text-white text-sm font-medium hover:bg-ensigna-primary-dark"
               >
                 <Plus className="w-4 h-4" />
                 Crear primer registro
@@ -213,16 +213,16 @@ export default function MedicalRecordsSection({
                 <button
                   type="button"
                   onClick={() => setSelectedRecordId(record.id)}
-                  className="w-full flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-indigo-100 transition-all text-left"
+                  className="w-full flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-ensigna-soft/50 transition-all text-left"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                      <Stethoscope className="w-5 h-5 text-indigo-600" />
+                    <div className="w-10 h-10 rounded-xl bg-ensigna-accent flex items-center justify-center flex-shrink-0">
+                      <Stethoscope className="w-5 h-5 text-ensigna-primary" />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900 flex items-center gap-1.5 flex-wrap">
                         <span className="flex items-center gap-1">
-                          <Clock className="w-4 h-4 text-indigo-600/80" />
+                          <Clock className="w-4 h-4 text-ensigna-primary/80" />
                           {formatRecordSubtitle(record)}
                         </span>
                         <span className="text-gray-400">·</span>
@@ -232,7 +232,7 @@ export default function MedicalRecordsSection({
                           {record.professional.specialty && ` · ${record.professional.specialty}`}
                         </span>
                         {record.appointment ? (
-                          <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700">
+                          <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-ensigna-accent text-ensigna-primary-dark">
                             Con turno
                           </span>
                         ) : (

@@ -202,10 +202,10 @@ export default function CreateMedicalRecordModal({
             id="create-medical-record-title"
             className="text-lg font-semibold text-gray-900 flex items-center gap-2"
           >
-            <FileText className="w-5 h-5 text-indigo-600" />
+            <FileText className="w-5 h-5 text-ensigna-primary" />
             Nuevo registro clínico
             {isFromAppointment && (
-              <span className="text-xs font-normal px-2 py-0.5 rounded-lg bg-indigo-100 text-indigo-700">
+              <span className="text-xs font-normal px-2 py-0.5 rounded-lg bg-ensigna-accent text-ensigna-primary-dark">
                 Con turno
               </span>
             )}
@@ -250,7 +250,7 @@ export default function CreateMedicalRecordModal({
                 onChange={(e) => setConsultationDate(e.target.value)}
                 required
                 max={new Date().toISOString().slice(0, 10)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-ensigna-primary focus:border-ensigna-primary"
               />
             )}
             {isFromAppointment && (
@@ -269,7 +269,7 @@ export default function CreateMedicalRecordModal({
                 value={doctorUserId}
                 onChange={(e) => setDoctorUserId(e.target.value)}
                 required
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-ensigna-primary focus:border-ensigna-primary"
               >
                 <option value="">Seleccionar...</option>
                 {doctorOptions.map((p) => (
@@ -291,7 +291,7 @@ export default function CreateMedicalRecordModal({
               <select
                 value={healthInsuranceId}
                 onChange={(e) => setHealthInsuranceId(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-ensigna-primary focus:border-ensigna-primary"
               >
                 <option value="">Sin obra social</option>
                 {patientInsurances.map((pi) => (
@@ -319,7 +319,7 @@ export default function CreateMedicalRecordModal({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Ej: Control de presión"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-ensigna-primary focus:border-ensigna-primary"
             />
           </div>
 
@@ -332,7 +332,7 @@ export default function CreateMedicalRecordModal({
               onChange={(e) => setSymptoms(e.target.value)}
               placeholder="Descripción de síntomas que presenta el paciente"
               rows={2}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-ensigna-primary focus:border-ensigna-primary resize-none"
             />
           </div>
 
@@ -345,7 +345,7 @@ export default function CreateMedicalRecordModal({
               value={diagnosis}
               onChange={(e) => setDiagnosis(e.target.value)}
               placeholder="Ej: Hipertensión arterial"
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-ensigna-primary focus:border-ensigna-primary"
             />
           </div>
 
@@ -358,7 +358,7 @@ export default function CreateMedicalRecordModal({
               onChange={(e) => setTreatment(e.target.value)}
               placeholder="Indicaciones, medicación, etc."
               rows={2}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-ensigna-primary focus:border-ensigna-primary resize-none"
             />
           </div>
 
@@ -371,7 +371,7 @@ export default function CreateMedicalRecordModal({
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Notas adicionales"
               rows={2}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-ensigna-primary focus:border-ensigna-primary resize-none"
             />
           </div>
 
@@ -386,7 +386,7 @@ export default function CreateMedicalRecordModal({
             <button
               type="submit"
               disabled={submitting || (isFromAppointment && loadingAppointment)}
-              className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+              className="flex-1 py-3 rounded-xl bg-ensigna-primary text-white font-medium hover:bg-ensigna-primary-dark disabled:opacity-50 inline-flex items-center justify-center gap-2"
             >
               {submitting ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

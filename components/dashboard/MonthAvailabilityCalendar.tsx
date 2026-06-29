@@ -204,7 +204,7 @@ export default function MonthAvailabilityCalendar({
                 min-h-[44px] sm:min-h-[56px] md:min-h-[64px] p-1 sm:p-1.5 md:p-2 border-b border-r border-gray-100
                 text-left transition-colors touch-manipulation flex flex-col
                 ${cell.isCurrentMonth ? 'text-gray-900 bg-white' : 'text-gray-300 bg-gray-50/50'}
-                ${hasBlock && cell.isCurrentMonth && !blocked ? 'bg-purple-50/70' : ''}
+                ${hasBlock && cell.isCurrentMonth && !blocked ? 'bg-ensigna-accent/70' : ''}
                 ${blocked && cell.isCurrentMonth ? 'bg-amber-50/80' : ''}
               `}
             >
@@ -214,15 +214,15 @@ export default function MonthAvailabilityCalendar({
                 disabled={!clickable}
                 className={`
                   text-left w-full flex-1 min-w-0
-                  ${clickable ? 'active:bg-purple-100 sm:hover:bg-purple-50 cursor-pointer rounded' : 'cursor-default'}
+                  ${clickable ? 'active:bg-ensigna-accent sm:hover:bg-ensigna-accent cursor-pointer rounded' : 'cursor-default'}
                 `}
               >
                 <span className="text-xs sm:text-sm font-medium block truncate">{cell.day}</span>
                 {hasBlock && !blocked && (
                   <div className="flex items-center gap-0.5 mt-0.5 sm:mt-1">
-                    <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-purple-500 shrink-0" />
+                    <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-ensigna-accent0 shrink-0" />
                     {availabilityByWeekday[cell.dayOfWeek].length > 1 && (
-                      <span className="text-[9px] sm:text-[10px] text-purple-600 font-medium truncate">
+                      <span className="text-[9px] sm:text-[10px] text-ensigna-primary font-medium truncate">
                         +{availabilityByWeekday[cell.dayOfWeek].length - 1}
                       </span>
                     )}

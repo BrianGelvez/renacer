@@ -249,7 +249,7 @@ export default function AvailabilitySection({ readOnly = false, doctorUserId }: 
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex justify-center"
       >
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-ensigna-primary" />
       </motion.div>
     );
   }
@@ -263,7 +263,7 @@ export default function AvailabilitySection({ readOnly = false, doctorUserId }: 
       {/* Header con toggle vista */}
       <div className="px-4 sm:px-6 py-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ensigna-primary to-ensigna-primary-light flex items-center justify-center flex-shrink-0">
             <Calendar className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0">
@@ -283,7 +283,7 @@ export default function AvailabilitySection({ readOnly = false, doctorUserId }: 
               type="button"
               onClick={() => setViewMode('week')}
               className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                viewMode === 'week' ? 'bg-white text-purple-700 shadow-sm border border-gray-200' : 'text-gray-600 hover:text-gray-900'
+                viewMode === 'week' ? 'bg-white text-ensigna-primary-dark shadow-sm border border-gray-200' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -293,7 +293,7 @@ export default function AvailabilitySection({ readOnly = false, doctorUserId }: 
               type="button"
               onClick={() => setViewMode('month')}
               className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                viewMode === 'month' ? 'bg-white text-purple-700 shadow-sm border border-gray-200' : 'text-gray-600 hover:text-gray-900'
+                viewMode === 'month' ? 'bg-white text-ensigna-primary-dark shadow-sm border border-gray-200' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               <CalendarDays className="w-4 h-4" />
@@ -309,7 +309,7 @@ export default function AvailabilitySection({ readOnly = false, doctorUserId }: 
                 setFormEditId(null);
                 setFormOpen(true);
               }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors shadow-lg shadow-purple-500/20"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-ensigna-primary text-white rounded-xl text-sm font-medium hover:bg-ensigna-primary-dark transition-colors shadow-lg shadow-ensigna-primary/20"
             >
               <Clock className="w-4 h-4" />
               Nuevo horario

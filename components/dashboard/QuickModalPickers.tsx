@@ -74,7 +74,7 @@ export function ProfessionalPickerField({
             : 'border-gray-200/90 bg-gradient-to-b from-white to-gray-50/80 hover:border-emerald-200 hover:shadow-md'
         }`}
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-ensigna-primary to-ensigna-primary-light text-white shadow-md shadow-emerald-500/25">
           <Stethoscope className="h-5 w-5" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">

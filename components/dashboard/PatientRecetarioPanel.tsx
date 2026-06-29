@@ -65,11 +65,11 @@ export default function PatientRecetarioPanel({
   }
 
   return (
-    <div className="rounded-xl border border-indigo-100 bg-indigo-50/40 p-4 space-y-3">
+    <div className="rounded-xl border border-ensigna-soft/50 bg-ensigna-accent/60 p-4 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="space-y-1">
           <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <Link2 className="h-4 w-4 text-indigo-600" />
+            <Link2 className="h-4 w-4 text-ensigna-primary" />
             Recetario
           </p>
           <RecetarioSyncBadge
@@ -84,7 +84,7 @@ export default function PatientRecetarioPanel({
             type="button"
             onClick={() => void handleSync()}
             disabled={syncing}
-            className="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-ensigna-soft bg-white px-3 py-2 text-sm font-medium text-ensigna-primary-dark hover:bg-ensigna-accent disabled:opacity-50"
           >
             {syncing ? (
               <Loader2 className="h-4 w-4 animate-spin" />

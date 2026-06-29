@@ -29,6 +29,10 @@ import DiagnosisAutocomplete, {
 import OrderRequestStep, {
   type LocalOrderRequestItem,
 } from '@/components/orders/OrderRequestStep';
+import WizardSummaryPanel from '@/components/ui/WizardSummaryPanel';
+import WizardStickyFooter from '@/components/ui/WizardStickyFooter';
+import Alert from '@/components/ui/Alert';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChanges';
 
 const PATIENT_SEARCH_DEBOUNCE_MS = 500;
 const STEPS = [
@@ -189,6 +193,61 @@ export default function OrderWizard({
   const isAssignedPhysician = user?.isDoctor === true && user?.id === doctorId;
   const isStaffPreparer = user?.role === 'ADMIN' || user?.role === 'SECRETARY';
 
+  const hasDraft =
+    !!doctorId ||
+    !!selectedPatient ||
+    requestItems.length > 0 ||
+    !!selectedDiagnosis ||
+    dateDisplay !== isoToDisplay(todayIsoDate());
+
+  useUnsavedChangesGuard(hasDraft && !issuedOrder);
+
+  const summaryItems = useMemo(
+    () => [
+      {
+        id: 'doctor',
+        label: 'Médico',
+        value: selectedDoctor
+          ? `Dr. ${selectedDoctor.lastName}, ${selectedDoctor.name}`
+          : null,
+        complete: !!selectedDoctor,
+      },
+      {
+        id: 'patient',
+        label: 'Paciente',
+        value: selectedPatient
+          ? `${selectedPatient.lastName}, ${selectedPatient.firstName}`
+          : null,
+        complete: !!selectedPatient,
+      },
+      {
+        id: 'requests',
+        label: 'Solicitudes',
+        value:
+          requestItems.length > 0
+            ? requestItems.map((i) => i.description).join('\n')
+            : null,
+        complete: requestItems.length > 0,
+        multiline: true,
+      },
+      {
+        id: 'diagnosis',
+        label: 'Diagnóstico',
+        value: selectedDiagnosis
+          ? `${selectedDiagnosis.diagnosisCode} — ${selectedDiagnosis.diagnosisDescriptionEs}`
+          : null,
+        complete: !!selectedDiagnosis?.diagnosisCode,
+      },
+      {
+        id: 'date',
+        label: 'Fecha',
+        value: displayToIso(dateDisplay) ?? null,
+        complete: !!displayToIso(dateDisplay),
+      },
+    ],
+    [selectedDoctor, selectedPatient, requestItems, selectedDiagnosis, dateDisplay],
+  );
+
   const loadPatient = useCallback(async (id: string) => {
     setPatientLoading(true);
     try {
@@ -335,12 +394,13 @@ export default function OrderWizard({
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <button type="button" onClick={() => router.push('/dashboard/orders')} className="inline-flex items-center gap-2 text-sm text-teal-600">
+    <div className="wizard-mobile-shell mx-auto max-w-6xl space-y-4 lg:space-y-6">
+      <button type="button" onClick={() => router.push('/dashboard/orders')} className="touch-row inline-flex items-center gap-2 text-base text-teal-600 lg:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600">
         <ArrowLeft className="h-4 w-4" /> Volver a órdenes
       </button>
 
-      <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="grid gap-4 lg:gap-6 lg:grid-cols-[1fr_280px]">
+        <div className="order-2 min-w-0 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6 lg:order-1">
         <div className="flex items-center gap-3 mb-6">
           <div className="rounded-xl bg-teal-50 p-2.5 text-teal-700"><ClipboardList className="h-6 w-6" /></div>
           <div>
@@ -356,9 +416,9 @@ export default function OrderWizard({
         </div>
 
         {error && (
-          <div className="mb-4 flex gap-2 rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-800">
-            <AlertCircle className="h-4 w-4 shrink-0" /> {error}
-          </div>
+          <Alert variant="error" className="mb-4" onDismiss={() => setError(null)}>
+            {error}
+          </Alert>
         )}
 
         {step === 1 && (
@@ -366,7 +426,7 @@ export default function OrderWizard({
             <div>
               <label className="block text-sm font-medium mb-2">Profesional responsable</label>
               {doctorsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                <select value={doctorId} onChange={(e) => setDoctorId(e.target.value)} className="w-full rounded-xl border px-3 py-2.5 text-sm">
+                <select value={doctorId} onChange={(e) => setDoctorId(e.target.value)} className="input-mobile ensigna-input w-full rounded-xl border">
                   <option value="">Seleccionar médico…</option>
                   {activeDoctors.map((d) => (
                     <option key={d.userId} value={d.userId}>Dr. {d.lastName}, {d.name}</option>
@@ -388,13 +448,13 @@ export default function OrderWizard({
                 <>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input value={patientTerm} onChange={(e) => { setPatientTerm(e.target.value); setPatientOpen(true); }} placeholder="Buscar paciente…" className="w-full rounded-xl border py-2.5 pl-10 pr-3 text-sm" />
+                    <input value={patientTerm} onChange={(e) => { setPatientTerm(e.target.value); setPatientOpen(true); }} placeholder="Buscar paciente…" className="input-mobile ensigna-input w-full rounded-xl border pl-10 pr-3" />
                   </div>
                   {patientOpen && patientHits.length > 0 && (
                     <ul className="mt-1 rounded-xl border bg-white shadow-lg">
                       {patientHits.map((p) => (
                         <li key={p.id}>
-                          <button type="button" onClick={() => { setPatientOpen(false); setPatientTerm(''); void loadPatient(p.id); }} className="flex w-full gap-2 px-4 py-2.5 text-left text-sm hover:bg-gray-50">
+                          <button type="button" onClick={() => { setPatientOpen(false); setPatientTerm(''); void loadPatient(p.id); }} className="touch-row flex w-full gap-2 px-4 py-3 text-left text-base hover:bg-gray-50 lg:text-sm">
                             <User className="h-4 w-4" /> {p.lastName}, {p.firstName}
                           </button>
                         </li>
@@ -425,7 +485,7 @@ export default function OrderWizard({
         {step === 4 && (
           <div>
             <label className="block text-sm font-medium mb-2">Fecha de emisión</label>
-            <input value={dateDisplay} onChange={(e) => setDateDisplay(e.target.value)} placeholder="dd/MM/aaaa" className="w-full max-w-xs rounded-xl border px-3 py-2.5 text-sm" />
+            <input value={dateDisplay} onChange={(e) => setDateDisplay(e.target.value)} placeholder="dd/MM/aaaa" className="input-mobile ensigna-input w-full max-w-xs rounded-xl border" />
           </div>
         )}
 
@@ -440,22 +500,33 @@ export default function OrderWizard({
           </dl>
         )}
 
-        <div className="mt-8 flex justify-between gap-3">
-          <button type="button" onClick={step === 1 ? () => router.push('/dashboard/orders') : () => setStep((s) => s - 1)} className="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm">
+        </div>
+
+        <div className="order-1 lg:order-2">
+        <WizardSummaryPanel
+          items={summaryItems}
+          accent="teal"
+          currentStep={step}
+          totalSteps={STEPS.length}
+        />
+        </div>
+      </div>
+
+      <WizardStickyFooter>
+          <button type="button" onClick={step === 1 ? () => router.push('/dashboard/orders') : () => setStep((s) => s - 1)} className="btn-ensigna-secondary inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-base sm:flex-none lg:text-sm">
             <ArrowLeft className="h-4 w-4" /> {step === 1 ? 'Cancelar' : 'Anterior'}
           </button>
           {step < 5 ? (
-            <button type="button" onClick={goNext} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-medium text-white">
+            <button type="button" onClick={goNext} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-base font-medium text-white sm:flex-none lg:text-sm touch-target">
               Siguiente <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
-            <button type="button" disabled={submitting} onClick={() => void handleEmit()} className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-60">
+            <button type="button" disabled={submitting} onClick={() => void handleEmit()} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-base font-medium text-white disabled:opacity-60 sm:flex-none lg:text-sm touch-target">
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardList className="h-4 w-4" />}
               Emitir orden
             </button>
           )}
-        </div>
-      </div>
+      </WizardStickyFooter>
 
       {issuedOrder && (
         <OrderSuccessModal order={issuedOrder} onClose={() => router.push(`/dashboard/orders/${issuedOrder.id}`)} />

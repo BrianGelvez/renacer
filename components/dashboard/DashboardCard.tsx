@@ -12,6 +12,7 @@ interface DashboardCardProps {
   href?: string;
   delay?: number;
   trend?: { text: string; className: string };
+  actionLabel?: string;
 }
 
 export default function DashboardCard({
@@ -22,13 +23,13 @@ export default function DashboardCard({
   href,
   delay = 0,
   trend,
+  actionLabel,
 }: DashboardCardProps) {
   const router = useRouter();
   const isClickable = Boolean(href);
 
   const go = () => {
     if (!href) return;
-    console.log('Dashboard click:', href);
     router.push(href);
   };
 
@@ -66,6 +67,11 @@ export default function DashboardCard({
           <p className="mt-2 text-3xl font-bold text-[var(--ensigna-text)]">{value}</p>
           {trend ? (
             <p className={`mt-1.5 text-sm ${trend.className}`}>{trend.text}</p>
+          ) : null}
+          {actionLabel ? (
+            <p className="mt-3 text-xs font-semibold text-ensigna-primary">
+              {actionLabel}
+            </p>
           ) : null}
         </div>
         <div

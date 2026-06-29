@@ -252,7 +252,7 @@ export default function CreatePatientModal({
     .slice(0, 250);
 
   const inputCls =
-    'w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[44px]';
+    'w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-ensigna-primary focus:border-ensigna-primary min-h-[44px]';
 
   return (
     <AnimatePresence>
@@ -275,7 +275,7 @@ export default function CreatePatientModal({
           <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 sm:px-6 py-3 sm:py-4 shrink-0">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <User className="w-5 h-5 text-indigo-600" />
+                <User className="w-5 h-5 text-ensigna-primary" />
                 Nuevo paciente
               </h3>
               <button
@@ -297,9 +297,9 @@ export default function CreatePatientModal({
                       disabled={step < s.id}
                       className={`flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full text-sm font-bold transition-all shrink-0 ${
                         step === s.id
-                          ? 'bg-indigo-600 text-white shadow-md ring-2 ring-indigo-200 ring-offset-2 scale-110'
+                          ? 'bg-ensigna-primary text-white shadow-md ring-2 ring-ensigna-soft ring-offset-2 scale-110'
                           : step > s.id
-                            ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200 cursor-pointer'
+                            ? 'bg-ensigna-accent text-ensigna-primary-dark hover:bg-ensigna-soft/60 cursor-pointer'
                             : 'bg-gray-100 text-gray-500 cursor-default'
                       }`}
                       aria-label={`Paso ${s.id}: ${s.title}`}
@@ -309,7 +309,7 @@ export default function CreatePatientModal({
                     {i < STEPS.length - 1 && (
                       <div
                         className={`flex-1 h-1 mx-1 sm:mx-2 rounded-full transition-colors min-w-0 ${
-                          step > s.id ? 'bg-indigo-200' : 'bg-gray-200'
+                          step > s.id ? 'bg-ensigna-soft/60' : 'bg-gray-200'
                         }`}
                         aria-hidden
                       />
@@ -317,7 +317,7 @@ export default function CreatePatientModal({
                   </div>
                 ))}
               </div>
-              <p className="text-sm font-medium text-indigo-700 text-center px-1">
+              <p className="text-sm font-medium text-ensigna-primary-dark text-center px-1">
                 {STEPS[step - 1].title}
               </p>
             </div>
@@ -354,7 +354,7 @@ export default function CreatePatientModal({
                     <p className="text-sm text-gray-500 mb-4">
                       Información básica del paciente
                       {recetarioLinked && (
-                        <span className="block mt-1 text-indigo-600">
+                        <span className="block mt-1 text-ensigna-primary">
                           Recetario: DNI, fecha de nacimiento y género son obligatorios.
                         </span>
                       )}
@@ -530,7 +530,7 @@ export default function CreatePatientModal({
                     <p className="text-sm text-gray-500 mb-4">
                       Obra social del paciente (opcional)
                       {recetarioLinked && (
-                        <span className="block mt-1 text-indigo-600">
+                        <span className="block mt-1 text-ensigna-primary">
                           Catálogo oficial Recetario ({recetarioHealthInsurances.length}{' '}
                           obras sociales/prepagas)
                         </span>
@@ -639,7 +639,7 @@ export default function CreatePatientModal({
                       </p>
                     </div>
                     {!hasSelectedInsurance && recetarioLinked && (
-                      <p className="text-xs text-indigo-600 rounded-lg bg-indigo-50 px-3 py-2">
+                      <p className="text-xs text-ensigna-primary rounded-lg bg-ensigna-accent px-3 py-2">
                         Sin obra social se registrará como &quot;particular&quot; en Recetario.
                       </p>
                     )}
@@ -684,7 +684,7 @@ export default function CreatePatientModal({
                         value={form.notes}
                         onChange={(e) => update('notes', e.target.value)}
                         rows={3}
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 focus:ring-2 focus:ring-ensigna-primary focus:border-ensigna-primary resize-none"
                         placeholder="Notas adicionales sobre el paciente..."
                       />
                     </div>
@@ -728,7 +728,7 @@ export default function CreatePatientModal({
                     e.preventDefault();
                     goNext();
                   }}
-                  className="flex-1 py-3.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50 inline-flex items-center justify-center gap-2 min-h-[48px]"
+                  className="flex-1 py-3.5 rounded-xl bg-ensigna-primary text-white font-medium hover:bg-ensigna-primary-dark active:bg-ensigna-primary-dark disabled:opacity-50 inline-flex items-center justify-center gap-2 min-h-[48px]"
                 >
                   Siguiente
                   <ChevronRight className="w-4 h-4" />
@@ -737,7 +737,7 @@ export default function CreatePatientModal({
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 py-3.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 active:bg-indigo-800 disabled:opacity-50 inline-flex items-center justify-center gap-2 min-h-[48px]"
+                  className="flex-1 py-3.5 rounded-xl bg-ensigna-primary text-white font-medium hover:bg-ensigna-primary-dark active:bg-ensigna-primary-dark disabled:opacity-50 inline-flex items-center justify-center gap-2 min-h-[48px]"
                 >
                   {submitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

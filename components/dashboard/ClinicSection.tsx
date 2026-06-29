@@ -168,8 +168,8 @@ export default function ClinicSection() {
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-                <MapPin className="w-5 h-5 text-purple-600" />
+              <div className="w-10 h-10 rounded-xl bg-ensigna-accent flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-5 h-5 text-ensigna-primary" />
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Dirección</p>
@@ -252,7 +252,7 @@ export default function ClinicSection() {
         {[
           { label: 'Profesionales', value: '8', color: 'bg-blue-50 text-blue-600' },
           { label: 'Pacientes', value: '1,234', color: 'bg-emerald-50 text-emerald-600' },
-          { label: 'Turnos este mes', value: '486', color: 'bg-purple-50 text-purple-600' },
+          { label: 'Turnos este mes', value: '486', color: 'bg-ensigna-accent text-ensigna-primary' },
           { label: 'Valoración', value: '4.9', color: 'bg-amber-50 text-amber-600' },
         ].map((stat, index) => (
           <div

@@ -142,7 +142,7 @@ export default function MedicalRecordVersionsPanel({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-6">
-        <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
+        <Loader2 className="w-5 h-5 text-ensigna-primary animate-spin" />
       </div>
     );
   }
@@ -167,7 +167,7 @@ export default function MedicalRecordVersionsPanel({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-        <History className="w-4 h-4 text-indigo-600" />
+        <History className="w-4 h-4 text-ensigna-primary" />
         Historial de versiones
         <span className="ml-auto text-xs text-gray-400 font-normal">
           {versions.length} {versions.length === 1 ? 'versión' : 'versiones'}
@@ -336,13 +336,13 @@ export default function MedicalRecordVersionsPanel({
                                 setConfirmRestore(v.id);
                                 setRestoreReason('');
                               }}
-                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-indigo-200 text-indigo-700 text-xs font-medium hover:bg-indigo-50 transition-colors"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-ensigna-soft text-ensigna-primary-dark text-xs font-medium hover:bg-ensigna-accent transition-colors"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                               Restaurar esta versión
                             </button>
                           ) : (
-                            <div className="rounded-lg bg-indigo-50/60 border border-indigo-100 p-3 space-y-2">
+                            <div className="rounded-lg bg-ensigna-accent/60 border border-ensigna-soft/50 p-3 space-y-2">
                               <p className="text-xs text-gray-700">
                                 Se creará una <strong>nueva versión</strong>{' '}
                                 con el contenido de v{v.versionNumber}. Las
@@ -372,7 +372,7 @@ export default function MedicalRecordVersionsPanel({
                                   type="button"
                                   onClick={() => void handleRestore(v.id)}
                                   disabled={restoring === v.id}
-                                  className="flex-1 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
+                                  className="flex-1 px-3 py-1.5 rounded-lg bg-ensigna-primary text-white text-xs font-medium disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
                                 >
                                   {restoring === v.id ? (
                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />

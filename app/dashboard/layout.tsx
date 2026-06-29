@@ -4,6 +4,8 @@ import { Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import DashboardPermissionGate from '@/components/auth/DashboardPermissionGate';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
+import { buildDashboardBreadcrumbs } from '@/lib/breadcrumbs';
 
 function DashboardRouteLayoutInner({
   children,
@@ -37,9 +39,17 @@ function DashboardRouteLayoutInner({
           searchParams?.get('section') ??
           'overview';
 
+  const breadcrumbItems = buildDashboardBreadcrumbs(
+    pathname,
+    searchParams?.get('section'),
+  );
+
   return (
     <DashboardPermissionGate>
       <DashboardLayout activeSection={activeSection}>
+        {breadcrumbItems.length > 0 && (
+          <Breadcrumbs items={breadcrumbItems} />
+        )}
         {children}
       </DashboardLayout>
     </DashboardPermissionGate>

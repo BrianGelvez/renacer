@@ -1,8 +1,7 @@
 "use client";
 
-import { ReactNode, useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { ReactNode, useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -18,8 +17,6 @@ import {
   X,
   ChevronRight,
   Bell,
-  Search,
-  Loader2,
   Sparkles,
   BarChart3,
   Wallet,
@@ -37,6 +34,7 @@ import {
   NotificationDropdown,
   type NotificationItem,
 } from "./NotificationDropdown";
+import GlobalSearch from "./GlobalSearch";
 
 interface NavItem {
   id: string;
@@ -52,16 +50,13 @@ interface DashboardLayoutProps {
   activeSection?: string;
 }
 
-interface PatientSearchHit {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dni?: string | null;
-  phone?: string | null;
-}
-
-const PATIENT_SEARCH_DEBOUNCE_MS = 300;
-const PATIENT_SEARCH_MIN_CHARS = 1;
+const MOBILE_BOTTOM_PRIORITY = [
+  "overview",
+  "patients",
+  "schedule",
+  "prescriptions",
+  "orders",
+] as const;
 
 const navItems: NavItem[] = [
   {
@@ -170,9 +165,8 @@ export default function DashboardLayout({
 }: DashboardLayoutProps) {
   const { user, clinic, logout } = useAuth();
   const { canAccess } = usePermissions();
-  const router = useRouter();
-  const patientSearchRef = useRef<HTMLDivElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [drawerTouchStartX, setDrawerTouchStartX] = useState<number | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
@@ -278,59 +272,15 @@ export default function DashboardLayout({
     canAccess(item.permission),
   );
 
-  const canSearchPatients = filteredNavItems.some((item) => item.id === "patients");
-
-  const [patientSearchQuery, setPatientSearchQuery] = useState("");
-  const [patientSearchResults, setPatientSearchResults] = useState<PatientSearchHit[]>([]);
-  const [patientSearchLoading, setPatientSearchLoading] = useState(false);
-  const [patientSearchOpen, setPatientSearchOpen] = useState(false);
-
-  useEffect(() => {
-    if (!canSearchPatients) return;
-    const q = patientSearchQuery.trim();
-    if (q.length < PATIENT_SEARCH_MIN_CHARS) {
-      setPatientSearchResults([]);
-      setPatientSearchOpen(false);
-      return;
-    }
-    const timer = window.setTimeout(async () => {
-      setPatientSearchLoading(true);
-      setPatientSearchOpen(true);
-      try {
-        const res = await apiClient.getPatients({
-          q,
-          page: 1,
-          limit: 12,
-        });
-        const items = (res as { items?: PatientSearchHit[] }).items ?? [];
-        setPatientSearchResults(Array.isArray(items) ? items : []);
-      } catch {
-        setPatientSearchResults([]);
-      } finally {
-        setPatientSearchLoading(false);
-      }
-    }, PATIENT_SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [patientSearchQuery, canSearchPatients]);
-
-  useEffect(() => {
-    if (!patientSearchOpen) return;
-    const onPointerDown = (e: PointerEvent) => {
-      const el = patientSearchRef.current;
-      if (el && !el.contains(e.target as Node)) {
-        setPatientSearchOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [patientSearchOpen]);
-
-  const goToPatientDetail = useCallback((id: string) => {
-    setPatientSearchQuery("");
-    setPatientSearchResults([]);
-    setPatientSearchOpen(false);
-    router.push(`/dashboard/patients/${id}`);
-  }, [router]);
+  const mobileBottomNavItems = useMemo(
+    () =>
+      MOBILE_BOTTOM_PRIORITY.map((id) =>
+        filteredNavItems.find((item) => item.id === id),
+      )
+        .filter((item): item is NavItem => Boolean(item))
+        .slice(0, 4),
+    [filteredNavItems],
+  );
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -536,17 +486,19 @@ export default function DashboardLayout({
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 ensigna-header-public">
-        <div className="flex items-center justify-between px-4 h-16">
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 ensigna-header-public safe-area-pt">
+        <div className="flex items-center justify-between gap-2 px-3 h-14">
           <button
+            type="button"
             onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 -ml-2 rounded-xl hover:bg-black/[0.04] text-[var(--ensigna-text-secondary)]"
+            className="touch-target inline-flex items-center justify-center rounded-xl text-[var(--ensigna-text-secondary)] hover:bg-black/[0.04]"
+            aria-label="Abrir menú"
           >
             <Menu className="w-6 h-6" />
           </button>
 
-          <Link href="/" className="flex items-center gap-2 min-h-10">
-            <div className="relative h-10 w-10">
+          <Link href="/dashboard" className="flex min-w-0 flex-1 items-center gap-2 px-1">
+            <div className="relative h-9 w-9 shrink-0">
               <Image
                 src="/logo-renacer.png"
                 alt="Renacer"
@@ -554,31 +506,33 @@ export default function DashboardLayout({
                 className="object-contain"
               />
             </div>
-            <span className="text-lg font-bold text-[var(--ensigna-text)]">Renacer</span>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-[var(--ensigna-text)]">
+                {clinic?.name || "Renacer"}
+              </p>
+              <p className="truncate text-xs text-[var(--ensigna-text-secondary)]">
+                {user?.name}
+              </p>
+            </div>
           </Link>
 
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1">
+            <GlobalSearch canAccess={canAccess} compact />
             <button
               type="button"
               onClick={() => setIsNotificationOpen(true)}
-              className="p-2 rounded-xl hover:bg-black/[0.04] text-[var(--ensigna-text-secondary)] relative"
+              className="touch-target relative inline-flex items-center justify-center rounded-xl text-[var(--ensigna-text-secondary)] hover:bg-black/[0.04]"
+              aria-label="Notificaciones"
             >
               <Bell className="w-5 h-5" />
               {notificationUnreadCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-ensigna-primary text-white rounded-full flex items-center justify-center">
+                <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-ensigna-primary text-white rounded-full flex items-center justify-center">
                   {notificationUnreadCount > 99
                     ? "99+"
                     : notificationUnreadCount}
                 </span>
               )}
             </button>
-            <div
-              className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getRoleColor(
-                user?.role || "",
-              )} flex items-center justify-center text-white text-sm font-bold`}
-            >
-              {user?.name?.[0]}
-            </div>
           </div>
         </div>
       </header>
@@ -599,7 +553,19 @@ export default function DashboardLayout({
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="lg:hidden fixed left-0 top-0 bottom-0 z-50 w-80 ensigna-sidebar shadow-ensigna-hover"
+              className="lg:hidden fixed left-0 top-0 bottom-0 z-50 w-[min(320px,88vw)] ensigna-sidebar shadow-ensigna-hover safe-area-pt safe-area-pb"
+              onTouchStart={(event) =>
+                setDrawerTouchStartX(event.touches[0]?.clientX ?? null)
+              }
+              onTouchMove={(event) => {
+                if (drawerTouchStartX === null) return;
+                const delta = (event.touches[0]?.clientX ?? 0) - drawerTouchStartX;
+                if (delta < -72) {
+                  setIsMobileMenuOpen(false);
+                  setDrawerTouchStartX(null);
+                }
+              }}
+              onTouchEnd={() => setDrawerTouchStartX(null)}
             >
               <div className="h-16 flex items-center justify-between px-4 border-b border-black/[0.06] dark:border-white/[0.08]">
                 <Link href="/" className="flex items-center gap-3 min-h-10">
@@ -616,8 +582,10 @@ export default function DashboardLayout({
                   </span>
                 </Link>
                 <button
+                  type="button"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 rounded-xl hover:bg-black/[0.04] text-[var(--ensigna-text-secondary)]"
+                  className="touch-target inline-flex items-center justify-center rounded-xl hover:bg-black/[0.04] text-[var(--ensigna-text-secondary)]"
+                  aria-label="Cerrar menú"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -658,7 +626,7 @@ export default function DashboardLayout({
                         <Link
                           href={item.href}
                           onClick={() => setIsMobileMenuOpen(false)}
-                          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                          className={`w-full flex items-center gap-3 px-4 py-3.5 min-h-12 rounded-xl transition-all touch-row ${
                             isActive
                               ? "bg-ensigna-accent text-ensigna-primary"
                               : "text-[var(--ensigna-text-secondary)] hover:bg-black/[0.04]"
@@ -705,14 +673,14 @@ export default function DashboardLayout({
 
       {/* Mobile Bottom Navigation */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 ensigna-header-public border-t safe-area-pb">
-        <div className="flex items-center justify-around px-2 py-2">
-          {filteredNavItems.slice(0, 5).map((item) => {
+        <div className="flex items-stretch justify-around px-1 py-1">
+          {mobileBottomNavItems.map((item) => {
             const isActive = activeSection === item.id;
             return (
               <Link
                 key={item.id}
                 href={item.href}
-                className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all relative"
+                className="mobile-bottom-nav-item relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5"
               >
                 {isActive && (
                   <motion.div
@@ -729,20 +697,29 @@ export default function DashboardLayout({
                   {item.icon}
                 </span>
                 <span
-                  className={`relative z-10 text-[10px] font-medium ${
+                  className={`relative z-10 text-[11px] font-medium leading-none ${
                     isActive ? "text-ensigna-primary" : "text-gray-500"
                   }`}
                 >
                   {item.label}
                 </span>
                 {item.badge && (
-                  <span className="absolute -top-0.5 right-1 w-4 h-4 text-[10px] font-bold bg-ensigna-primary text-white rounded-full flex items-center justify-center">
+                  <span className="absolute top-0.5 right-2 min-w-[16px] h-4 px-1 text-[10px] font-bold bg-ensigna-primary text-white rounded-full flex items-center justify-center">
                     {item.badge}
                   </span>
                 )}
               </Link>
             );
           })}
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="mobile-bottom-nav-item relative flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-1.5 text-gray-500"
+            aria-label="Más opciones"
+          >
+            <Menu className="w-5 h-5" />
+            <span className="text-[11px] font-medium leading-none">Más</span>
+          </button>
         </div>
       </nav>
 
@@ -752,7 +729,7 @@ export default function DashboardLayout({
           isSidebarCollapsed
             ? "lg:ml-20 lg:w-[calc(100vw-5rem)]"
             : "lg:ml-72 lg:w-[calc(100vw-18rem)]"
-        } pt-16 lg:pt-0 pb-20 lg:pb-0`}
+        } pt-14 lg:pt-0 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pb-0`}
       >
         {/* Desktop Header */}
         <header className="hidden lg:flex items-center justify-between px-6 lg:px-8 h-16 min-w-0 mx-4 lg:mx-8 mt-4 ensigna-dashboard-header">
@@ -763,72 +740,7 @@ export default function DashboardLayout({
             </h1>
           </div>
           <div className="flex items-center gap-4">
-            {canSearchPatients ? (
-              <div ref={patientSearchRef} className="relative z-50">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
-                <input
-                  type="search"
-                  autoComplete="off"
-                  placeholder="Buscar paciente..."
-                  value={patientSearchQuery}
-                  onChange={(e) => setPatientSearchQuery(e.target.value)}
-                  onFocus={() => {
-                    if (patientSearchQuery.trim().length >= PATIENT_SEARCH_MIN_CHARS) {
-                      setPatientSearchOpen(true);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") {
-                      setPatientSearchOpen(false);
-                      (e.target as HTMLInputElement).blur();
-                    }
-                  }}
-                  className="w-64 pl-10 pr-9 py-2 rounded-xl bg-white/15 border border-white/25 text-sm text-white placeholder:text-white/55 focus:outline-none focus:ring-2 focus:ring-white/35 focus:border-white/50 transition-all"
-                  aria-expanded={patientSearchOpen}
-                  aria-controls="dashboard-patient-search-results"
-                  aria-autocomplete="list"
-                />
-                {patientSearchLoading && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white animate-spin pointer-events-none" />
-                )}
-                {patientSearchOpen &&
-                  patientSearchQuery.trim().length >= PATIENT_SEARCH_MIN_CHARS && (
-                    <div
-                      id="dashboard-patient-search-results"
-                      role="listbox"
-                      className="absolute left-0 right-0 top-full mt-1 max-h-72 overflow-y-auto rounded-xl ensigna-modal-panel py-1 shadow-ensigna-hover"
-                    >
-                      {patientSearchLoading && patientSearchResults.length === 0 ? (
-                        <p className="px-3 py-2.5 text-sm text-[var(--ensigna-text-secondary)]">Buscando…</p>
-                      ) : patientSearchResults.length === 0 ? (
-                        <p className="px-3 py-2.5 text-sm text-[var(--ensigna-text-secondary)]">
-                          No se encontraron pacientes.
-                        </p>
-                      ) : (
-                        patientSearchResults.map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            role="option"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => goToPatientDetail(p.id)}
-                            className="w-full text-left px-3 py-2.5 text-sm hover:bg-ensigna-accent/80 active:bg-ensigna-accent border-b border-black/[0.04] last:border-0 transition-colors"
-                          >
-                            <span className="font-medium text-[var(--ensigna-text)]">
-                              {p.lastName}, {p.firstName}
-                            </span>
-                            {(p.dni || p.phone) && (
-                              <span className="block text-xs text-[var(--ensigna-text-secondary)] mt-0.5">
-                                {[p.dni ? `DNI ${p.dni}` : null, p.phone].filter(Boolean).join(" · ")}
-                              </span>
-                            )}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
-              </div>
-            ) : null}
+            <GlobalSearch canAccess={canAccess} />
             <button
               type="button"
               onClick={() => setIsNotificationOpen(true)}

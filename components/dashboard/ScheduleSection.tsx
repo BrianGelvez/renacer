@@ -106,7 +106,7 @@ function appointmentStatusColors(status: string): { bg: string; border: string; 
   const map: Record<string, { bg: string; border: string; text: string }> = {
     SCHEDULED: { bg: 'bg-amber-500', border: 'border-amber-600/50', text: 'text-white' },
     PENDING_CONFIRMATION: {
-      bg: 'bg-violet-500',
+      bg: 'bg-ensigna-accent0',
       border: 'border-violet-600/50',
       text: 'text-white',
     },
@@ -128,10 +128,10 @@ function appointmentStatusListColors(status: string): { bg: string; border: stri
   const map: Record<string, { bg: string; border: string; badge: string; text: string }> = {
     SCHEDULED: { bg: 'bg-amber-50', border: 'border-amber-300', badge: 'bg-amber-200/80 text-amber-800', text: 'text-amber-900' },
     PENDING_CONFIRMATION: {
-      bg: 'bg-violet-50',
-      border: 'border-violet-300',
-      badge: 'bg-violet-200/80 text-violet-900',
-      text: 'text-violet-900',
+      bg: 'bg-ensigna-accent',
+      border: 'border-ensigna-soft',
+      badge: 'bg-violet-200/80 text-ensigna-primary-dark',
+      text: 'text-ensigna-primary-dark',
     },
     CONFIRMED: { bg: 'bg-emerald-50', border: 'border-emerald-300', badge: 'bg-emerald-200/80 text-emerald-800', text: 'text-emerald-900' },
     RESCHEDULE_REQUESTED: {
@@ -412,7 +412,7 @@ export default function ScheduleSection() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/20">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-ensigna-primary to-ensigna-primary-light flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/20">
             <CalendarIcon className="w-6 h-6 text-white" />
           </div>
           <div className="min-w-0">
@@ -452,7 +452,7 @@ export default function ScheduleSection() {
                       : 'border-gray-200/90 bg-gradient-to-b from-white to-gray-50/80 hover:border-emerald-200 hover:shadow-md'
                   }`}
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/25">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-ensigna-primary to-ensigna-primary-light text-white shadow-md shadow-emerald-500/25">
                     <Stethoscope className="h-5 w-5" aria-hidden />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -570,7 +570,7 @@ export default function ScheduleSection() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-100"
                 >
-                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/20">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-ensigna-primary to-ensigna-primary-light flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/20">
                     <User className="w-7 h-7 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">

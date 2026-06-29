@@ -24,6 +24,7 @@ import {
   type MedicalDocumentStatus,
   type MedicalDocumentType,
 } from '@/lib/api';
+import MobileDataCard from '@/components/ui/MobileDataCard';
 
 const DEBOUNCE_MS = 350;
 
@@ -400,7 +401,59 @@ export default function MedicalDocumentsSection({
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="space-y-3 p-4 md:hidden">
+            {items.map((doc) => (
+              <MobileDataCard
+                key={doc.id}
+                title={doc.patientName}
+                subtitle={formatDate(doc.issuedAt)}
+                badge={
+                  <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusBadgeClass(doc.status)}`}>
+                    {doc.statusLabel}
+                  </span>
+                }
+                fields={[
+                  { label: 'DNI', value: doc.patientDni ?? '—' },
+                  { label: 'Médico', value: doc.doctorName || '—' },
+                  { label: 'Tipo', value: doc.documentTypeLabel },
+                  { label: 'Obra social', value: doc.healthInsurance ?? '—' },
+                  { label: 'Nº doc.', value: doc.documentNumber ?? '—' },
+                ]}
+                actions={
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/dashboard/prescriptions/${doc.id}`)}
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white touch-target"
+                    >
+                      <Eye className="h-4 w-4" /> Ver
+                    </button>
+                    {doc.pdfUrl && (
+                      <a
+                        href={doc.pdfUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-ensigna-secondary inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm"
+                      >
+                        <FileText className="h-4 w-4" /> PDF
+                      </a>
+                    )}
+                    {doc.patientId && (
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/dashboard/patients/${doc.patientId}`)}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm touch-target"
+                      >
+                        <User className="h-4 w-4" /> Paciente
+                      </button>
+                    )}
+                  </>
+                }
+              />
+            ))}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[900px] text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/80 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -517,6 +570,7 @@ export default function MedicalDocumentsSection({
               </tbody>
             </table>
           </div>
+          </>
         )}
 
         {!loading && totalPages > 1 && (
@@ -529,7 +583,7 @@ export default function MedicalDocumentsSection({
                 type="button"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-3 py-1.5 rounded-lg border border-gray-200 disabled:opacity-50"
+                className="touch-target px-4 py-2.5 rounded-lg border border-gray-200 disabled:opacity-50"
               >
                 Anterior
               </button>
@@ -537,7 +591,7 @@ export default function MedicalDocumentsSection({
                 type="button"
                 disabled={page >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
-                className="px-3 py-1.5 rounded-lg border border-gray-200 disabled:opacity-50"
+                className="touch-target px-4 py-2.5 rounded-lg border border-gray-200 disabled:opacity-50"
               >
                 Siguiente
               </button>

@@ -45,7 +45,7 @@ export default function ProfessionalAvailabilityViewer() {
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 flex justify-center"
       >
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-ensigna-primary" />
       </motion.div>
     );
   }
@@ -94,7 +94,7 @@ export default function ProfessionalAvailabilityViewer() {
       >
         <div className="px-6 py-5 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-ensigna-primary to-ensigna-primary-light flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -115,25 +115,25 @@ export default function ProfessionalAvailabilityViewer() {
                 onClick={() => setSelectedDoctorUserId(prof.userId)}
                 className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${
                   selectedDoctorUserId === prof.userId
-                    ? 'border-indigo-500 bg-indigo-50'
+                    ? 'border-ensigna-primary bg-ensigna-accent'
                     : 'border-gray-200 hover:border-gray-300 bg-white'
                 }`}
               >
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold text-lg ${
                   selectedDoctorUserId === prof.userId
-                    ? 'bg-gradient-to-br from-indigo-500 to-violet-600'
+                    ? 'bg-gradient-to-br from-ensigna-primary to-ensigna-primary-light'
                     : 'bg-gradient-to-br from-gray-400 to-gray-500'
                 }`}>
                   {prof.firstName[0]}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className={`font-medium truncate ${
-                    selectedDoctorUserId === prof.userId ? 'text-indigo-900' : 'text-gray-900'
+                    selectedDoctorUserId === prof.userId ? 'text-ensigna-primary-dark' : 'text-gray-900'
                   }`}>
                     Dr. {prof.firstName} {prof.lastName}
                   </p>
                   <p className={`text-sm truncate ${
-                    selectedDoctorUserId === prof.userId ? 'text-indigo-600' : 'text-gray-500'
+                    selectedDoctorUserId === prof.userId ? 'text-ensigna-primary' : 'text-gray-500'
                   }`}>
                     {prof.specialty || 'Sin especialidad'}
                     {prof.hasAccount
@@ -154,7 +154,7 @@ export default function ProfessionalAvailabilityViewer() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl p-6 text-white relative overflow-hidden"
+          className="bg-gradient-to-br from-ensigna-primary to-ensigna-primary-light rounded-2xl p-6 text-white relative overflow-hidden"
         >
           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3" />
           <div className="relative flex items-center gap-4">
