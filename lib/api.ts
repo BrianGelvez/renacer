@@ -881,6 +881,81 @@ class ApiClient {
     return response.data;
   }
 
+  /** Invitar médico solo con email (OWNER / ADMIN) */
+  async inviteDoctorByEmail(email: string) {
+    const response = await this.client.post('/invitations/doctor', { email });
+    return response.data as { expiresAt: string; inviteUrl: string };
+  }
+
+  async getInvitationPreview(token: string) {
+    const response = await this.client.get(`/invitations/${token}`);
+    return response.data as {
+      status: 'VALID' | 'EXPIRED' | 'ACCEPTED' | 'CANCELLED' | 'INVALID';
+      email?: string;
+      role?: 'ADMIN' | 'DOCTOR';
+      clinicName?: string;
+      inviterName?: string | null;
+      requiresRegistration?: boolean;
+      hasAccount?: boolean;
+    };
+  }
+
+  async registerInvitationAccept(
+    token: string,
+    data: {
+      email: string;
+      password: string;
+      name: string;
+      lastName: string;
+      phone?: string;
+    },
+  ) {
+    const response = await this.client.post(
+      `/invitations/${token}/register`,
+      data,
+    );
+    return response.data as {
+      accessToken: string;
+      user: { id: string; clinicId: string; role: string; clinicName: string };
+    };
+  }
+
+  async acceptInvitation(token: string) {
+    const response = await this.client.post(`/invitations/${token}/accept`);
+    return response.data as {
+      accessToken: string;
+      user: { id: string; clinicId: string; role: string; clinicName: string };
+    };
+  }
+
+  async resendAdminInvite(inviteId: string) {
+    const response = await this.client.post(
+      `/invitations/admin/${inviteId}/resend`,
+    );
+    return response.data as { inviteUrl: string; expiresAt: string };
+  }
+
+  async cancelAdminInvite(inviteId: string) {
+    const response = await this.client.post(
+      `/invitations/admin/${inviteId}/cancel`,
+    );
+    return response.data;
+  }
+
+  async resendDoctorInvite(inviteId: string) {
+    const response = await this.client.post(
+      `/invitations/doctor/${inviteId}/resend`,
+    );
+    return response.data as { inviteUrl: string; expiresAt: string };
+  }
+
+  async cancelDoctorInvite(inviteId: string) {
+    const response = await this.client.post(
+      `/invitations/doctor/${inviteId}/cancel`,
+    );
+    return response.data;
+  }
+
   async syncDoctorRecetario(doctorUserId: string) {
     const response = await this.client.post(
       `/doctors/${doctorUserId}/recetario/sync`,

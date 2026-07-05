@@ -163,7 +163,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
   return (
     <>
       {/* Botón para abrir el modal */}
-      <motion.button
+      {/* <motion.button
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         onClick={() => setIsOpen(true)}
@@ -171,7 +171,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
       >
         <UserPlus className="w-5 h-5" />
         Agregar profesional
-      </motion.button>
+      </motion.button> */}
 
       {/* Modal */}
       <AnimatePresence>

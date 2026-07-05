@@ -735,8 +735,8 @@ export default function DashboardLayout({
         <header className="hidden lg:flex items-center justify-between px-6 lg:px-8 h-16 min-w-0 mx-4 lg:mx-8 mt-4 ensigna-dashboard-header">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-semibold text-white drop-shadow-sm">
-              {filteredNavItems.find((item) => item.id === activeSection)
-                ?.label || "Dashboard"}
+                {filteredNavItems.find((item) => item.id === activeSection)
+                ?.label || "Dashboard"}                
             </h1>
           </div>
           <div className="flex items-center gap-4">
