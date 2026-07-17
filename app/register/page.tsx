@@ -74,9 +74,8 @@ function RegisterPageInner() {
 
   const handleGoogleRegister = () => {
     const clinicSlug = process.env.NEXT_PUBLIC_CLINIC_SLUG;
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
     if (clinicSlug) {
-      window.location.href = `${apiUrl}/auth/google?clinicSlug=${clinicSlug}`;
+      window.location.href = `/api/auth/google?clinicSlug=${encodeURIComponent(clinicSlug)}`;
     }
   };
 

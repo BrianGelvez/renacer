@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { io, type Socket } from "socket.io-client";
+import { getWsBaseUrl } from '@/lib/env';
 
 type NewMessageHandler = (msg: unknown) => void;
 type ConversationUpdateHandler = (conversation: unknown) => void;
@@ -12,14 +13,7 @@ export function useConversationSocket(
   onConversationUpdated?: ConversationUpdateHandler,
 ) {
   const socketRef = useRef<Socket | null>(null);
-
-  const backendUrl = useMemo(() => {
-    return (
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      "http://localhost:3333"
-    );
-  }, []);
+  const backendUrl = getWsBaseUrl();
 
   useEffect(() => {
     if (!conversationId && !onConversationUpdated) return;
@@ -27,6 +21,7 @@ export function useConversationSocket(
     if (!socketRef.current) {
       socketRef.current = io(backendUrl, {
         transports: ["websocket"],
+        withCredentials: true,
       });
     }
 
@@ -52,4 +47,3 @@ export function useConversationSocket(
     };
   }, [backendUrl, conversationId, onNewMessage, onConversationUpdated]);
 }
-

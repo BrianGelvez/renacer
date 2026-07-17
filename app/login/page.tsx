@@ -43,13 +43,12 @@ function LoginPageInner() {
 
   const handleGoogleLogin = () => {
     const clinicSlug = process.env.NEXT_PUBLIC_CLINIC_SLUG;
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
     if (!clinicSlug) {
       setError('NEXT_PUBLIC_CLINIC_SLUG no está configurado');
       return;
     }
-    window.location.href = `${apiUrl}/auth/google?clinicSlug=${clinicSlug}`;
+    window.location.href = `/api/auth/google?clinicSlug=${encodeURIComponent(clinicSlug)}`;
   };
 
   useEffect(() => {

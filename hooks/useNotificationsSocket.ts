@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { io, type Socket } from "socket.io-client";
+import { getWsBaseUrl } from '@/lib/env';
 
 type Handlers = {
   onNewNotification: (n: any) => void;
@@ -10,20 +11,14 @@ type Handlers = {
 
 export function useNotificationsSocket(userId: string | null, handlers: Handlers) {
   const socketRef = useRef<Socket | null>(null);
-
-  const backendUrl = useMemo(() => {
-    return (
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      "http://localhost:3333"
-    );
-  }, []);
+  const backendUrl = getWsBaseUrl();
 
   useEffect(() => {
     if (!userId) return;
 
     const socket = io(`${backendUrl}/notifications`, {
       transports: ["websocket"],
+      withCredentials: true,
       query: { userId },
     });
     socketRef.current = socket;
@@ -50,4 +45,3 @@ export function useNotificationsSocket(userId: string | null, handlers: Handlers
     };
   }, [backendUrl, handlers, userId]);
 }
-

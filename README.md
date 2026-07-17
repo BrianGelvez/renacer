@@ -1,106 +1,58 @@
-# Frontend SaaS - Consultorios Médicos
+# Configuración del Frontend (Next.js) — Renacer
 
-Frontend Next.js para el sistema SaaS de gestión de consultorios médicos.
+## Variables de entorno
 
-## Configuración
-
-### Variables de Entorno
-
-Crea un archivo `.env.local` en la raíz del proyecto con las siguientes variables:
+Copiar `.env.example` a `.env.local` (desarrollo).
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3333
-NEXT_PUBLIC_CLINIC_SLUG=consultorio-ensigna
-NEXT_PUBLIC_API_KEY=VB1mMnoaV2ZLXuW1zH2QrWHMLLfH0kWo
+# Servidor (secretos — NO exponer al navegador en Vercel)
+BACKEND_URL=http://localhost:3333
+SAAS_API_KEY=your-saas-api-key
+
+# WebSocket (URL pública de Render — no es secreto)
+NEXT_PUBLIC_WS_URL=http://localhost:3333
+
+# Públicas
+NEXT_PUBLIC_CLINIC_SLUG=consultorio-renacer
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-**Nota:** El `NEXT_PUBLIC_API_KEY` debe coincidir con `SAAS_API_KEY` del backend.
+**Importante:** `SAAS_API_KEY` debe coincidir con `SAAS_API_KEY` del backend. Nunca usar `NEXT_PUBLIC_*` para secretos.
 
-### Instalación
+### Arquitectura API (BFF Proxy)
+
+El navegador **nunca** llama a Render directamente para REST:
+
+```
+Navegador → /api/backend/* (Vercel, mismo origen)
+         → Render (servidor inyecta x-api-key)
+```
+
+- Sin CORS en peticiones REST
+- Sin `x-api-key` en DevTools
+- JWT vía `Authorization: Bearer` reenviado por el proxy
+
+WebSocket (Socket.IO) conecta directo a `NEXT_PUBLIC_WS_URL` (requiere CORS en Render).
+
+OAuth Google: `/api/auth/google` (redirect servidor).
+
+## CORS en producción (Vercel + Render)
+
+**Render (backend):**
+
+```env
+CORS_ORIGINS=https://renacer-omega.vercel.app,https://renacer.com,https://www.renacer.com
+NODE_ENV=production
+FRONTEND_URL=https://renacer-omega.vercel.app
+```
+
+**Vercel (frontend):** ver `.env.production.example`
+
+## Desarrollo
 
 ```bash
 npm install
-```
-
-### Desarrollo
-
-```bash
 npm run dev
 ```
 
-El frontend estará disponible en `http://localhost:3000`
-
-## Estructura del Proyecto
-
-```
-frontend-clinica-saas/
-├── app/                    # Páginas Next.js (App Router)
-│   ├── login/             # Página de login
-│   ├── register/          # Página de registro
-│   ├── dashboard/         # Dashboard principal
-│   └── layout.tsx         # Layout principal
-├── contexts/              # Contextos de React
-│   └── AuthContext.tsx    # Contexto de autenticación
-├── lib/                   # Utilidades y clientes
-│   └── api.ts             # Cliente API para comunicarse con el backend
-└── .env.local             # Variables de entorno (no commitear)
-```
-
-## Flujo de Autenticación
-
-### Registro
-
-1. El usuario accede a `/register`
-2. Completa el formulario con sus datos
-3. El frontend envía `POST /auth/register` con el header `x-clinic-slug`
-4. El backend asocia el usuario a la clínica como OWNER
-5. Redirige a `/login`
-
-### Login
-
-1. El usuario accede a `/login`
-2. Ingresa email y contraseña
-3. El frontend envía `POST /auth/login`
-4. El backend devuelve un JWT
-5. El JWT se guarda en `localStorage`
-6. Redirige a `/dashboard`
-
-### Dashboard
-
-1. Al cargar, verifica si hay JWT
-2. Si no hay JWT, redirige a `/login`
-3. Si hay JWT, carga datos del usuario y la clínica
-4. Muestra información de la clínica y del usuario
-
-## Decisiones de Diseño
-
-### Almacenamiento del JWT
-
-**Decisión:** Usar `localStorage` en lugar de cookies httpOnly.
-
-**Razón:** 
-- Para desarrollo local es más fácil de debuggear
-- En producción, se recomienda migrar a cookies httpOnly para mayor seguridad
-- El interceptor de axios maneja automáticamente el token
-
-### Headers Automáticos
-
-El cliente API (`lib/api.ts`) agrega automáticamente:
-- `Authorization: Bearer <JWT>` cuando hay token
-- `x-api-key` para endpoints públicos protegidos
-- `x-clinic-slug` en el registro (desde variables de entorno)
-
-### Protección de Rutas
-
-El dashboard verifica la autenticación usando el contexto `AuthContext`:
-- Si `isLoading` es `true`, muestra loading
-- Si `isAuthenticated` es `false`, redirige a `/login`
-
-## Próximos Pasos
-
-- [ ] Agregar gestión de usuarios (invitaciones ADMIN/STAFF)
-- [ ] Agregar gestión de profesionales
-- [ ] Agregar gestión de pacientes
-- [ ] Agregar gestión de turnos
-- [ ] Migrar JWT a cookies httpOnly en producción
-- [ ] Agregar manejo de múltiples clínicas (select-clinic)
+Frontend: `http://localhost:3000`

@@ -1,29 +1,29 @@
+import { getServerApiKey, getServerBackendUrl } from '@/lib/server/env';
+
 /**
- * Función para obtener datos de la clínica desde el backend (server-side)
- * Usa API Key para autenticación
+ * Datos de clínica para landing (Server Component).
+ * Usa BACKEND_URL + SAAS_API_KEY solo en el servidor — nunca en el navegador.
  */
 export async function getClinicData(slug: string) {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
-  const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+  const apiUrl = getServerBackendUrl();
+  const apiKey = getServerApiKey();
 
-  if (!apiKey) {
-    throw new Error('NEXT_PUBLIC_API_KEY no está configurada');
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey) {
+    headers['x-api-key'] = apiKey;
   }
 
   try {
     const response = await fetch(`${apiUrl}/clinics/slug/${slug}`, {
-      headers: {
-        'x-api-key': apiKey,
-        'Content-Type': 'application/json',
-      },
-      // Permitimos que Next.js lo trate como dato estático en build.
-      // Si se quiere refrescar en producción, se puede usar revalidate.
+      headers,
       next: { revalidate: 60 },
     });
 
     if (!response.ok) {
       if (response.status === 404) {
-        return null; // Clínica no encontrada
+        return null;
       }
       throw new Error(`Error al obtener datos de la clínica: ${response.statusText}`);
     }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { getApiBaseUrl } from '@/lib/env';
 
 // Función para generar UUID v4
 function uuidv4(): string {
@@ -52,7 +53,7 @@ export default function ChatbotWidget({ clinicSlug }: ChatbotWidgetProps) {
   }, [messages]);
 
   const getClinicSlug = () => {
-    return clinicSlug || process.env.NEXT_PUBLIC_CLINIC_SLUG || 'consultorio-ensigna';
+    return clinicSlug || process.env.NEXT_PUBLIC_CLINIC_SLUG || 'consultorio-renacer';
   };
 
   const sendMessage = async () => {
@@ -81,15 +82,12 @@ export default function ChatbotWidget({ clinicSlug }: ChatbotWidgetProps) {
     abortControllerRef.current = new AbortController();
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
-      const apiKey = process.env.NEXT_PUBLIC_API_KEY || '';
-
-      const response = await fetch(`${apiUrl}/chatbot/message`, {
+      const response = await fetch(`${getApiBaseUrl()}/chatbot/message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': apiKey,
         },
+        credentials: 'include',
         body: JSON.stringify({
           sessionId,
           clinicSlug: getClinicSlug(),

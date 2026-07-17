@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import Cookies from 'js-cookie';
+import { getApiBaseUrl } from '@/lib/env';
 
 export type ClinicTeamRole =
   | 'OWNER'
@@ -608,14 +609,13 @@ class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
-    const apiKey = process.env.NEXT_PUBLIC_API_KEY || '';
+    const apiUrl = getApiBaseUrl();
 
     this.client = axios.create({
       baseURL: apiUrl,
+      withCredentials: true,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': apiKey, // API Key para endpoints públicos protegidos
       },
     });
 
