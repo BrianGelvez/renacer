@@ -336,7 +336,7 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+        className="bg-white rounded-2xl shadow-sm border border-gray-100"
       >
         {(activeTab === 'all' || activeTab === 'staff') &&
           filteredStaff.length > 0 && (
@@ -567,7 +567,7 @@ export default function TeamSection({ refreshKey = 0 }: TeamSectionProps) {
                               initial={{ opacity: 0, y: -4 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -4 }}
-                              className="absolute right-0 top-full mt-1 w-52 py-1 bg-white rounded-xl border border-gray-200 shadow-lg z-20"
+                              className="absolute right-0 top-full mt-1 w-52 py-1 bg-white rounded-xl border border-gray-200 shadow-lg z-50"
                             >
                               <button
                                 type="button"
