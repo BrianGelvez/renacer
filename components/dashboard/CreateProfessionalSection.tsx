@@ -16,8 +16,18 @@ import {
   Building2,
   Link,
   Mail,
+  FileText,
+  ChevronDown,
+  MapPin,
+  PenLine,
 } from 'lucide-react';
 import { apiClient, type CreateDoctorApiPayload } from '@/lib/api';
+
+const labelClass = 'block text-sm font-medium text-gray-700 mb-2';
+const inputClass =
+  'w-full px-4 py-3 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all text-sm disabled:opacity-60';
+const inputWithIconClass =
+  'w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 bg-white focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all disabled:opacity-60';
 
 interface CreateProfessionalSectionProps {
   onCreated?: () => void;
@@ -45,6 +55,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
   const [prescriptionLegend, setPrescriptionLegend] = useState('');
   const [signatureUrl, setSignatureUrl] = useState('');
 
+  const [recetarioOpen, setRecetarioOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [successType, setSuccessType] = useState<'managed' | 'pending' | null>(null);
@@ -156,6 +167,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
       setLicenseNumber('');
       setPhone('');
       setManagedByClinic(true);
+      setRecetarioOpen(false);
       resetRecetarioForm();
     }
   };
@@ -163,15 +175,15 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
   return (
     <>
       {/* Botón para abrir el modal */}
-      {/* <motion.button
+      <motion.button
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         onClick={() => setIsOpen(true)}
-        className="w-full sm:w-auto inline-flex items-center gap-2 px-6 py-3 gradient-red text-white rounded-xl font-semibold hover:brightness-105 transition-all shadow-lg shadow-ensigna-primary/25 hover:shadow-xl"
+        className="w-full sm:w-auto inline-flex items-center gap-2 px-6 py-3 gradient-brand text-white bg-ensigna-primary rounded-xl font-semibold hover:brightness-105 transition-all shadow-lg shadow-ensigna-primary/25 hover:shadow-xl"
       >
         <UserPlus className="w-5 h-5" />
         Agregar profesional
-      </motion.button> */}
+      </motion.button>
 
       {/* Modal */}
       <AnimatePresence>
@@ -187,7 +199,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
               <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-ensigna-soft/40 to-ensigna-accent-soft">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl gradient-red flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl gradient-brand flex items-center justify-center">
                       <UserPlus className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -299,7 +311,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
                           placeholder="Juan"
-                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
+                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
                           required
                           disabled={loading}
                         />
@@ -317,7 +329,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
                           placeholder="Pérez"
-                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
+                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
                           required
                           disabled={loading}
                         />
@@ -337,7 +349,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                         value={specialty}
                         onChange={(e) => setSpecialty(e.target.value)}
                         placeholder="Cardiología, Pediatría, Dermatología..."
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
                         disabled={loading}
                       />
                     </div>
@@ -358,7 +370,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                           value={licenseNumber}
                           onChange={(e) => setLicenseNumber(e.target.value)}
                           placeholder="MN 12345"
-                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
+                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
                           disabled={loading}
                         />
                       </div>
@@ -375,153 +387,248 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           placeholder="+54 11 1234-5678"
-                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[rgba(209,106,138,0.2)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
+                          className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[var(--color-focus-ring)] focus:border-ensigna-primary text-gray-900 placeholder-gray-400 transition-all"
                           disabled={loading}
                         />
                       </div>
                     </div>
                   </div>
 
-                  <fieldset className="rounded-2xl border border-ensigna-soft bg-ensigna-accent/50 p-4 space-y-4">
-                    <legend className="text-sm font-semibold text-ensigna-primary-dark px-2">
-                      Recetario.com.ar — recetas electrónicas
-                    </legend>
-                    <p className="text-xs text-ensigna-primary-dark/80">
-                      Opcional en el alta: si completás estos campos, el backend puede sincronizar el médico con la institución vinculada. Provincias y listas salen del API oficial (cache servidor).
-                    </p>
-                    <div>
-                      <label htmlFor="pro-rx-email" className="block text-xs font-medium text-gray-700 mb-1">
-                        Email de cuenta (obligatorio)
-                      </label>
+                  <div>
+                    <label htmlFor="pro-email" className={labelClass}>
+                      Email de cuenta <span className="text-ensigna-primary">*</span>
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <input
-                        id="pro-rx-email"
+                        id="pro-email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        placeholder="usuario@ejemplo.com — también sirve para Recetario"
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm"
+                        placeholder="usuario@ejemplo.com"
+                        className={inputWithIconClass}
+                        required
                         disabled={loading}
                       />
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Tipo matrícula</label>
-                        <select
-                          value={licenseType}
-                          onChange={(e) => setLicenseType(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm"
-                          disabled={loading}
+                    <p className="mt-1.5 text-xs text-gray-500">
+                      Para iniciar sesión y, si completás Recetario, para sincronizar con la institución.
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => setRecetarioOpen((open) => !open)}
+                      className="flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-gray-50/90"
+                      aria-expanded={recetarioOpen}
+                    >
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                        <FileText className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-gray-900">Recetario.com.ar</span>
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+                            Opcional
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-sm text-gray-500">
+                          Recetas electrónicas y sincronización con la institución vinculada
+                        </p>
+                      </div>
+                      <ChevronDown
+                        className={`h-5 w-5 shrink-0 text-gray-400 transition-transform duration-200 ${
+                          recetarioOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {recetarioOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
                         >
-                          <option value="">—</option>
-                          {licenseTypes.map((t) => (
-                            <option key={t} value={t}>{t}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-700 mb-1">Título</label>
-                        <select
-                          value={title}
-                          onChange={(e) => setTitle(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm"
-                          disabled={loading}
-                        >
-                          <option value="">—</option>
-                          {titles.map((t) => (
-                            <option key={t} value={t}>{t}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        DNI (solo dígitos, sin puntos)
-                      </label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={documentNumber}
-                        onChange={(e) =>
-                          setDocumentNumber(e.target.value.replace(/\D/g, ''))
-                        }
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 font-mono text-sm"
-                        disabled={loading}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Provincia
-                      </label>
-                      <select
-                        value={province}
-                        onChange={(e) => setProvince(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm"
-                        disabled={loading}
-                      >
-                        <option value="">—</option>
-                        {provinces.map((pr) => (
-                          <option key={pr.id} value={pr.name}>
-                            {pr.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <input
-                        type="text"
-                        value={workPhone}
-                        onChange={(e) => setWorkPhone(e.target.value)}
-                        placeholder="Teléfono laboral"
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm"
-                        disabled={loading}
-                      />
-                      <input
-                        type="text"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        placeholder="Dirección consultorio"
-                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm sm:col-span-2"
-                        disabled={loading}
-                      />
-                    </div>
-                    <div className="border-t border-ensigna-soft pt-3 space-y-2">
-                      <p className="text-xs font-medium text-gray-700">
-                        Leyenda en receta (opcional; el resto del perfil en Recetario usa teléfono laboral, dirección y email de contacto arriba)
-                      </p>
-                      <input
-                        type="text"
-                        value={prescriptionLegend}
-                        onChange={(e) => setPrescriptionLegend(e.target.value)}
-                        placeholder="Leyenda / pie de documento"
-                        className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm"
-                        disabled={loading}
-                      />
-                    </div>
-                    <div className="border-t border-ensigna-soft pt-3 space-y-2">
-                      <label
-                        htmlFor="pro-signature-url"
-                        className="block text-xs font-medium text-gray-700"
-                      >
-                        Firma digital — URL pública (opcional)
-                      </label>
-                      <p className="text-xs text-ensigna-primary-dark/75">
-                        Enlace a la imagen de firma para Recetario (se guarda en el perfil y se usa al sincronizar con la institución).
-                      </p>
-                      <div className="relative">
-                        <Link className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                        <input
-                          id="pro-signature-url"
-                          type="url"
-                          value={signatureUrl}
-                          onChange={(e) => setSignatureUrl(e.target.value)}
-                          placeholder="https://…"
-                          className="w-full rounded-lg border border-gray-200 py-2 pl-10 pr-3 text-sm"
-                          disabled={loading}
-                          autoComplete="off"
-                        />
-                      </div>
-                    </div>
-                  </fieldset>
+                          <div className="space-y-6 border-t border-gray-100 px-5 pb-5 pt-4">
+                            <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                              Completá estos campos solo si querés sincronizar al profesional con Recetario al crearlo.
+                              Provincias y listas provienen del catálogo oficial.
+                            </p>
+
+                            <div>
+                              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Matrícula y documentación
+                              </h4>
+                              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                  <label htmlFor="pro-rx-license-type" className={labelClass}>
+                                    Tipo de matrícula
+                                  </label>
+                                  <select
+                                    id="pro-rx-license-type"
+                                    value={licenseType}
+                                    onChange={(e) => setLicenseType(e.target.value)}
+                                    className={inputClass}
+                                    disabled={loading}
+                                  >
+                                    <option value="">Seleccionar…</option>
+                                    {licenseTypes.map((t) => (
+                                      <option key={t} value={t}>{t}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label htmlFor="pro-rx-title" className={labelClass}>
+                                    Título
+                                  </label>
+                                  <select
+                                    id="pro-rx-title"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    className={inputClass}
+                                    disabled={loading}
+                                  >
+                                    <option value="">Seleccionar…</option>
+                                    {titles.map((t) => (
+                                      <option key={t} value={t}>{t}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <label htmlFor="pro-rx-dni" className={labelClass}>
+                                    DNI
+                                  </label>
+                                  <input
+                                    id="pro-rx-dni"
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={documentNumber}
+                                    onChange={(e) =>
+                                      setDocumentNumber(e.target.value.replace(/\D/g, ''))
+                                    }
+                                    placeholder="Solo dígitos, sin puntos"
+                                    className={`${inputClass} font-mono`}
+                                    disabled={loading}
+                                  />
+                                </div>
+                                <div>
+                                  <label htmlFor="pro-rx-province" className={labelClass}>
+                                    Provincia
+                                  </label>
+                                  <select
+                                    id="pro-rx-province"
+                                    value={province}
+                                    onChange={(e) => setProvince(e.target.value)}
+                                    className={inputClass}
+                                    disabled={loading}
+                                  >
+                                    <option value="">Seleccionar…</option>
+                                    {provinces.map((pr) => (
+                                      <option key={pr.id} value={pr.name}>
+                                        {pr.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Contacto en consultorio
+                              </h4>
+                              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <div>
+                                  <label htmlFor="pro-rx-work-phone" className={labelClass}>
+                                    Teléfono laboral
+                                  </label>
+                                  <div className="relative">
+                                    <Phone className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                      id="pro-rx-work-phone"
+                                      type="tel"
+                                      value={workPhone}
+                                      onChange={(e) => setWorkPhone(e.target.value)}
+                                      placeholder="+54 11 1234-5678"
+                                      className={inputWithIconClass}
+                                      disabled={loading}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <label htmlFor="pro-rx-address" className={labelClass}>
+                                    Dirección del consultorio
+                                  </label>
+                                  <div className="relative">
+                                    <MapPin className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                      id="pro-rx-address"
+                                      type="text"
+                                      value={address}
+                                      onChange={(e) => setAddress(e.target.value)}
+                                      placeholder="Calle, número, localidad"
+                                      className={inputWithIconClass}
+                                      disabled={loading}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Personalización de recetas
+                              </h4>
+                              <div className="space-y-4">
+                                <div>
+                                  <label htmlFor="pro-rx-legend" className={labelClass}>
+                                    Leyenda en receta
+                                  </label>
+                                  <div className="relative">
+                                    <PenLine className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                      id="pro-rx-legend"
+                                      type="text"
+                                      value={prescriptionLegend}
+                                      onChange={(e) => setPrescriptionLegend(e.target.value)}
+                                      placeholder="Pie de documento o leyenda personalizada"
+                                      className={inputWithIconClass}
+                                      disabled={loading}
+                                    />
+                                  </div>
+                                </div>
+                                <div>
+                                  <label htmlFor="pro-signature-url" className={labelClass}>
+                                    Firma digital — URL pública
+                                  </label>
+                                  <p className="mb-2 text-xs text-gray-500">
+                                    Enlace a la imagen de firma para Recetario (se guarda en el perfil al sincronizar).
+                                  </p>
+                                  <div className="relative">
+                                    <Link className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                      id="pro-signature-url"
+                                      type="url"
+                                      value={signatureUrl}
+                                      onChange={(e) => setSignatureUrl(e.target.value)}
+                                      placeholder="https://…"
+                                      className={inputWithIconClass}
+                                      disabled={loading}
+                                      autoComplete="off"
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
 
                   <div className="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 bg-gray-50/50">
                     <input
@@ -567,7 +674,7 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                       type="submit"
                       form="create-professional-form"
                       disabled={loading}
-                      className="inline-flex items-center gap-2 px-6 py-2.5 gradient-red text-white rounded-xl font-semibold hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-lg shadow-ensigna-primary/25"
+                      className="inline-flex items-center gap-2 px-6 py-2.5 gradient-brand text-white rounded-xl font-semibold hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed transition-all shadow-lg shadow-ensigna-primary/25"
                     >
                       {loading ? (
                         <>
