@@ -230,7 +230,7 @@ export default function PatientsSection() {
     >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/20">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-ensigna-primary-light to-pink-800 flex items-center justify-center flex-shrink-0 shadow-lg shadow-indigo-500/20">
             <Users className="w-5 h-5 text-white" />
           </div>
           <div className="min-w-0">
@@ -244,7 +244,7 @@ export default function PatientsSection() {
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 active:bg-indigo-800 shadow-lg shadow-indigo-500/20"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-ensigna-primary text-white text-sm font-medium hover:bg-ensigna-primary-dark active:bg-pink-800 shadow-lg shadow-indigo-500/20"
           >
             <UserPlus className="w-4 h-4" />
             Nuevo paciente
@@ -262,7 +262,7 @@ export default function PatientsSection() {
                 onClick={() => setActiveFilter(filter)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   activeFilter === filter
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-ensigna-primary-dark text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -337,8 +337,8 @@ export default function PatientsSection() {
                 }
                 className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   visibleColumns[column]
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'text-ensigna-primary-dark hover:bg-ensigna-primary-light hover:text-white'
+                    : 'bg-ensigna-primary-dark text-white hover:bg-ensigna-primary-light'
                 }`}
                 aria-pressed={visibleColumns[column]}
               >
@@ -392,7 +392,7 @@ export default function PatientsSection() {
                         {patient.lastName}, {patient.firstName}
                       </p>
                       {patient.medicalRecordNumber != null && (
-                        <p className="mt-1 text-xs font-medium text-indigo-700">
+                        <p className="mt-1 text-xs font-medium text-ensigna-primary-dark">
                           N° HC {patient.medicalRecordNumber}
                         </p>
                       )}
@@ -453,7 +453,7 @@ export default function PatientsSection() {
                               `/dashboard/prescriptions/new?patientId=${patient.id}`,
                             )
                           }
-                          className="touch-row inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+                          className="touch-row inline-flex items-center gap-2 rounded-xl border border-indigo-200  px-4 py-3 text-sm font-medium text-ensigna-primary-dark hover:bg-ensigna-primary-light hover:text-white"
                         >
                           <FilePlus2 className="w-3.5 h-3.5" />
                           Crear receta
@@ -467,7 +467,7 @@ export default function PatientsSection() {
                               `/dashboard/orders/new?patientId=${patient.id}`,
                             )
                           }
-                          className="touch-row inline-flex items-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-medium text-teal-700 hover:bg-teal-100"
+                          className="touch-row inline-flex items-center gap-2 rounded-xl border border-indigo-200  px-4 py-3 text-sm font-medium text-ensigna-primary-dark hover:bg-ensigna-primary-light hover:text-white"
                         >
                           <ClipboardList className="w-3.5 h-3.5" />
                           Crear orden

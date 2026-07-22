@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Building2,
@@ -13,24 +13,75 @@ import {
   Edit2,
   Upload,
   Camera,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiClient } from '@/lib/api';
 import EditClinicModal from './EditClinicModal';
 import HealthInsurancesSection from './HealthInsurancesSection';
 import RecetarioSyncBadge from './RecetarioSyncBadge';
 import RecetarioIntegrationPanel from './RecetarioIntegrationPanel';
+import Link from 'next/link';
 
 const DAYS_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+type ClinicStats = {
+  professionals: number;
+  patients: number;
+  appointmentsThisMonth: number;
+  attendanceRate: number;
+};
+
+function formatStat(value: number): string {
+  return new Intl.NumberFormat('es-AR').format(value);
+}
 
 export default function ClinicSection() {
   const { clinic, loadUserData } = useAuth();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [logoLoadFailed, setLogoLoadFailed] = useState(false);
+  const [stats, setStats] = useState<ClinicStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const prescriptionLogoUrl = clinic?.prescriptionLogoUrl?.trim() || null;
+
+  const loadStats = useCallback(async () => {
+    setStatsLoading(true);
+    setStatsError(null);
+    try {
+      const [summary, appointmentsReport] = await Promise.all([
+        apiClient.getDashboardSummary(),
+        apiClient.getReportsAppointments({ period: 'this_month' }),
+      ]);
+
+      const appointmentsThisMonth = Array.isArray(appointmentsReport?.byStatus)
+        ? appointmentsReport.byStatus.reduce(
+            (sum, row) => sum + (row.count ?? 0),
+            0,
+          )
+        : 0;
+
+      setStats({
+        professionals: summary.professionalsActive,
+        patients: summary.patientsTotal,
+        appointmentsThisMonth,
+        attendanceRate: summary.attendanceRate,
+      });
+    } catch {
+      setStats(null);
+      setStatsError('No se pudieron cargar las estadísticas.');
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     setLogoLoadFailed(false);
   }, [prescriptionLogoUrl]);
+
+  useEffect(() => {
+    void loadStats();
+  }, [loadStats, clinic?.id]);
 
   /**
    * Tras un guardado, recargamos los datos.
@@ -42,12 +93,43 @@ export default function ClinicSection() {
    */
   const handleSaved = async () => {
     await loadUserData();
+    void loadStats();
     window.setTimeout(() => {
       void loadUserData();
+      void loadStats();
     }, 2500);
   };
 
   const clinicAvailabilities = (clinic?.clinicAvailabilities ?? []).filter((a) => a.isActive);
+
+  const statCards = stats
+    ? [
+        {
+          label: 'Profesionales',
+          value: formatStat(stats.professionals),
+          hint: 'Médicos activos',
+          accent: 'bg-blue-50 text-blue-600',
+        },
+        {
+          label: 'Pacientes',
+          value: formatStat(stats.patients),
+          hint: 'Registrados en la clínica',
+          accent: 'bg-emerald-50 text-emerald-600',
+        },
+        {
+          label: 'Turnos este mes',
+          value: formatStat(stats.appointmentsThisMonth),
+          hint: 'Todos los estados',
+          accent: 'bg-ensigna-accent text-ensigna-primary',
+        },
+        {
+          label: 'Asistencia',
+          value: `${stats.attendanceRate}%`,
+          hint: 'Últimos 7 días',
+          accent: 'bg-amber-50 text-amber-600',
+        },
+      ]
+    : [];
 
   return (
     <div className="space-y-6">
@@ -66,7 +148,7 @@ export default function ClinicSection() {
         <button
           type="button"
           onClick={() => setEditModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 gradient-red text-white rounded-xl font-medium hover:brightness-105 transition-all shadow-lg shadow-ensigna-primary/25"
+          className="inline-flex items-center gap-2 px-4 py-2.5 gradient-brand bg-ensigna-primary hover:bg-ensigna-primary-dark text-white rounded-xl font-medium hover:brightness-105 transition-all shadow-lg shadow-ensigna-primary/25"
         >
           <Edit2 className="w-4 h-4" />
           Editar información
@@ -81,7 +163,7 @@ export default function ClinicSection() {
         className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
       >
         {/* Cover Image */}
-        <div className="relative h-48 bg-gradient-to-br from-[#D16A8A] via-[#c75f82] to-[#E89AB0]">
+        <div className="relative h-48 bg-gradient-to-br from-[var(--color-primary)] via-[var(--color-primary-hover)] to-[var(--color-primary-light)]">
           <div className="absolute inset-0 bg-black/20" />
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
           <button className="absolute top-4 right-4 p-2 bg-white/20 backdrop-blur-sm rounded-xl text-white hover:bg-white/30 transition-colors">
@@ -189,9 +271,9 @@ export default function ClinicSection() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-500">Sitio web</p>
-                <p className="text-ensigna-primary hover:text-ensigna-primary-dark cursor-pointer">
-                  www.clinica.com
-                </p>
+                <Link href="https://renacer-eight.vercel.app/" target="_blank" className="text-ensigna-primary hover:text-ensigna-primary-dark cursor-pointer">
+                https://renacer-eight.vercel.app/
+                </Link>
               </div>
             </div>
           </div>
@@ -249,24 +331,41 @@ export default function ClinicSection() {
         transition={{ delay: 0.4 }}
         className="grid grid-cols-2 lg:grid-cols-4 gap-4"
       >
-        {[
-          { label: 'Profesionales', value: '8', color: 'bg-blue-50 text-blue-600' },
-          { label: 'Pacientes', value: '1,234', color: 'bg-emerald-50 text-emerald-600' },
-          { label: 'Turnos este mes', value: '486', color: 'bg-ensigna-accent text-ensigna-primary' },
-          { label: 'Valoración', value: '4.9', color: 'bg-amber-50 text-amber-600' },
-        ].map((stat, index) => (
-          <div
-            key={index}
-            className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 text-center"
-          >
-            <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-            <p className="text-sm text-gray-500 mt-1">{stat.label}</p>
+        {statsLoading &&
+          Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={`stat-skeleton-${index}`}
+              className="flex min-h-[108px] items-center justify-center rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
+            >
+              <Loader2 className="h-6 w-6 animate-spin text-gray-300" />
+            </div>
+          ))}
+
+        {!statsLoading &&
+          statCards.map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm"
+            >
+              <span
+                className={`mb-3 inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${stat.accent}`}
+              >
+                {stat.hint}
+              </span>
+              <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+              <p className="mt-1 text-sm text-gray-500">{stat.label}</p>
+            </div>
+          ))}
+
+        {!statsLoading && statsError && (
+          <div className="col-span-2 lg:col-span-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-center text-sm text-red-700">
+            {statsError}
           </div>
-        ))}
+        )}
       </motion.div>
 
       {/* Documents */}
-      <motion.div
+      {/* <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
@@ -305,7 +404,7 @@ export default function ClinicSection() {
             </div>
           ))}
         </div>
-      </motion.div>
+      </motion.div> */}
 
       {editModalOpen && (
         <EditClinicModal

@@ -298,6 +298,19 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                     )}
 
                     <form id="create-professional-form" onSubmit={handleSubmit} className="space-y-5">
+                    <div className="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 bg-gray-50/50">
+                    <input
+                      id="pro-managedByClinic"
+                      type="checkbox"
+                      checked={managedByClinic}
+                      onChange={(e) => setManagedByClinic(e.target.checked)}
+                      disabled={loading}
+                      className="mt-1 w-4 h-4 rounded border-gray-300 text-ensigna-primary focus:ring-ensigna-primary"
+                    />
+                    <label htmlFor="pro-managedByClinic" className="text-sm font-medium text-gray-700 cursor-pointer">
+                      Gestionado por la clínica (no tendrá cuenta de usuario). La clínica configurará su horario y disponibilidad.
+                    </label>
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="pro-firstName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -628,20 +641,6 @@ export default function CreateProfessionalSection({ onCreated }: CreateProfessio
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-4 rounded-xl border-2 border-gray-200 bg-gray-50/50">
-                    <input
-                      id="pro-managedByClinic"
-                      type="checkbox"
-                      checked={managedByClinic}
-                      onChange={(e) => setManagedByClinic(e.target.checked)}
-                      disabled={loading}
-                      className="mt-1 w-4 h-4 rounded border-gray-300 text-ensigna-primary focus:ring-ensigna-primary"
-                    />
-                    <label htmlFor="pro-managedByClinic" className="text-sm font-medium text-gray-700 cursor-pointer">
-                      Gestionado por la clínica (no tendrá cuenta de usuario). La clínica configurará su horario y disponibilidad.
-                    </label>
                   </div>
 
                     </form>

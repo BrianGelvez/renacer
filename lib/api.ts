@@ -1606,6 +1606,21 @@ class ApiClient {
     return response.data;
   }
 
+  private reportsQuery(params: Record<string, string>) {
+    const q = new URLSearchParams(params).toString();
+    return q ? `?${q}` : '';
+  }
+
+  async getReportsAppointments(params: Record<string, string>) {
+    const response = await this.client.get(
+      `/reports/appointments${this.reportsQuery(params)}`,
+    );
+    return response.data as {
+      byStatus: Array<{ status: string; count: number }>;
+      timeline: unknown[];
+    };
+  }
+
   // --- Pacientes ---
 
   /**

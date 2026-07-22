@@ -1,20 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  ClipboardList,
-  Copy,
-  ExternalLink,
-  Loader2,
-  Search,
-  User,
-  X,
-} from 'lucide-react';
+import { Check, Copy, ExternalLink, FileText, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   apiClient,
@@ -23,68 +11,69 @@ import {
   type MedicalOrderDto,
 } from '@/lib/api';
 import { isClinicRecetarioLinked } from '@/lib/recetario-patient-form';
-import DiagnosisAutocomplete, {
-  type DiagnosisSelection,
-} from '@/components/prescriptions/DiagnosisAutocomplete';
-import OrderRequestStep, {
-  type LocalOrderRequestItem,
-} from '@/components/orders/OrderRequestStep';
-import WizardSummaryPanel from '@/components/ui/WizardSummaryPanel';
-import WizardStickyFooter from '@/components/ui/WizardStickyFooter';
+import type { DiagnosisSelection } from '@/components/prescriptions/DiagnosisAutocomplete';
+import type { LocalOrderRequestItem } from '@/components/orders/OrderRequestStep';
 import Alert from '@/components/ui/Alert';
 import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChanges';
+import OrderWizardStepper from '@/components/orders/wizard/OrderWizardStepper';
+import OrderWizardFooter from '@/components/orders/wizard/OrderWizardFooter';
+import OrderStepPatient from '@/components/orders/wizard/OrderStepPatient';
+import OrderStepRequests from '@/components/orders/wizard/OrderStepRequests';
+import OrderStepDiagnosis from '@/components/orders/wizard/OrderStepDiagnosis';
+import OrderStepConfig from '@/components/orders/wizard/OrderStepConfig';
+import OrderStepPreview from '@/components/orders/wizard/OrderStepPreview';
+import OrderSummarySidebar, {
+  type OrderSummaryCheck,
+} from '@/components/orders/wizard/OrderSummarySidebar';
+import {
+  displayToIso,
+  formatSavedAgo,
+  isoToDisplay,
+  newRequestKey,
+  pushRecentToStorage,
+  readRecentFromStorage,
+  todayIsoDate,
+  type OrderPatientDetail,
+  type OrderWizardDraft,
+  type PatientListItem,
+} from '@/components/orders/wizard/helpers';
 
 const PATIENT_SEARCH_DEBOUNCE_MS = 500;
+const DRAFT_STORAGE_KEY = 'order-wizard-draft-v1';
+const RECENT_DX_KEY = 'order-recent-diagnoses';
+
 const STEPS = [
-  { id: 1, title: 'Doctor y paciente' },
-  { id: 2, title: 'Solicitud' },
-  { id: 3, title: 'Diagnóstico' },
-  { id: 4, title: 'Fecha' },
-  { id: 5, title: 'Confirmación' },
+  {
+    id: 1,
+    title: 'Médico y paciente',
+    subtitle: 'Profesional responsable y paciente de la orden',
+  },
+  {
+    id: 2,
+    title: 'Solicitudes',
+    subtitle: 'Estudios, laboratorio e interconsultas',
+  },
+  {
+    id: 3,
+    title: 'Diagnóstico',
+    subtitle: 'CIE-10 que justifica la orden',
+  },
+  {
+    id: 4,
+    title: 'Configuración',
+    subtitle: 'Fecha y opciones administrativas',
+  },
+  {
+    id: 5,
+    title: 'Confirmación',
+    subtitle: 'Revisá todo antes de emitir',
+  },
 ] as const;
-
-type PatientListItem = {
-  id: string;
-  firstName: string;
-  lastName: string;
-  dni?: string | null;
-};
-
-type PatientInsuranceRow = {
-  isPrimary: boolean;
-  isActive: boolean;
-  affiliateNumber: string;
-  healthInsurance: { name: string };
-};
-
-type PatientDetail = PatientListItem & {
-  healthInsurancePlan?: string | null;
-  insurances?: PatientInsuranceRow[];
-};
 
 export type OrderWizardProps = {
   initialPatientId?: string;
   lockPatient?: boolean;
 };
-
-function todayIsoDate(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-function isoToDisplay(iso: string): string {
-  const [y, m, d] = iso.split('-');
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
-}
-
-function displayToIso(display: string): string | null {
-  const m = display.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!m) return null;
-  const day = String(Number.parseInt(m[1], 10)).padStart(2, '0');
-  const month = String(Number.parseInt(m[2], 10)).padStart(2, '0');
-  return `${m[3]}-${month}-${day}`;
-}
 
 function useDebouncedValue(value: string, delayMs: number): string {
   const [debounced, setDebounced] = useState(value);
@@ -113,35 +102,67 @@ function OrderSuccessModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900">Orden emitida correctamente</h3>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Orden emitida correctamente</h3>
+            <p className="mt-1 text-sm text-gray-600">La orden fue generada en Recetario.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100"
+            aria-label="Cerrar"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
         <dl className="mt-5 space-y-3 text-sm">
           <div>
             <dt className="text-gray-500">ID Recetario</dt>
-            <dd className="font-mono font-medium">{order.recetarioOrderId ?? '—'}</dd>
+            <dd className="font-mono font-medium text-gray-900">
+              {order.recetarioOrderId ?? '—'}
+            </dd>
           </div>
           <div>
             <dt className="text-gray-500">Fecha</dt>
-            <dd>{order.orderDate}</dd>
+            <dd className="text-gray-900">{order.orderDate}</dd>
           </div>
         </dl>
         <div className="mt-6 flex flex-wrap gap-2">
           {order.pdfUrl && (
             <>
-              <a href={order.pdfUrl} target="_blank" rel="noopener noreferrer" className="rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white">
+              <a
+                href={order.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-teal-700"
+              >
+                <FileText className="h-4 w-4" />
                 Ver PDF
               </a>
-              <a href={order.pdfUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm">
-                <ExternalLink className="h-4 w-4" /> Abrir en nueva pestaña
+              <a
+                href={order.pdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                <ExternalLink className="h-4 w-4" />
+                Abrir en nueva pestaña
               </a>
-              <button type="button" onClick={() => void copyLink()} className="inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm">
-                {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+              <button
+                type="button"
+                onClick={() => void copyLink()}
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                {copied ? (
+                  <Check className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4" />
+                )}
                 Copiar enlace
               </button>
             </>
           )}
-          <button type="button" onClick={onClose} className="rounded-xl px-4 py-2.5 text-sm text-gray-600">
-            Cerrar
-          </button>
         </div>
       </div>
     </div>
@@ -160,22 +181,28 @@ export default function OrderWizard({
   const [doctors, setDoctors] = useState<ClinicTeamMemberDto[]>([]);
   const [doctorsLoading, setDoctorsLoading] = useState(true);
   const [doctorId, setDoctorId] = useState('');
+  const [showDoctorPicker, setShowDoctorPicker] = useState(false);
 
   const [patientTerm, setPatientTerm] = useState('');
   const debouncedPatientTerm = useDebouncedValue(patientTerm, PATIENT_SEARCH_DEBOUNCE_MS);
   const [patientHits, setPatientHits] = useState<PatientListItem[]>([]);
+  const [patientSearchLoading, setPatientSearchLoading] = useState(false);
   const [patientOpen, setPatientOpen] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState<PatientDetail | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<OrderPatientDetail | null>(null);
   const [patientLoading, setPatientLoading] = useState(!!initialPatientId);
-  const patientBoxRef = useRef<HTMLDivElement>(null);
+  const [createPatientOpen, setCreatePatientOpen] = useState(false);
 
   const [requestItems, setRequestItems] = useState<LocalOrderRequestItem[]>([]);
   const [selectedDiagnosis, setSelectedDiagnosis] = useState<DiagnosisSelection | null>(null);
   const [dateDisplay, setDateDisplay] = useState(() => isoToDisplay(todayIsoDate()));
+  const [recentDiagnoses, setRecentDiagnoses] = useState<DiagnosisSelection[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stepError, setStepError] = useState<string | null>(null);
   const [issuedOrder, setIssuedOrder] = useState<MedicalOrderDto | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [draftLoaded, setDraftLoaded] = useState(false);
 
   const activeDoctors = useMemo(
     () => doctors.filter((d) => d.isDoctor && d.isActive),
@@ -189,6 +216,9 @@ export default function OrderWizard({
     if (!selectedPatient?.insurances?.length) return null;
     return selectedPatient.insurances.find((i) => i.isPrimary && i.isActive) ?? null;
   }, [selectedPatient]);
+  const primaryInsuranceName = primaryInsurance?.healthInsurance.name ?? null;
+  const affiliateNumber = primaryInsurance?.affiliateNumber ?? null;
+  const dateValid = !!displayToIso(dateDisplay);
 
   const isAssignedPhysician = user?.isDoctor === true && user?.id === doctorId;
   const isStaffPreparer = user?.role === 'ADMIN' || user?.role === 'SECRETARY';
@@ -202,56 +232,76 @@ export default function OrderWizard({
 
   useUnsavedChangesGuard(hasDraft && !issuedOrder);
 
-  const summaryItems = useMemo(
-    () => [
-      {
-        id: 'doctor',
-        label: 'Médico',
-        value: selectedDoctor
-          ? `Dr. ${selectedDoctor.lastName}, ${selectedDoctor.name}`
-          : null,
-        complete: !!selectedDoctor,
-      },
+  const completionChecks = useMemo((): OrderSummaryCheck[] => {
+    const doctorValid =
+      !!selectedDoctor &&
+      (!isAssignedPhysician ||
+        (selectedDoctor.recetarioUserId != null && selectedDoctor.recetarioActive !== false));
+
+    return [
       {
         id: 'patient',
-        label: 'Paciente',
-        value: selectedPatient
-          ? `${selectedPatient.lastName}, ${selectedPatient.firstName}`
-          : null,
+        label: 'Paciente seleccionado',
         complete: !!selectedPatient,
+        warning: 'Seleccioná un paciente para continuar.',
+      },
+      {
+        id: 'doctor',
+        label: 'Médico válido',
+        complete: doctorValid,
+        warning:
+          isAssignedPhysician && !doctorValid
+            ? 'Debés estar activo en Recetario para emitir.'
+            : 'Seleccioná el profesional responsable.',
       },
       {
         id: 'requests',
-        label: 'Solicitudes',
-        value:
-          requestItems.length > 0
-            ? requestItems.map((i) => i.description).join('\n')
-            : null,
+        label: 'Solicitudes cargadas',
         complete: requestItems.length > 0,
-        multiline: true,
+        warning: 'Agregá al menos una solicitud.',
       },
       {
         id: 'diagnosis',
-        label: 'Diagnóstico',
-        value: selectedDiagnosis
-          ? `${selectedDiagnosis.diagnosisCode} — ${selectedDiagnosis.diagnosisDescriptionEs}`
-          : null,
+        label: 'Diagnóstico CIE-10',
         complete: !!selectedDiagnosis?.diagnosisCode,
+        warning: 'Seleccioná un diagnóstico.',
       },
       {
         id: 'date',
-        label: 'Fecha',
-        value: displayToIso(dateDisplay) ?? null,
-        complete: !!displayToIso(dateDisplay),
+        label: 'Fecha válida',
+        complete: dateValid,
+        warning: 'Ingresá una fecha válida (dd/MM/aaaa).',
       },
-    ],
-    [selectedDoctor, selectedPatient, requestItems, selectedDiagnosis, dateDisplay],
+    ];
+  }, [
+    selectedPatient,
+    selectedDoctor,
+    isAssignedPhysician,
+    requestItems.length,
+    selectedDiagnosis,
+    dateValid,
+  ]);
+
+  const canEmit = completionChecks.every((c) => c.complete);
+  const pendingCount = completionChecks.filter((c) => !c.complete).length;
+  const savedLabel = formatSavedAgo(lastSavedAt);
+
+  const draftSnapshot = useMemo(
+    () => ({
+      doctorId,
+      selectedPatientId: selectedPatient?.id ?? null,
+      requestItems,
+      selectedDiagnosis,
+      dateDisplay,
+    }),
+    [doctorId, selectedPatient, requestItems, selectedDiagnosis, dateDisplay],
   );
 
   const loadPatient = useCallback(async (id: string) => {
     setPatientLoading(true);
+    setError(null);
     try {
-      setSelectedPatient((await apiClient.getPatientById(id)) as PatientDetail);
+      setSelectedPatient((await apiClient.getPatientById(id)) as OrderPatientDetail);
     } catch {
       setError('No se pudo cargar el paciente.');
     } finally {
@@ -259,8 +309,63 @@ export default function OrderWizard({
     }
   }, []);
 
+  const applyDraft = useCallback((draft: OrderWizardDraft) => {
+    if (draft.doctorId) setDoctorId(draft.doctorId);
+    if (draft.requestItems?.length) setRequestItems(draft.requestItems);
+    if (draft.selectedDiagnosis) setSelectedDiagnosis(draft.selectedDiagnosis);
+    if (draft.dateDisplay) setDateDisplay(draft.dateDisplay);
+    if (draft.savedAt) setLastSavedAt(draft.savedAt);
+  }, []);
+
+  const saveDraftNow = useCallback(() => {
+    if (typeof window === 'undefined' || issuedOrder) return;
+    const draft: OrderWizardDraft = { ...draftSnapshot, savedAt: Date.now() };
+    try {
+      window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      setLastSavedAt(draft.savedAt);
+    } catch {
+      /* ignore quota */
+    }
+  }, [draftSnapshot, issuedOrder]);
+
   useEffect(() => {
-    apiClient.getTeamMembers().then((t) => setDoctors(Array.isArray(t) ? t : [])).finally(() => setDoctorsLoading(false));
+    setRecentDiagnoses(readRecentFromStorage<DiagnosisSelection>(RECENT_DX_KEY));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || draftLoaded) return;
+    try {
+      const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw) as OrderWizardDraft;
+        applyDraft(draft);
+        if (draft.selectedPatientId && !initialPatientId) {
+          void loadPatient(draft.selectedPatientId);
+        }
+      }
+    } catch {
+      /* ignore corrupt draft */
+    } finally {
+      setDraftLoaded(true);
+    }
+  }, [applyDraft, draftLoaded, initialPatientId, loadPatient]);
+
+  useEffect(() => {
+    if (!draftLoaded || issuedOrder) return;
+    const timer = window.setTimeout(() => saveDraftNow(), 800);
+    return () => window.clearTimeout(timer);
+  }, [draftLoaded, draftSnapshot, issuedOrder, saveDraftNow]);
+
+  useEffect(() => {
+    setStepError(null);
+  }, [doctorId, selectedPatient, requestItems, selectedDiagnosis, dateDisplay]);
+
+  useEffect(() => {
+    apiClient
+      .getTeamMembers()
+      .then((t) => setDoctors(Array.isArray(t) ? t : []))
+      .catch(() => setError('No se pudo cargar el equipo médico.'))
+      .finally(() => setDoctorsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -281,10 +386,37 @@ export default function OrderWizard({
       setPatientHits([]);
       return;
     }
-    apiClient.getPatients({ q: debouncedPatientTerm.trim(), limit: 8 }).then((res) => {
-      setPatientHits((res as { items?: PatientListItem[] }).items ?? []);
-    });
+    setPatientSearchLoading(true);
+    apiClient
+      .getPatients({ q: debouncedPatientTerm.trim(), limit: 8 })
+      .then((res) => setPatientHits((res as { items?: PatientListItem[] }).items ?? []))
+      .catch(() => setPatientHits([]))
+      .finally(() => setPatientSearchLoading(false));
   }, [debouncedPatientTerm, lockPatient]);
+
+  const selectPatient = useCallback(
+    async (hit: PatientListItem) => {
+      setPatientTerm('');
+      setPatientOpen(false);
+      await loadPatient(hit.id);
+    },
+    [loadPatient],
+  );
+
+  const duplicateRequest = (key: string) => {
+    const source = requestItems.find((i) => i.key === key);
+    if (!source) return;
+    setRequestItems((prev) => [...prev, { ...source, key: newRequestKey() }]);
+  };
+
+  const reorderRequests = (fromIndex: number, toIndex: number) => {
+    setRequestItems((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, item);
+      return next;
+    });
+  };
 
   const validateStep = (s: number): string | null => {
     if (s === 1) {
@@ -294,7 +426,10 @@ export default function OrderWizard({
     if (s === 2 && requestItems.length === 0) {
       return 'Agregá al menos una solicitud.';
     }
-    if (s === 3 && (!selectedDiagnosis?.diagnosisCode || !selectedDiagnosis.diagnosisDescriptionEs)) {
+    if (
+      s === 3 &&
+      (!selectedDiagnosis?.diagnosisCode || !selectedDiagnosis.diagnosisDescriptionEs)
+    ) {
       return 'Seleccioná un diagnóstico CIE-10.';
     }
     if (s === 4 && !displayToIso(dateDisplay)) {
@@ -303,18 +438,44 @@ export default function OrderWizard({
     return null;
   };
 
+  const goToStep = (targetStep: number) => {
+    if (targetStep < step) {
+      setStepError(null);
+      setError(null);
+      setStep(targetStep);
+    }
+  };
+
   const goNext = () => {
     setError(null);
     const err = validateStep(step);
     if (err) {
-      setError(err);
+      setStepError(err);
       return;
     }
+    setStepError(null);
+
+    if (step === 3 && selectedDiagnosis) {
+      pushRecentToStorage(RECENT_DX_KEY, selectedDiagnosis);
+      setRecentDiagnoses(readRecentFromStorage<DiagnosisSelection>(RECENT_DX_KEY));
+    }
+
     setStep((x) => Math.min(5, x + 1));
   };
 
+  const goBack = () => {
+    setError(null);
+    setStepError(null);
+    setStep((s) => Math.max(1, s - 1));
+  };
+
   const buildPayload = (): CreateMedicalOrderPayload | null => {
-    if (!doctorId || !selectedPatient || !selectedDiagnosis?.diagnosisCode || !selectedDiagnosis.diagnosisDescriptionEs) {
+    if (
+      !doctorId ||
+      !selectedPatient ||
+      !selectedDiagnosis?.diagnosisCode ||
+      !selectedDiagnosis.diagnosisDescriptionEs
+    ) {
       return null;
     }
     const iso = displayToIso(dateDisplay);
@@ -338,6 +499,7 @@ export default function OrderWizard({
       const err = validateStep(s);
       if (err) {
         setError(err);
+        setStepError(err);
         setStep(s);
         return;
       }
@@ -365,6 +527,12 @@ export default function OrderWizard({
 
       if (current.status === 'EMITTED' || current.status === 'ISSUED') {
         setIssuedOrder(current);
+        try {
+          window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+        } catch {
+          /* ignore */
+        }
+        setLastSavedAt(null);
       } else if (current.status === 'PENDING_APPROVAL') {
         setError(
           isStaffPreparer
@@ -388,148 +556,144 @@ export default function OrderWizard({
   if (!recetarioLinked) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-900">
-        Vinculá la clínica con Recetario antes de emitir órdenes médicas.
+        <p className="font-medium">Recetario no vinculado</p>
+        <p className="mt-1 text-sm">
+          Vinculá la clínica con Recetario desde Integraciones antes de emitir órdenes médicas.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="wizard-mobile-shell mx-auto max-w-6xl space-y-4 lg:space-y-6">
-      <button type="button" onClick={() => router.push('/dashboard/orders')} className="touch-row inline-flex items-center gap-2 text-base text-teal-600 lg:text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600">
-        <ArrowLeft className="h-4 w-4" /> Volver a órdenes
-      </button>
-
-      <div className="grid gap-4 lg:gap-6 lg:grid-cols-[1fr_280px]">
-        <div className="order-2 min-w-0 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6 lg:order-1">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="rounded-xl bg-teal-50 p-2.5 text-teal-700"><ClipboardList className="h-6 w-6" /></div>
-          <div>
-            <h1 className="text-xl font-semibold">Nueva orden médica</h1>
-            <p className="text-sm text-gray-500">Paso {step} — {STEPS[step - 1].title}</p>
-          </div>
-        </div>
-
-        <div className="flex gap-2 mb-6">
-          {STEPS.map((s) => (
-            <div key={s.id} className={`h-1.5 flex-1 rounded-full ${s.id <= step ? 'bg-teal-600' : 'bg-gray-100'}`} />
-          ))}
-        </div>
-
-        {error && (
-          <Alert variant="error" className="mb-4" onDismiss={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
-
-        {step === 1 && (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">Profesional responsable</label>
-              {doctorsLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
-                <select value={doctorId} onChange={(e) => setDoctorId(e.target.value)} className="input-mobile ensigna-input w-full rounded-xl border">
-                  <option value="">Seleccionar médico…</option>
-                  {activeDoctors.map((d) => (
-                    <option key={d.userId} value={d.userId}>Dr. {d.lastName}, {d.name}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-            <div ref={patientBoxRef}>
-              <label className="block text-sm font-medium mb-2">Paciente</label>
-              {lockPatient && selectedPatient ? (
-                <div className="rounded-xl border bg-gray-50 p-4 text-sm">
-                  <p className="font-medium">{selectedPatient.lastName}, {selectedPatient.firstName}</p>
-                  {selectedPatient.dni && <p>DNI {selectedPatient.dni}</p>}
-                  {primaryInsurance && (
-                    <p className="mt-1">{primaryInsurance.healthInsurance.name} · Afiliado {primaryInsurance.affiliateNumber}</p>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input value={patientTerm} onChange={(e) => { setPatientTerm(e.target.value); setPatientOpen(true); }} placeholder="Buscar paciente…" className="input-mobile ensigna-input w-full rounded-xl border pl-10 pr-3" />
-                  </div>
-                  {patientOpen && patientHits.length > 0 && (
-                    <ul className="mt-1 rounded-xl border bg-white shadow-lg">
-                      {patientHits.map((p) => (
-                        <li key={p.id}>
-                          <button type="button" onClick={() => { setPatientOpen(false); setPatientTerm(''); void loadPatient(p.id); }} className="touch-row flex w-full gap-2 px-4 py-3 text-left text-base hover:bg-gray-50 lg:text-sm">
-                            <User className="h-4 w-4" /> {p.lastName}, {p.firstName}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              )}
-              {patientLoading && <p className="mt-2 text-sm text-gray-500">Cargando…</p>}
-            </div>
-          </div>
-        )}
-
-        {step === 2 && <OrderRequestStep items={requestItems} onChange={setRequestItems} />}
-
-        {step === 3 && (
-          <div>
-            <label className="block text-sm font-medium mb-2">Diagnóstico (CIE-10)</label>
-            <DiagnosisAutocomplete value={selectedDiagnosis} onChange={setSelectedDiagnosis} />
-            {selectedDiagnosis && (
-              <div className="mt-3 inline-flex rounded-full bg-teal-100 px-3 py-1 text-sm text-teal-900">
-                {selectedDiagnosis.diagnosisCode} — {selectedDiagnosis.diagnosisDescriptionEs}
-              </div>
-            )}
-          </div>
-        )}
-
-        {step === 4 && (
-          <div>
-            <label className="block text-sm font-medium mb-2">Fecha de emisión</label>
-            <input value={dateDisplay} onChange={(e) => setDateDisplay(e.target.value)} placeholder="dd/MM/aaaa" className="input-mobile ensigna-input w-full max-w-xs rounded-xl border" />
-          </div>
-        )}
-
-        {step === 5 && (
-          <dl className="space-y-4 text-sm">
-            <div><dt className="text-gray-500">Profesional</dt><dd className="font-medium">{selectedDoctor ? `Dr. ${selectedDoctor.lastName}, ${selectedDoctor.name}` : '—'}</dd></div>
-            <div><dt className="text-gray-500">Paciente</dt><dd className="font-medium">{selectedPatient ? `${selectedPatient.lastName}, ${selectedPatient.firstName}` : '—'}</dd></div>
-            <div><dt className="text-gray-500">Obra social</dt><dd>{primaryInsurance ? `${primaryInsurance.healthInsurance.name} (${primaryInsurance.affiliateNumber})` : 'Particular'}</dd></div>
-            <div><dt className="text-gray-500">Diagnóstico</dt><dd>{selectedDiagnosis?.diagnosisCode} — {selectedDiagnosis?.diagnosisDescriptionEs}</dd></div>
-            <div><dt className="text-gray-500">Solicitudes</dt><dd className="whitespace-pre-wrap">{requestItems.map((i) => i.description).join('\n')}</dd></div>
-            <div><dt className="text-gray-500">Fecha</dt><dd>{displayToIso(dateDisplay)}</dd></div>
-          </dl>
-        )}
-
-        </div>
-
-        <div className="order-1 lg:order-2">
-        <WizardSummaryPanel
-          items={summaryItems}
-          accent="teal"
-          currentStep={step}
-          totalSteps={STEPS.length}
-        />
-        </div>
+    <div className="wizard-mobile-shell mx-auto w-full max-w-[1400px] space-y-4 pb-28 lg:space-y-6 lg:pb-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Nueva orden médica</h1>
+        <p className="mt-1 text-sm text-gray-600">
+          Solicitudes de estudios e interconsultas vía Recetario
+        </p>
       </div>
 
-      <WizardStickyFooter>
-          <button type="button" onClick={step === 1 ? () => router.push('/dashboard/orders') : () => setStep((s) => s - 1)} className="btn-ensigna-secondary inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 text-base sm:flex-none lg:text-sm">
-            <ArrowLeft className="h-4 w-4" /> {step === 1 ? 'Cancelar' : 'Anterior'}
-          </button>
-          {step < 5 ? (
-            <button type="button" onClick={goNext} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-base font-medium text-white sm:flex-none lg:text-sm touch-target">
-              Siguiente <ArrowRight className="h-4 w-4" />
-            </button>
-          ) : (
-            <button type="button" disabled={submitting} onClick={() => void handleEmit()} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-teal-600 px-5 py-3 text-base font-medium text-white disabled:opacity-60 sm:flex-none lg:text-sm touch-target">
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardList className="h-4 w-4" />}
-              Emitir orden
-            </button>
+      <OrderWizardStepper steps={STEPS} currentStep={step} onStepClick={goToStep} />
+
+      {error && (
+        <Alert variant="error" onDismiss={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6 lg:p-8">
+          {step === 1 && (
+            <OrderStepPatient
+              doctorsLoading={doctorsLoading}
+              activeDoctors={activeDoctors}
+              selectedDoctor={selectedDoctor}
+              doctorId={doctorId}
+              showDoctorPicker={showDoctorPicker}
+              onToggleDoctorPicker={() => setShowDoctorPicker((open) => !open)}
+              onDoctorChange={setDoctorId}
+              clinicName={clinic?.name}
+              patientLoading={patientLoading}
+              selectedPatient={selectedPatient}
+              lockPatient={lockPatient}
+              onClearPatient={() => setSelectedPatient(null)}
+              patientTerm={patientTerm}
+              onPatientTermChange={setPatientTerm}
+              patientOpen={patientOpen}
+              onPatientOpenChange={setPatientOpen}
+              patientSearchLoading={patientSearchLoading}
+              patientHits={patientHits}
+              onSelectPatient={(hit) => void selectPatient(hit)}
+              createPatientOpen={createPatientOpen}
+              onCreatePatientOpenChange={setCreatePatientOpen}
+              onCreatePatientSuccess={(id) => {
+                setCreatePatientOpen(false);
+                void loadPatient(id);
+              }}
+              primaryInsuranceName={primaryInsuranceName}
+              affiliateNumber={affiliateNumber}
+              stepError={stepError}
+            />
           )}
-      </WizardStickyFooter>
+
+          {step === 2 && (
+            <OrderStepRequests
+              items={requestItems}
+              onChange={setRequestItems}
+              onDuplicate={duplicateRequest}
+              onReorder={reorderRequests}
+              stepError={stepError}
+            />
+          )}
+
+          {step === 3 && (
+            <OrderStepDiagnosis
+              selectedDiagnosis={selectedDiagnosis}
+              onDiagnosisChange={setSelectedDiagnosis}
+              recentDiagnoses={recentDiagnoses}
+              stepError={stepError}
+            />
+          )}
+
+          {step === 4 && (
+            <OrderStepConfig
+              dateDisplay={dateDisplay}
+              onDateDisplayChange={setDateDisplay}
+              stepError={stepError}
+            />
+          )}
+
+          {step === 5 && (
+            <OrderStepPreview
+              clinicName={clinic?.name}
+              selectedDoctor={selectedDoctor}
+              selectedPatient={selectedPatient}
+              primaryInsuranceName={primaryInsuranceName}
+              affiliateNumber={affiliateNumber}
+              requestItems={requestItems}
+              selectedDiagnosis={selectedDiagnosis}
+              dateDisplay={dateDisplay}
+              checks={completionChecks}
+              canEmit={canEmit}
+            />
+          )}
+        </div>
+
+        <OrderSummarySidebar
+          currentStep={step}
+          totalSteps={STEPS.length}
+          selectedDoctor={selectedDoctor}
+          selectedPatient={selectedPatient}
+          primaryInsuranceName={primaryInsuranceName}
+          affiliateNumber={affiliateNumber}
+          requestItems={requestItems}
+          selectedDiagnosis={selectedDiagnosis}
+          dateDisplay={dateDisplay}
+          dateValid={dateValid}
+          checks={completionChecks}
+          pendingCount={pendingCount}
+        />
+      </div>
+
+      <OrderWizardFooter
+        step={step}
+        totalSteps={STEPS.length}
+        submitting={submitting}
+        emitLabel="Emitir orden"
+        savedLabel={savedLabel}
+        onBack={goBack}
+        onNext={goNext}
+        onEmit={() => void handleEmit()}
+        onSaveDraft={saveDraftNow}
+        onCancel={() => router.push('/dashboard/orders')}
+        canEmit={canEmit}
+      />
 
       {issuedOrder && (
-        <OrderSuccessModal order={issuedOrder} onClose={() => router.push(`/dashboard/orders/${issuedOrder.id}`)} />
+        <OrderSuccessModal
+          order={issuedOrder}
+          onClose={() => router.push(`/dashboard/orders/${issuedOrder.id}`)}
+        />
       )}
     </div>
   );

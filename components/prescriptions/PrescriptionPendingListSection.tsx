@@ -68,7 +68,7 @@ export default function PrescriptionPendingListSection() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-indigo-500/20">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-ensigna-primary-dark to-pink-800 shadow-lg shadow-indigo-500/20">
           <ClipboardList className="h-5 w-5 text-white" />
         </div>
         <div>

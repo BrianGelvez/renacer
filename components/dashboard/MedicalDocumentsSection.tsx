@@ -285,7 +285,7 @@ export default function MedicalDocumentsSection({
           {!compact && (
             <Link
               href="/dashboard/prescriptions/new"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-ensigna-primary-dark to-ensigna-primary-light shadow-lg text-white text-sm font-medium"
             >
               <FilePlus2 className="w-4 h-4" />
               Nueva receta

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Loader2,
@@ -89,6 +90,16 @@ export default function EditMyProfileModal({
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   const applyServerProfile = useCallback((p: UserProfileDto) => {
     setDetail(p);
@@ -239,14 +250,29 @@ export default function EditMyProfileModal({
     }
   };
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <motion.div
+        key="edit-my-profile-modal"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4"
+      >
+        <div
+          className="absolute inset-0 min-h-[100dvh] min-w-full bg-black/60 backdrop-blur-sm"
+          onClick={onClose}
+          aria-hidden
+        />
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+          initial={{ opacity: 0, scale: 0.97, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.97, y: 8 }}
+          transition={{ type: 'tween', duration: 0.2 }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative z-10 flex w-full max-w-2xl max-h-[min(92dvh,90vh)] flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl"
         >
           <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between gap-3">
             <div>
@@ -470,7 +496,7 @@ export default function EditMyProfileModal({
                 <button
                   type="submit"
                   disabled={loading || syncing}
-                  className="flex-1 px-4 py-2.5 rounded-xl gradient-red text-white font-medium disabled:opacity-60"
+                  className="flex-1 px-4 py-2.5 rounded-xl gradient-brand text-white font-medium disabled:opacity-60"
                 >
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin mx-auto" />
@@ -482,7 +508,8 @@ export default function EditMyProfileModal({
             </form>
           )}
         </motion.div>
-      </div>
-    </AnimatePresence>
+      </motion.div>
+    </AnimatePresence>,
+    document.body,
   );
 }
