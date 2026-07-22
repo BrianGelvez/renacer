@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCheck, Loader2 } from 'lucide-react';
+import { Check, CheckCheck, Loader2, UserPlus } from 'lucide-react';
 
 export type NotificationItem = {
   id: string;
@@ -34,7 +34,7 @@ function formatRelativeTime(dateStr: string): string {
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
 
-  if (diffMins < 1) return 'Ahora';
+  if (diffMins < 1) return 'Hace unos segundos';
   if (diffMins < 60) return `Hace ${diffMins} min`;
   if (diffHours < 24) return `Hace ${diffHours} h`;
   if (diffDays === 1) return 'Ayer';
@@ -43,6 +43,10 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 function getNavigationForNotification(n: NotificationItem): string | null {
+  if (n.type === 'INVITATION_ACCEPTED') {
+    return '/dashboard?section=team';
+  }
+
   const meta = n.metadata as {
     appointmentId?: string;
     patientId?: string;
@@ -75,6 +79,21 @@ function getNavigationForNotification(n: NotificationItem): string | null {
     return '/dashboard/orders/pending';
   }
   return null;
+}
+
+function NotificationIcon({ type }: { type: string }) {
+  if (type === 'INVITATION_ACCEPTED') {
+    return (
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+        <Check className="h-4 w-4" aria-hidden />
+      </span>
+    );
+  }
+  return (
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ensigna-accent-soft text-ensigna-primary">
+      <UserPlus className="h-4 w-4" aria-hidden />
+    </span>
+  );
 }
 
 export function NotificationDropdown({
@@ -178,19 +197,30 @@ export function NotificationDropdown({
                     }`}
                   >
                     <div className="flex gap-3">
-                      {!n.readAt && (
-                        <span className="flex-shrink-0 w-2 h-2 mt-1.5 rounded-full bg-ensigna-primary" />
-                      )}
-                      <div className={`flex-1 min-w-0 ${!n.readAt ? '' : 'pl-5'}`}>
-                        <p className="font-medium text-[var(--ensigna-text)] text-sm group-hover:text-white">
-                          {n.title}
-                        </p>
+                      <NotificationIcon type={n.type} />
+                      <div className={`flex-1 min-w-0 ${!n.readAt ? '' : ''}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-medium text-[var(--ensigna-text)] text-sm group-hover:text-white">
+                            {n.title}
+                          </p>
+                          {!n.readAt && (
+                            <span
+                              className="mt-1 h-2 w-2 shrink-0 rounded-full bg-ensigna-primary"
+                              aria-hidden
+                            />
+                          )}
+                        </div>
                         <p className="text-sm text-[var(--ensigna-text-secondary)] line-clamp-2 group-hover:text-white">
                           {n.message}
                         </p>
                         <p className="text-xs text-[var(--ensigna-text-secondary)]/80 mt-1 group-hover:text-white">
                           {formatRelativeTime(n.createdAt)}
                         </p>
+                        {n.type === 'INVITATION_ACCEPTED' && (
+                          <p className="mt-2 text-xs font-medium text-ensigna-primary group-hover:text-white">
+                            Ver equipo →
+                          </p>
+                        )}
                       </div>
                     </div>
                   </button>
